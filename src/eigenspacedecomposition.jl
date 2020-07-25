@@ -28,6 +28,7 @@ function row_echelon_form(A::Matrix{T}) where T <: PrimeFields.GF
     return row_echelon_form!(deepcopy(A))
 end
 
+#=
 function Base.inv(A::Matrix{T}) where T <: PrimeFields.GF
     n, m = size(A)
     @assert n == m 
@@ -35,6 +36,7 @@ function Base.inv(A::Matrix{T}) where T <: PrimeFields.GF
     row_echelon_form!(B)
     return B[:, n+1:end]
 end
+=#
 
 function right_nullspace(M::Matrix{T}) where T <: PrimeFields.GF
     A, l = row_echelon_form(M)
@@ -53,6 +55,7 @@ function right_nullspace(M::Matrix{T}) where T <: PrimeFields.GF
     end
     return W
 end
+
 function left_nullspace(M::Matrix{T}) where T <: PrimeFields.GF 
     return Matrix(transpose(right_nullspace(Matrix(transpose(M)))))
 end
@@ -83,6 +86,17 @@ function normalize(v::Array{T, 2}) where T <: PrimeFields.GF
     return v./v[1]
 end
 
+function _find_l(M::Matrix{T}) where T <: PrimeFields.GF
+    # this function should be redundant when defining a better structure for echelonized subspaces
+    l = Int[]
+    for i = 1:size(M, 2)
+        j = findfirst(isone, M[length(l)+1:end,i])
+        if !(j isa Nothing)
+            push!(l, i)
+        end
+    end
+    return l
+end
 
 # EigenSpaceDecomposition
 
@@ -138,7 +152,7 @@ function Base.getindex(esd::EigenSpaceDecomposition, i::Int)
 end
 
 function Base.iterate(esd::EigenSpaceDecomposition, s=1)
-    s == length(esd) && nothing
+    s > length(esd) && return nothing 
     first_last = esd.eigspace_ptrs[s]:esd.eigspace_ptrs[s+1]-1
     return (esd.basis[first_last, :], s+1)
 end
@@ -146,14 +160,18 @@ end
 LinearAlgebra.isdiag(esd::EigenSpaceDecomposition) =
     all(isone, diff(esd.eigspace_ptrs))
 
-_change_basis(M::Matrix{T}, basis::Matrix{T}) where T = basis*M*inv(basis)
-
-function refine!(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where T
-    m = _change_basis(M, esd.basis)
-    @debug "matrices: original (M) and after base change (m)" M m
-    m, eigspace_ptrs = eigen_decomposition!(m)
-    esd.basis = m
-    resize!(esd.eigspace_ptrs, length(eigspace_ptrs))
-    esd.eigspace_ptrs .= eigspace_ptrs
-    return esd
+function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where T
+    nbasis = Array{T}(undef, 0, size(first(esd), 2))
+    nptrs = [1]
+    for (i, e) in enumerate(esd)
+        if size(e, 1) > 1
+            esd2, ptrs = eigen_decomposition!(e*M[:, _find_l(e)])
+            nbasis = vcat(nbasis, esd2*e)
+            append!(nptrs, ptrs.+(pop!(nptrs)-1))
+        else
+            nbasis = vcat(nbasis, e)
+            push!(nptrs, nptrs[end]+1)
+        end
+    end
+    return EigenSpaceDecomposition(nbasis,nptrs)
 end

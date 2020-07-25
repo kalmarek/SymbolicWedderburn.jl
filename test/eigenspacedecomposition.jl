@@ -157,7 +157,7 @@ end
                      0 0 0 4;
                      4 4 0 0])
         esd = SymbolicWedderburn.EigenSpaceDecomposition(M3)
-        @test  SymbolicWedderburn.isdiag(esd)
+        @test SymbolicWedderburn.isdiag(esd)
 
         #Handbook of Computational Group Theory p.262
         M6 = GF{13}.([0 0 0 0 0 1;
@@ -181,6 +181,14 @@ end
                       3 0 3 0 0 0;
                       0 0 0 0 2 0])
 
-        SymbolicWedderburn.refine!(esd, M4)
+        esd = SymbolicWedderburn.refine(esd, M4)
+        @test SymbolicWedderburn.isdiag(esd)
+        @test esd[1] == GF{13}.([1 12 6 0 0 7])
+        @test esd[2] == GF{13}.([1 1 1 1 1 1])
+        @test esd[3] == GF{13}.([1 1 1 12 12 1])
+        @test esd[4] == GF{13}.([1 12 1 8 5 12])
+        @test esd[5] == GF{13}.([1 12 1 5 8 12])
+        @test esd[6] == GF{13}.([1 1 6 0 0 6])
+
     end
 end
