@@ -1,0 +1,9 @@
+name = "SymbolicWedderburn"
+uuid = "858aa9a9-4c7c-4c62-b466-2421203962a2"
+authors = ["tweisser <tillmann.weisser@web.de>"]
+version = "0.1.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
