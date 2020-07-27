@@ -14,14 +14,15 @@ Base.IndexStyle(::Type{<:CCMatrix}) = IndexCartesian()
 
 function Base.getindex(M::CCMatrix, s::Integer, t::Integer)
     if isone(-M.m[s,t])
+        out = one(first(first(M.cc)))
+
         M.m[s,:] .= 0
         r = M.r
-        out = one(first(first(M.cc)))
 
         for g in M.cc[r]
             for h in M.cc[s]
-                out = mul!(out, g, h)
-                for t in 1:size(M, 1)
+                out = AbstractAlgebra.mul!(out, g, h)
+                for t in 1:size(M, 2)
                     if out == first(M.cc[t])
                         M.m[s, t] += 1
                         break
