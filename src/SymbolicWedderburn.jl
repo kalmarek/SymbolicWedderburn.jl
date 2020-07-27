@@ -4,7 +4,7 @@ using LinearAlgebra
 import AbstractAlgebra
 using Primes
 
-using PermutationGroups
+#using PermutationGroups
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")
