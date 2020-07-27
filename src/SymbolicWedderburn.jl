@@ -4,7 +4,9 @@ using LinearAlgebra
 import AbstractAlgebra
 using Primes
 
-#using PermutationGroups
+using Pkg
+Pkg.add(PackageSpec(url="https://github.com/kalmarek/PermutationGroups.jl"))
+using PermutationGroups
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")
