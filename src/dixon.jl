@@ -1,6 +1,9 @@
-AbstractAlgebra.exponent(G::AbstractAlgebra.Group) = AbstractAlgebra.exponent(AbstractAlgebra.conjugacy_classes(G))
-AbstractAlgebra.exponent(cclasses::AbstractVector) = lcm(order.(first.(cclasses)))
-dixon_prime(G::AbstractAlgebra.Group) = dixon_prime(order(G), AbstractAlgebra.exponent(G))
+AbstractAlgebra.exponent(G::AbstractAlgebra.AbstractPermutationGroup) =
+    AbstractAlgebra.exponent(conjugacy_classes(G))
+AbstractAlgebra.exponent(cclasses::AbstractVector) =
+    lcm(AbstractAlgebra.order.(first.(cclasses)))
+dixon_prime(G::AbstractAlgebra.Group) =
+    dixon_prime(AbstractAlgebra.order(G), exponent(G))
 
 function dixon_prime(cclasses::AbstractVector)
     ordG = sum(length, cclasses)
@@ -16,4 +19,3 @@ function dixon_prime(ordG::Integer, exponent::Integer)
     end
     return p
 end
-
