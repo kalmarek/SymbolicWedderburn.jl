@@ -74,7 +74,7 @@ function generator(::Type{GF{q}}) where {q}
 end
 
 Base.sqrt(n::GF{q}) where {q} = GF{q}(sqrtmod(int(n), q))
-issqrt(n::GF{q}) where {q} = legendresymbol(int(n), q) >= 0
+issquare(n::GF{q}) where {q} = legendresymbol(int(n), q) >= 0
 
 function sqrtmod(n::Integer, q::Integer)
     l = legendresymbol(n, q)

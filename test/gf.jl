@@ -52,9 +52,11 @@
         try
             w = sqrt(x)
             @test w*w == x
+            @test FiniteFields.issquare(x)
         catch er
             if er isa DomainError
-                @test FiniteFields.legendresymbol(i, p) == -1
+                @test FiniteFields.legendresymbol(int(x), p) == -1
+                @test !FiniteFields.issquare(x)
             else
                 rethrow(er)
             end
