@@ -2,6 +2,7 @@
 
     @test GF{p}(0) isa GF{p}
     @test_throws AssertionError GF{-p}(0)
+    @test_throws AssertionError GF{p^2}(0)
 
     @test int(zero(GF{p})) == 0
     @test int(one(GF{p})) == 1
