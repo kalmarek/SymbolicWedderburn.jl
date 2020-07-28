@@ -7,7 +7,7 @@ export GF, int, characteristic
 export generator, issqrt
 
 struct GF{q} <: Number
-    value::Int16
+    value::Int
 
     function GF{q}(n, check=true) where {q}
         if check
