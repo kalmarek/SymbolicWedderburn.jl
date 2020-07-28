@@ -28,13 +28,19 @@
     @test isone(GF{p}(23)*inv(GF{p}(23)))
     @test_throws DomainError inv(GF{p}(p))
 
-    @test all(GF{p}(i) + GF{p}(j) == GF{p}(i + j) for i in 0:p for j in 0:p-1)
-    @test all(GF{p}(i) - GF{p}(j) == GF{p}(i - j) for i in 0:p for j in 0:p-1)
-    @test all(GF{p}(i) * GF{p}(j) == GF{p}(i * j) for i in 0:p for j in 0:p-1)
+    @test all(GF{p}(i) + GF{p}(j) == GF{p}(i + j) for i in 0:p-1 for j in 0:p-1)
+    @test all(GF{p}(i) - GF{p}(j) == GF{p}(i - j) for i in 0:p-1 for j in 0:p-1)
+    @test all(GF{p}(i) * GF{p}(j) == GF{p}(i * j) for i in 0:p-1 for j in 0:p-1)
+
     @test all(iszero, (-GF{p}(i) + GF{p}(i) for i in 0:p-1))
     @test all(isone, (GF{p}(i)*inv(GF{p}(i)) for i in 1:p-1))
     @test all(GF{p}(i)^4 == GF{p}(i^4) for i in 0:p-1)
     @test all(GF{p}(23)/GF{p}(i) isa GF{p} for i in 1:p-1)
+
+    @test all(GF{p}(i) + j == GF{p}(i + j) for i in 0:p-1 for j in 0:p-1)
+    @test all(GF{p}(i) - j == GF{p}(i - j) for i in 0:p-1 for j in 0:p-1)
+    @test all(GF{p}(i) * j == GF{p}(i * j) for i in 0:p-1 for j in 0:p-1)
+    @test all(i/GF{p}(j) == GF{p}(i)/GF{p}(j) for i in 0:p-1 for j in 1:p-1)
 
     p!= 23 && @test_throws DomainError GF{p}(1) + GF{23}(2)
     p!= 23 && @test_throws DomainError GF{p}(1) - GF{23}(2)
