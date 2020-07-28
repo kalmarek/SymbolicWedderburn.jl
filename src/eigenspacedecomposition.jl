@@ -1,4 +1,4 @@
-function row_echelon_form!(A::Matrix{T}) where T <: PrimeFields.GF
+function row_echelon_form!(A::Matrix{T}) where T <: FiniteFields.GF
     c, d = size(A)
     l = Int[]
     pos = 0
@@ -24,12 +24,12 @@ function row_echelon_form!(A::Matrix{T}) where T <: PrimeFields.GF
     return A, l
 end
 
-function row_echelon_form(A::Matrix{T}) where T <: PrimeFields.GF
+function row_echelon_form(A::Matrix{T}) where T <: FiniteFields.GF
     return row_echelon_form!(deepcopy(A))
 end
 
 #=
-function Base.inv(A::Matrix{T}) where T <: PrimeFields.GF
+function Base.inv(A::Matrix{T}) where T <: FiniteFields.GF
     n, m = size(A)
     @assert n == m 
     B = hcat(deepcopy(A), Matrix{T}(I, n, n))
@@ -38,7 +38,7 @@ function Base.inv(A::Matrix{T}) where T <: PrimeFields.GF
 end
 =#
 
-function right_nullspace(M::Matrix{T}) where T <: PrimeFields.GF
+function right_nullspace(M::Matrix{T}) where T <: FiniteFields.GF
     A, l = row_echelon_form(M)
     c, d = size(A)
     (length(l) == d) && return zeros(T, d)
@@ -56,11 +56,11 @@ function right_nullspace(M::Matrix{T}) where T <: PrimeFields.GF
     return W
 end
 
-function left_nullspace(M::Matrix{T}) where T <: PrimeFields.GF 
+function left_nullspace(M::Matrix{T}) where T <: FiniteFields.GF
     return Matrix(transpose(right_nullspace(Matrix(transpose(M)))))
 end
 
-function left_eigen(M::Matrix{T}) where T <: PrimeFields.GF
+function left_eigen(M::Matrix{T}) where T <: FiniteFields.GF
     @assert ==(size(M)...)
     Id = Matrix{eltype(M)}(I, size(M)...)
     eigen = Dict{T, typeof(M)}()
@@ -81,12 +81,12 @@ function left_eigen(M::Matrix{T}) where T <: PrimeFields.GF
     return eigen
 end
 
-function normalize(v::Array{T, 2}) where T <: PrimeFields.GF
+function normalize(v::Array{T, 2}) where T <: FiniteFields.GF
     @assert !iszero(v[1])
     return v./v[1]
 end
 
-function _find_l(M::Matrix{T}) where T <: PrimeFields.GF
+function _find_l(M::Matrix{T}) where T <: FiniteFields.GF
     # this function should be redundant when defining a better structure for echelonized subspaces
     l = Int[]
     for i = 1:size(M, 2)
@@ -100,7 +100,7 @@ end
 
 # EigenSpaceDecomposition
 
-function eigen_decomposition!(M::Matrix{T}) where T <: PrimeFields.GF
+function eigen_decomposition!(M::Matrix{T}) where T <: FiniteFields.GF
     eigspace_ptrs = Vector{Int}()
     eigen = left_eigen(M)
     sizehint!(eigspace_ptrs, length(eigen) + 1)
@@ -117,14 +117,14 @@ function eigen_decomposition!(M::Matrix{T}) where T <: PrimeFields.GF
     return M, eigspace_ptrs
 end
 
-mutable struct EigenSpaceDecomposition{T <: PrimeFields.GF}
+mutable struct EigenSpaceDecomposition{T <: FiniteFields.GF}
     basis::Matrix{T}
     eigspace_ptrs::Vector{Int}
 
     function EigenSpaceDecomposition(
                                      basis::Matrix{T},
                                      eigspace_ptrs::AbstractVector{<:Integer}
-                                    ) where T <: PrimeFields.GF
+                                    ) where T <: FiniteFields.GF
 
         @assert eigspace_ptrs[1] == 1
         @assert eigspace_ptrs[end] == size(basis, 1) + 1
@@ -132,7 +132,7 @@ mutable struct EigenSpaceDecomposition{T <: PrimeFields.GF}
     end
 end
 
-EigenSpaceDecomposition(M::Matrix{T}) where T <: PrimeFields.GF =
+EigenSpaceDecomposition(M::Matrix{T}) where T <: FiniteFields.GF =
     EigenSpaceDecomposition(eigen_decomposition!(deepcopy(M))...)
 
     function Base.show(io::IO, ::MIME"text/plain", esd::EigenSpaceDecomposition{T}) where T

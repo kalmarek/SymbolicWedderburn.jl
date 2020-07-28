@@ -1,16 +1,16 @@
-module PrimeFields
+module FiniteFields
 
 # taken from https://github.com/kalmarek/RamanujanGraphs.jl/blob/master/src/gf.jl
 
-export GF, int, characteristic 
-export generator, issqrt, order
+export GF, int, characteristic
+export generator, issqrt
 
 struct GF{q} <: Number
     value::Int16
 
     function GF{q}(n) where {q}
         @assert q > 1
-        return new{q}(mod(n,q))
+        return new{q}(mod(n, q))
     end
 end
 
@@ -42,6 +42,10 @@ Base.iszero(n::GF) = int(n) == 0
 Base.isone(n::GF) = int(n) == 1
 
 Base.promote_rule(::Type{GF{q}}, ::Type{I}) where {q,I<:Integer} = GF{q}
+Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q} = throw(DomainError(
+    (GF{p}, GF{q}),
+    "Cannot perform arithmetic on elements from different fields",
+))
 
 # taken from ValidatedNumerics, under under the MIT "Expat" License:
 # https://github.com/JuliaIntervals/ValidatedNumerics.jl/blob/master/LICENSE.md
@@ -59,13 +63,14 @@ function legendresymbol(n, q)
     return -one(n)
 end
 
-function generator(n::GF{q}) where {q}
-    for i = 2:q-1
+function generator(::Type{GF{q}}) where {q}
+    q == 2 && return one(GF{2})
+    for i = 2:q-1 # bruteforce loop
         g = GF{q}(i)
         any(isone, g^k for k = 2:q-2) && continue
         return g
     end
-    return zero(n) # never hit, to keep compiler happy
+    return zero(GF{q}) # never hit, to keep compiler happy
 end
 
 Base.sqrt(n::GF{q}) where {q} = GF{q}(sqrtmod(int(n), q))
@@ -82,9 +87,8 @@ function sqrtmod(n::Integer, q::Integer)
     return zero(n) # never hit, to keep compiler happy
 end
 
-order(::Type{GF{q}}) where {q} = q
 Base.iterate(::Type{GF{q}}, s = 0) where {q} =
     s >= q ? nothing : (GF{q}(s), s + 1)
 Base.eltype(::Type{GF{q}}) where {q} = GF{q}
-Base.size(gf::Type{<:GF}) = (order(gf),)
+Base.size(gf::Type{<:GF}) = (characteristic(gf),)
 end # module
