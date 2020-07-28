@@ -14,7 +14,7 @@ end
         end
         
         @testset "random" begin
-            for i in abs.(rand(Int8, 10)).+2
+            for i in abs.(rand(2:1000, 10))
                 _dixon_prime(i)
             end
         end
@@ -28,4 +28,3 @@ end
         @test SymbolicWedderburn.dixon_prime(G) == SymbolicWedderburn.dixon_prime(ccG)
     end
 end
-@warn "This section needs more tests!"

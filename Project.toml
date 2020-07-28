@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 AbstractAlgebra = "c3fe647b-3220-5bb0-a1ea-a7954cac585d"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PermutationGroups = "8bc5a954-2dfc-11e9-10e6-cd969bffa420"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Primes = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
