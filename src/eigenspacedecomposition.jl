@@ -76,7 +76,7 @@ function _find_l(M::AbstractMatrix)
     l = Int[]
     for i = 1:size(M, 2)
         j = findfirst(isone, @view M[length(l)+1:end,i])
-        if j != nothing
+        if j !== nothing
             push!(l, i)
         end
     end
