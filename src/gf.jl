@@ -1,16 +1,20 @@
-module PrimeFields
+module FiniteFields
 
 # taken from https://github.com/kalmarek/RamanujanGraphs.jl/blob/master/src/gf.jl
 
-export GF, int, characteristic 
-export generator, issqrt, order
+using Primes
+export GF, int, characteristic
+export generator, issqrt
 
 struct GF{q} <: Number
-    value::Int16
+    value::Int
 
-    function GF{q}(n) where {q}
-        @assert q > 1
-        return new{q}(mod(n,q))
+    function GF{q}(n, check=true) where {q}
+        if check
+            @assert q > 1
+            @assert isprime(q)
+        end
+        return new{q}(mod(n, q))
     end
 end
 
@@ -23,25 +27,29 @@ Base.:(==)(n::GF{q}, m::GF{q}) where {q} = int(n) == int(m)
 Base.hash(n::GF{q}, h::UInt) where {q} =
     xor(0x04fd9e474909f8bf, hash(q, hash(int(n), h)))
 
-Base.:+(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) + int(m))
-Base.:-(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) - int(m))
-Base.:*(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) * int(m))
+Base.:+(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) + int(m), false)
+Base.:-(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) - int(m), false)
+Base.:*(n::GF{q}, m::GF{q}) where {q} = GF{q}(int(n) * int(m), false)
 Base.:/(n::GF{q}, m::GF{q}) where {q} = n * inv(m)
 
-Base.:-(n::GF{q}) where {q} = GF{q}(q - int(n))
-Base.inv(n::GF{q}) where {q} = GF{q}(invmod(int(n), q))
+Base.:-(n::GF{q}) where {q} = GF{q}(q - int(n), false)
+Base.inv(n::GF{q}) where {q} = GF{q}(invmod(int(n), q), false)
 
 function Base.:^(n::GF{q}, i::Integer) where {q}
     i < 0 && return inv(n)^-i
-    return GF{q}(powermod(int(n), i, q))
+    return GF{q}(powermod(int(n), i, q), false)
 end
 
-Base.zero(::Type{GF{q}}) where {q} = GF{q}(0)
-Base.one(::Type{GF{q}}) where {q} = GF{q}(1)
+Base.zero(::Type{GF{q}}) where {q} = GF{q}(0, false)
+Base.one(::Type{GF{q}}) where {q} = GF{q}(1, false)
 Base.iszero(n::GF) = int(n) == 0
 Base.isone(n::GF) = int(n) == 1
 
 Base.promote_rule(::Type{GF{q}}, ::Type{I}) where {q,I<:Integer} = GF{q}
+Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q} = throw(DomainError(
+    (GF{p}, GF{q}),
+    "Cannot perform arithmetic on elements from different fields",
+))
 
 # taken from ValidatedNumerics, under under the MIT "Expat" License:
 # https://github.com/JuliaIntervals/ValidatedNumerics.jl/blob/master/LICENSE.md
@@ -59,17 +67,18 @@ function legendresymbol(n, q)
     return -one(n)
 end
 
-function generator(n::GF{q}) where {q}
-    for i = 2:q-1
-        g = GF{q}(i)
+function generator(::Type{GF{q}}) where {q}
+    q == 2 && return one(GF{2})
+    for i = 2:q-1 # bruteforce loop
+        g = GF{q}(i, false)
         any(isone, g^k for k = 2:q-2) && continue
         return g
     end
-    return zero(n) # never hit, to keep compiler happy
+    return zero(GF{q}) # never hit, to keep compiler happy
 end
 
-Base.sqrt(n::GF{q}) where {q} = GF{q}(sqrtmod(int(n), q))
-issqrt(n::GF{q}) where {q} = legendresymbol(int(n), q) >= 0
+Base.sqrt(n::GF{q}) where {q} = GF{q}(sqrtmod(int(n), q), false)
+issquare(n::GF{q}) where {q} = legendresymbol(int(n), q) >= 0
 
 function sqrtmod(n::Integer, q::Integer)
     l = legendresymbol(n, q)
@@ -82,9 +91,8 @@ function sqrtmod(n::Integer, q::Integer)
     return zero(n) # never hit, to keep compiler happy
 end
 
-order(::Type{GF{q}}) where {q} = q
 Base.iterate(::Type{GF{q}}, s = 0) where {q} =
-    s >= q ? nothing : (GF{q}(s), s + 1)
+    s >= q ? nothing : (GF{q}(s, false), s + 1)
 Base.eltype(::Type{GF{q}}) where {q} = GF{q}
-Base.size(gf::Type{<:GF}) = (order(gf),)
+Base.size(gf::Type{<:GF}) = (characteristic(gf),)
 end # module
