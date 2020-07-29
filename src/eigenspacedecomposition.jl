@@ -28,7 +28,7 @@ function row_echelon_form(A::AbstractMatrix)
     return row_echelon_form!(deepcopy(A))
 end
 
-function right_nullspace(M::AbstractMatrix{T}) where T <: FiniteFields.GF
+function right_nullspace(M::AbstractMatrix{T}) where T
     A, l = row_echelon_form(M)
     c, d = size(A)
     (length(l) == d) && return zeros(T, d)
