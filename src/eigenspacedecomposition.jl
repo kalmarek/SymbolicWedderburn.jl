@@ -1,11 +1,11 @@
-function row_echelon_form!(A::Matrix{T}) where T <: FiniteFields.GF
+function row_echelon_form!(A::AbstractMatrix{T}) where T <: FiniteFields.GF
     c, d = size(A)
     l = Int[]
     pos = 0
     i = 0
     for i = 1:d
         j = findfirst(x -> !iszero(x), A[pos+1:end, i])
-        (j isa Nothing) && continue
+        j == nothing && continue
         j += pos
         pos += 1
         push!(l, i)
@@ -24,21 +24,11 @@ function row_echelon_form!(A::Matrix{T}) where T <: FiniteFields.GF
     return A, l
 end
 
-function row_echelon_form(A::Matrix{T}) where T <: FiniteFields.GF
+function row_echelon_form(A::AbstractMatrix)
     return row_echelon_form!(deepcopy(A))
 end
 
-#=
-function Base.inv(A::Matrix{T}) where T <: FiniteFields.GF
-    n, m = size(A)
-    @assert n == m 
-    B = hcat(deepcopy(A), Matrix{T}(I, n, n))
-    row_echelon_form!(B)
-    return B[:, n+1:end]
-end
-=#
-
-function right_nullspace(M::Matrix{T}) where T <: FiniteFields.GF
+function right_nullspace(M::AbstractMatrix{T}) where T <: FiniteFields.GF
     A, l = row_echelon_form(M)
     c, d = size(A)
     (length(l) == d) && return zeros(T, d)
@@ -56,13 +46,13 @@ function right_nullspace(M::Matrix{T}) where T <: FiniteFields.GF
     return W
 end
 
-function left_nullspace(M::Matrix{T}) where T <: FiniteFields.GF
+function left_nullspace(M::AbstractMatrix) 
     return Matrix(transpose(right_nullspace(Matrix(transpose(M)))))
 end
 
-function left_eigen(M::Matrix{T}) where T <: FiniteFields.GF
+function left_eigen(M::AbstractMatrix{T}) where T <: FiniteFields.GF
     @assert ==(size(M)...)
-    Id = Matrix{eltype(M)}(I, size(M)...)
+    Id = Matrix{T}(I, size(M)...)
     eigen = Dict{T, typeof(M)}()
     cumdim = 0
     for i in T
@@ -81,17 +71,12 @@ function left_eigen(M::Matrix{T}) where T <: FiniteFields.GF
     return eigen
 end
 
-function normalize(v::Array{T, 2}) where T <: FiniteFields.GF
-    @assert !iszero(v[1])
-    return v./v[1]
-end
-
-function _find_l(M::Matrix{T}) where T <: FiniteFields.GF
+function _find_l(M::AbstractMatrix)
     # this function should be redundant when defining a better structure for echelonized subspaces
     l = Int[]
     for i = 1:size(M, 2)
         j = findfirst(isone, M[length(l)+1:end,i])
-        if !(j isa Nothing)
+        if j != nothing
             push!(l, i)
         end
     end
