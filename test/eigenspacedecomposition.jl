@@ -131,11 +131,10 @@ end
             @test haskey(E4, val)
         end
         
-        @test SymbolicWedderburn.normalize(E3[GF{7}(0)]) == GF{7}.([1 2 0 0])
-        @test SymbolicWedderburn.normalize(E3[GF{7}(-3)]) == GF{7}.([1 1 1 1])
-        @test SymbolicWedderburn.normalize(E3[GF{7}(-5)]) == GF{7}.([1 1 2 4])
-        @test SymbolicWedderburn.normalize(E3[GF{7}(-6)]) == GF{7}.([1 1 4 2])
-
+        @test E3[GF{7}(0)] == GF{7}.([1 2 0 0])
+        @test E3[GF{7}(-3)] == GF{7}.([1 1 1 1])
+        @test E3[GF{7}(-5)] == GF{7}.([1 1 2 4])
+        @test E3[GF{7}(-6)] == GF{7}.([1 1 4 2])
 
     end
 

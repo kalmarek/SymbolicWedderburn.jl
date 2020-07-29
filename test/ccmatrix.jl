@@ -1,7 +1,3 @@
-using Pkg
-Pkg.add(PackageSpec(url="https://github.com/kalmarek/PermutationGroups.jl"))
-using PermutationGroups
-
 function generic_tests_ccmatrix(C)
     r = length(C)
     for i = 1:r
