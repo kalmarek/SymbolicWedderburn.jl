@@ -5,7 +5,7 @@ function row_echelon_form!(A::AbstractMatrix{T}) where T <: FiniteFields.GF
     i = 0
     for i = 1:d
         j = findfirst(x -> !iszero(x), @view A[pos+1:end, i])
-        j == nothing && continue
+        j === nothing && continue
         j += pos
         pos += 1
         push!(l, i)
