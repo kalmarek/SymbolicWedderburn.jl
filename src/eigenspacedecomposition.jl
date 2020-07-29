@@ -4,7 +4,7 @@ function row_echelon_form!(A::AbstractMatrix{T}) where T <: FiniteFields.GF
     pos = 0
     i = 0
     for i = 1:d
-        j = findfirst(x -> !iszero(x), A[pos+1:end, i])
+        j = findfirst(x -> !iszero(x), @view A[pos+1:end, i])
         j == nothing && continue
         j += pos
         pos += 1
@@ -75,7 +75,7 @@ function _find_l(M::AbstractMatrix)
     # this function should be redundant when defining a better structure for echelonized subspaces
     l = Int[]
     for i = 1:size(M, 2)
-        j = findfirst(isone, M[length(l)+1:end,i])
+        j = findfirst(isone, @view M[length(l)+1:end,i])
         if j != nothing
             push!(l, i)
         end
