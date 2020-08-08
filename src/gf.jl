@@ -74,10 +74,21 @@ end
 
 function generator(::Type{GF{q}}) where {q}
     q == 2 && return one(GF{2})
-    for i = 2:q-1 # bruteforce loop
+    return rootofunity(GF{q}, q-1)
+end
+
+function rootofunity(::Type{GF{q}}, ord::Integer) where {q}
+    d, r = divrem(q-1, ord)
+    !iszero(r) && throw(DomainError(GF{q}, "No root of unity of order $ord in $(GF{q})."))
+    for i =2:q-1
         g = GF{q}(i, false)
-        any(isone, g^k for k = 2:q-2) && continue
-        return g
+        acc = g
+        for j in 2:ord-1
+            acc *= g
+            isone(acc) && @goto next_elt
+        end
+        isone(acc*g) && return g
+        @label next_elt
     end
     return zero(GF{q}) # never hit, to keep compiler happy
 end

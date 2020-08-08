@@ -40,3 +40,49 @@ function characters_dixon(
         for eigensubspace in esd
     ]
 end
+
+function complex_characters(
+    chars::AbstractVector{<:Character{F}},
+) where {F<:FiniteFields.GF}
+    cclasses = conjugacy_classes(first(chars))
+    e = Int(exponent(cclasses))
+    powermap = PowerMap(cclasses)
+
+    lccl = length(cclasses)
+
+    ω = FiniteFields.rootofunity(F, e)
+    ie = inv(F(e))
+
+    coeffs = zeros(Int, length(chars), lccl, e)
+
+    for (i, χ) in enumerate(chars)
+        for j = 1:lccl, k = 0:e-1
+            coeffs[i, j, k+1] =
+                Int(ie * sum(χ[powermap[j, l]] * ω^-(k * l) for l = 0:e-1))
+        end
+    end
+
+    inv_of_cls = first(chars).inv_of
+
+    C = Cyclotomics.Cyclotomic{Int, Cyclotomics.SparseVector{Int, Int}}
+    # C = typeof(Cyclotomics.E(5))
+
+    complex_chars = Vector{Character{C, eltype(cclasses)}}(
+        undef,
+        length(chars),
+    )
+
+    for i = 1:length(complex_chars)
+        complex_chars[i] = Character(
+            [
+                Cyclotomics.reduced_embedding(sum(
+                    coeffs[i, j, k+1] * E(e, k) for k = 0:e-1
+                )) for j = 1:lccl
+            ],
+            inv_of_cls,
+            cclasses,
+        )
+    end
+
+    return complex_chars
+end
