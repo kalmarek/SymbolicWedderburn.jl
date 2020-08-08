@@ -22,7 +22,7 @@ end
 
     @testset "DixonPrimeGroups" begin
         G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(4)
-        ccG = SymbolicWedderburn.PermutationGroups.conjugacy_classes(G)
+        ccG = conjugacy_classes(G)
         @test exponent(G) == 12
         @test exponent(ccG) == 12
         @test SymbolicWedderburn.dixon_prime(G) == SymbolicWedderburn.dixon_prime(ccG)
