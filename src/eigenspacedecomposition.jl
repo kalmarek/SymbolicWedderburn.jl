@@ -120,7 +120,7 @@ end
 EigenSpaceDecomposition(M::Matrix{T}) where T <: FiniteFields.GF =
     EigenSpaceDecomposition(eigen_decomposition!(deepcopy(M))...)
 
-    function Base.show(io::IO, ::MIME"text/plain", esd::EigenSpaceDecomposition{T}) where T
+function Base.show(io::IO, ::MIME"text/plain", esd::EigenSpaceDecomposition{T}) where T
     println(io, tuple(diff(esd.eigspace_ptrs)...), "-splitting over ", T)
     print(io, esd.basis)
 end
@@ -142,8 +142,7 @@ function Base.iterate(esd::EigenSpaceDecomposition, s=1)
     return (esd.basis[first_last, :], s+1)
 end
 
-LinearAlgebra.isdiag(esd::EigenSpaceDecomposition) =
-    all(isone, diff(esd.eigspace_ptrs))
+LinearAlgebra.isdiag(esd::EigenSpaceDecomposition) = esd.eigspace_ptrs == 1:length(esd)+1
 
 function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where T
     nbasis = Array{T}(undef, 0, size(first(esd), 2))
