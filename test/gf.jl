@@ -4,8 +4,8 @@
     @test_throws AssertionError GF{-p}(0)
     @test_throws AssertionError GF{p^2}(0)
 
-    @test int(zero(GF{p})) == 0
-    @test int(one(GF{p})) == 1
+    @test Int(zero(GF{p})) == 0
+    @test Int(one(GF{p})) == 1
     @test characteristic(GF{p}) == p
     @test characteristic(zero(GF{p})) == p
 
@@ -56,7 +56,7 @@
             @test FiniteFields.issquare(x)
         catch er
             if er isa DomainError
-                @test FiniteFields.legendresymbol(int(x), p) == -1
+                @test FiniteFields.legendresymbol(Int(x), p) == -1
                 @test !FiniteFields.issquare(x)
             else
                 rethrow(er)
@@ -67,11 +67,11 @@
     @test FiniteFields.generator(GF{p}) isa GF{p}
     g = FiniteFields.generator(GF{p})
     @test !iszero(g)
-    @test sort(int.(g^i for i in 1:p-1)) == 1:p-1
+    @test sort(Int.(g^i for i in 1:p-1)) == 1:p-1
 
     @test collect(GF{p}) isa Vector{GF{p}}
     F = collect(GF{p})
-    @test int.(F) == collect(0:p-1)
+    @test Int.(F) == collect(0:p-1)
     @test all(characteristic.(F) .== p)
     @test iszero(first(F))
     @test all(F .== F .+ F[1])
