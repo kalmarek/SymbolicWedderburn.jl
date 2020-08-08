@@ -53,6 +53,9 @@ Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q} = throw(DomainError(
     "Cannot perform arithmetic on elements from different fields",
 ))
 
+Base.div(n::GF{q}, m::Integer) where q = n/GF{q}(m, false)
+Base.div(m::Integer, n::GF{q}) where q = GF{q}(m, false)/n
+
 # taken from ValidatedNumerics, under under the MIT "Expat" License:
 # https://github.com/JuliaIntervals/ValidatedNumerics.jl/blob/master/LICENSE.md
 function subscriptify(n::Integer)
