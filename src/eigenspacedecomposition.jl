@@ -98,7 +98,7 @@ function eigen_decomposition!(M::Matrix{T}) where T <: FiniteFields.GF
         M[ran, :] = basis 
         push!(eigspace_ptrs, cd+dim)
     end
-    @assert eigspace_ptrs[end] == size(M, 1) + 1
+    @assert eigspace_ptrs[end] == size(M, 1) + 1 "Matrix does not split over $T"
     return M, eigspace_ptrs
 end
 
