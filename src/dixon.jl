@@ -41,42 +41,51 @@ function characters_dixon(
     ]
 end
 
-function complex_characters(
+function _multiplicities(
     chars::AbstractVector{<:Character{F}},
+    cclasses = conjugacy_classes(first(chars)),
 ) where {F<:FiniteFields.GF}
-    cclasses = conjugacy_classes(first(chars))
+
     e = Int(exponent(cclasses))
-    powermap = PowerMap(cclasses)
-
-    lccl = length(cclasses)
-
-    ω = FiniteFields.rootofunity(F, e)
     ie = inv(F(e))
+    ω = FiniteFields.rootofunity(F, e)
 
-    coeffs = zeros(Int, length(chars), lccl, e)
 
+    multiplicities = zeros(Int, length(chars), length(cclasses), e)
+    powermap = PowerMap(cclasses)
     for (i, χ) in enumerate(chars)
-        for j = 1:lccl, k = 0:e-1
-            coeffs[i, j, k+1] =
+        for j = 1:length(cclasses), k = 0:e-1
+            multiplicities[i, j, k+1] =
                 Int(ie * sum(χ[powermap[j, l]] * ω^-(k * l) for l = 0:e-1))
         end
     end
 
+    return multiplicities
+end
+
+
+function complex_characters(
+    chars::AbstractVector{<:Character{F}},
+) where {F<:FiniteFields.GF}
+
+    cclasses = conjugacy_classes(first(chars))
+    lccl = length(cclasses)
+    mult_c = _multiplicities(chars, cclasses)
+    e = size(mult_c, 3) # the exponent
+
     inv_of_cls = first(chars).inv_of
 
-    C = Cyclotomics.Cyclotomic{Int, Cyclotomics.SparseVector{Int, Int}}
+    C = Cyclotomics.Cyclotomic{Int,Cyclotomics.SparseVector{Int,Int}}
     # C = typeof(Cyclotomics.E(5))
 
-    complex_chars = Vector{Character{C, eltype(cclasses)}}(
-        undef,
-        length(chars),
-    )
+    complex_chars = Vector{Character{C,eltype(cclasses)}}(undef, length(chars))
+
 
     for i = 1:length(complex_chars)
         complex_chars[i] = Character(
             [
                 Cyclotomics.reduced_embedding(sum(
-                    coeffs[i, j, k+1] * E(e, k) for k = 0:e-1
+                    mult_c[i, j, k+1] * E(e, k) for k = 0:e-1
                 )) for j = 1:lccl
             ],
             inv_of_cls,
