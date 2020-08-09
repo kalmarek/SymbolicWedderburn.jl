@@ -11,7 +11,7 @@ end
 
 @testset "ConjClassMatrix" begin
     @testset "example: Symmetric group (4)" begin
-        G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(4)
+        G = PermutationGroups.SymmetricGroup(4)
         C = conjugacy_classes(G)
         generic_tests_ccmatrix(C)
         @test SymbolicWedderburn.CCMatrix(C, 2)  == [0 1 0 0 0;
@@ -117,7 +117,7 @@ end
 
     @testset "random subgroups of SymetricGroup(N)" begin
         for i in 2:6
-            G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(i)
+            G = PermutationGroups.SymmetricGroup(i)
             for _ in 1:5
                 PG = PermGroup(rand(G, 2))
                 generic_tests_ccmatrix(SymbolicWedderburn.conjugacy_classes(PG))

@@ -55,16 +55,18 @@ end
     @testset "DixonPrimes" begin
         @test SymbolicWedderburn.dixon_prime(20, 20) == 41
 
-        @testset "random" for n in rand(2:1000, 10)
-            F = SymbolicWedderburn.Primes.factor(n)
-            e = lcm(collect(keys(F)))
-            p = SymbolicWedderburn.dixon_prime(n, e)
-            @test mod(p, e) == 1
-            @test p > 2 * floor(sqrt(n))
+        @testset "random" begin
+            for n in rand(2:1000, 10)
+                F = SymbolicWedderburn.Primes.factor(n)
+                e = lcm(collect(keys(F)))
+                p = SymbolicWedderburn.dixon_prime(n, e)
+                @test mod(p, e) == 1
+                @test p > 2 * floor(sqrt(n))
+            end
         end
 
         @testset "DixonPrimeGroups" begin
-            G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(4)
+            G = PermutationGroups.SymmetricGroup(4)
             ccG = conjugacy_classes(G)
             @test exponent(G) == 12
             @test exponent(ccG) == 12
@@ -153,15 +155,12 @@ end
             chars_C = SymbolicWedderburn.characters_dixon(G)
             E = SymbolicWedderburn.Cyclotomics.E
 
-            @test Set([χ.vals for χ in chars_C]) == Set([
+            @test [χ.vals for χ in chars_C] == [
                 E(3,0)*[3, 0, 0, -1],
                 [E(3,0), E(3,1), E(3,2), E(3,0)],
                 [E(3,0), E(3,2), E(3,1), E(3,0)],
                 E(3,0)*[1, 1, 1,  1],
-            ])
-
-
-
+            ]
         end
     end
 end
