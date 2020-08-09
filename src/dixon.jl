@@ -28,6 +28,15 @@ function common_esd(Ns, F::Type{<:FiniteFields.GF})
     return esd
 end
 
+characters_dixon(G::AbstractPermutationGroup) =
+    characters_dixon(conjugacy_classes(G))
+
+function characters_dixon(cclasses::AbstractVector{<:AbstractOrbit})
+    p = dixon_prime(cclasses)
+    chars_𝔽p = characters_dixon(cclasses, FiniteFields.GF{p})
+    return complex_characters(chars_𝔽p)
+end
+
 function characters_dixon(
     cclasses::AbstractVector{<:AbstractOrbit},
     F::Type{<:FiniteFields.GF},
