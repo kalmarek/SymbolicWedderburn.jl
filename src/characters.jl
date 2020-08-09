@@ -67,6 +67,9 @@ end
 
 PermutationGroups.conjugacy_classes(χ::Character) = χ.cc
 
+PermutationGroups.degree(χ::Character) =
+    Int(χ(one(first(first(conjugacy_classes(χ))))))
+
 Base.@propagate_inbounds function Base.getindex(χ::Character, i::Integer)
     @boundscheck checkbounds(χ.vals, abs(i))
     if i < 0

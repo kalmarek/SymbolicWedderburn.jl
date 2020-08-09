@@ -111,4 +111,9 @@ Base.iterate(::Type{GF{q}}, s = 0) where {q} =
     s >= q ? nothing : (GF{q}(s, false), s + 1)
 Base.eltype(::Type{GF{q}}) where {q} = GF{q}
 Base.size(gf::Type{<:GF}) = (characteristic(gf),)
+
+# needed for basic linear algebra over GF{q}:
+Base.abs(x::GF) = x
+Base.conj(x::GF) = x
+
 end # module

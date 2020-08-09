@@ -87,3 +87,19 @@
 
     @test string(one(GF{p})) == "1"*FiniteFields.subscriptify(p)
 end
+
+@testset "rootofunity" begin
+    p = 31
+    FFs = SymbolicWedderburn.FiniteFields
+    F = FFs.GF{p}
+    @test isone(FFs.generator(F)^30)
+    @test isone(FFs.rootofunity(F, 5)^5)
+    x = FFs.rootofunity(F, 5)
+    @test !any(isone, (x^i for i in 1:4))
+    @test_throws DomainError FFs.rootofunity(F, 7)
+    y = FFs.rootofunity(F, 6)
+    @test isone(y^6)
+    @test !any(isone, (y^i for i in 1:5))
+    @test !any(isone, ((x*y)^i for i in 1:29))
+    @test isone((x*y)^30)
+end

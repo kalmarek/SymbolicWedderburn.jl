@@ -2,6 +2,7 @@ using Test
 
 using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields
+using LinearAlgebra
 
 using Pkg
 Pkg.add(PackageSpec(url="https://github.com/kalmarek/PermutationGroups.jl"))
