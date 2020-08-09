@@ -1,11 +1,8 @@
 module SymbolicWedderburn
 
 using LinearAlgebra
-import AbstractAlgebra
 using Primes
 
-using Pkg
-Pkg.add(PackageSpec(url="https://github.com/kalmarek/PermutationGroups.jl"))
 using PermutationGroups
 using Cyclotomics
 
