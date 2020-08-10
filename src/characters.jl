@@ -14,13 +14,6 @@ function LinearAlgebra.dot(
     return val
 end
 
-function (χ::AbstractClassFunction)(g::PermutationGroups.AbstractPerm)
-    for (i, cc) in enumerate(conjugacy_classes(χ))
-        g ∈ cc && return χ[i]
-    end
-    throw(DomainError(g, "element does not belong to conjugacy classes of χ"))
-end
-
 ####################################
 # Characters
 
@@ -28,6 +21,22 @@ mutable struct Character{T,CCl<:AbstractOrbit} <: AbstractClassFunction{T}
     vals::Vector{T}
     inv_of::Vector{Int}
     cc::Vector{CCl}
+end
+
+if VERSION >= v"1.3.0"
+    function (χ::AbstractClassFunction)(g::PermutationGroups.AbstractPerm)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(DomainError(g, "element does not belong to conjugacy classes of χ"))
+    end
+else
+    function (χ::Character)(g::PermutationGroups.AbstractPerm)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(DomainError(g, "element does not belong to conjugacy classes of χ"))
+    end
 end
 
 function Character(
