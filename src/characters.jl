@@ -8,7 +8,6 @@ function LinearAlgebra.dot(
 ) where {T}
 
     val = sum(length(cc) * χ[i] * ψ[-i] for (i, cc) in enumerate(conjugacy_classes(χ)))
-
     orderG = sum(length, conjugacy_classes(χ))
     val = div(val,orderG)
     return val
@@ -60,16 +59,25 @@ end
 
 function normalize!(χ::Character)
 
-    id = one(first(first(conjugacy_classes(χ))))
+    ccG = conjugacy_classes(χ)
+    id = one(first(first(ccG)))
+
     k = χ(id)
+    if !isone(k)
+        k⁻¹ = inv(k)
+        for i in eachindex(χ.vals)
+            χ.vals *= k⁻¹
+        end
+    end
 
-    # computing the degree of χ:
-    n = sqrt(inv(dot(χ, χ) * k^2))
-    @debug n χ.vals
+    # ⟨χ, χ⟩ = 1/d²
 
-    # renormalizing χ
+    deg = sqrt(inv(dot(χ,χ)))
+    # @debug "normalizing with" n dot(χ, χ) χ(id) χ
+
+    # normalizing χ
     for i in eachindex(χ.vals)
-        χ.vals[i] *= n
+        χ.vals[i] *= deg
     end
     return χ
 end
