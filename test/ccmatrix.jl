@@ -11,7 +11,7 @@ end
 
 @testset "ConjClassMatrix" begin
     @testset "example: Symmetric group (4)" begin
-        G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(4)
+        G = PermutationGroups.SymmetricGroup(4)
         C = conjugacy_classes(G)
         generic_tests_ccmatrix(C)
         @test SymbolicWedderburn.CCMatrix(C, 2)  == [0 1 0 0 0;
@@ -36,14 +36,14 @@ end
                                                      3 0 0 0 2]
     end
     @testset "example: Alternating group (4)" begin
-        a = PermutationGroups.perm"(1,2,3)(4)"
-        b = PermutationGroups.perm"(1,2,4)"
-        G = PermutationGroups.PermGroup([a,b])
+        a = perm"(1,2,3)(4)"
+        b = perm"(1,2,4)"
+        G = PermGroup([a,b])
         C = [
             Orbit([a,b], one(G)),
-            Orbit([a,b], PermutationGroups.perm"(1,2)(3,4)"),
-            Orbit([a,b], PermutationGroups.perm"(1,2,3)(4)"),
-            Orbit([a,b], PermutationGroups.perm"(1,3,2)(4)"),
+            Orbit([a,b], perm"(1,2)(3,4)"),
+            Orbit([a,b], perm"(1,2,3)(4)"),
+            Orbit([a,b], perm"(1,3,2)(4)"),
             ]
 
         generic_tests_ccmatrix(C)
@@ -66,19 +66,19 @@ end
     end
 
     @testset "example: C₅ ⋊ C₄" begin
-        S = [PermutationGroups.perm"(1,2,4,5,3)", PermutationGroups.perm"(2,5,3,4)"]
+        S = [perm"(1,2,4,5,3)", perm"(2,5,3,4)"]
         G = PermGroup(S);
 
         ccG = [
             Orbit(S, one(G)),
-            Orbit(S, PermutationGroups.perm"(2,3)(4,5)"),
-            Orbit(S, PermutationGroups.perm"(2,4,3,5)"),
-            Orbit(S, PermutationGroups.perm"(2,5,3,4)"),
-            Orbit(S, PermutationGroups.perm"(1,2,4,5,3)"),
+            Orbit(S, perm"(2,3)(4,5)"),
+            Orbit(S, perm"(2,4,3,5)"),
+            Orbit(S, perm"(2,5,3,4)"),
+            Orbit(S, perm"(1,2,4,5,3)"),
             ]
         # the order of cclasses is taken from GAP
 
-        @assert sum(length, ccG) == PermutationGroups.order(G)
+        @assert sum(length, ccG) == order(G)
 
         @test SymbolicWedderburn.CCMatrix(ccG, 1) ==
         [ 1  0  0  0  0
@@ -117,9 +117,9 @@ end
 
     @testset "random subgroups of SymetricGroup(N)" begin
         for i in 2:6
-            G = SymbolicWedderburn.AbstractAlgebra.SymmetricGroup(i)
+            G = PermutationGroups.SymmetricGroup(i)
             for _ in 1:5
-                PG = PermutationGroups.PermGroup(rand(G, 2))
+                PG = PermGroup(rand(G, 2))
                 generic_tests_ccmatrix(SymbolicWedderburn.conjugacy_classes(PG))
             end
         end

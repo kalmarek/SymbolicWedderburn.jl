@@ -21,7 +21,7 @@ function Base.getindex(M::CCMatrix, s::Integer, t::Integer)
 
         for g in M.cc[r]
             for h in M.cc[s]
-                out = AbstractAlgebra.mul!(out, g, h)
+                out = PermutationGroups.mul!(out, g, h)
                 for t in 1:size(M, 2)
                     if out == first(M.cc[t])
                         M.m[s, t] += 1

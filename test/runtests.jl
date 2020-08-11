@@ -2,11 +2,10 @@ using Test
 
 using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields
+using LinearAlgebra
 
-using Pkg
-Pkg.add(PackageSpec(url="https://github.com/kalmarek/PermutationGroups.jl"))
 using PermutationGroups
-
+using Cyclotomics
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")
