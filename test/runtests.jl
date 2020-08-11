@@ -5,6 +5,7 @@ using SymbolicWedderburn.FiniteFields
 using LinearAlgebra
 
 using PermutationGroups
+using Cyclotomics
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")
