@@ -41,8 +41,9 @@ function characters_dixon(
     cclasses::AbstractVector{<:AbstractOrbit},
     F::Type{<:FiniteFields.GF},
 )
-    Ns = (CCMatrix(cclasses, i) for i = 1:length(cclasses))
+    Ns = [CCMatrix(cclasses, i) for i = 1:length(cclasses)]
     esd = common_esd(Ns, F)
+    @assert isdiag(esd) "Class Matricies failed to diagonalize! $esd"
     inv_ccls = _inv_of(cclasses)
     return [
         normalize!(Character(vec(eigensubspace), inv_ccls, cclasses))

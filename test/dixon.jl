@@ -1,7 +1,7 @@
 function _dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
-    Ns = (SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG))
+    Ns = [SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG)]
     @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
     esd = SymbolicWedderburn.common_esd(Ns, F)
 
