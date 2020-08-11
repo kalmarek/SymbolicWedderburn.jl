@@ -142,6 +142,8 @@ function Base.iterate(esd::EigenSpaceDecomposition, s=1)
     return (esd.basis[first_last, :], s+1)
 end
 
+Base.eltype(esd::EigenSpaceDecomposition{T}) where T = Matrix{T}
+
 LinearAlgebra.isdiag(esd::EigenSpaceDecomposition) = esd.eigspace_ptrs == 1:length(esd)+1
 
 function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where T
