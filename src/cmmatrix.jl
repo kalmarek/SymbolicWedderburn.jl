@@ -1,18 +1,18 @@
-struct CCMatrix{T, C} <: AbstractMatrix{T} # M_r
+struct CMMatrix{T, C} <: AbstractMatrix{T} # M_r
     cc::Vector{C} # vector of conjugacy classes to fix the order
     r::Int # the index of conjugacy class
     m::Matrix{T} # cache of class coefficients
 
-    function CCMatrix(cc::A, r::Int, T::Type=Int) where {C, A<:AbstractVector{C}}
+    function CMMatrix(cc::A, r::Int, T::Type=Int) where {C, A<:AbstractVector{C}}
         M = -ones(T, length(cc), length(cc))
         new{T, C}(cc, r, M)
     end
 end
 
-Base.size(M::CCMatrix) = size(M.m)
-Base.IndexStyle(::Type{<:CCMatrix}) = IndexCartesian()
+Base.size(M::CMMatrix) = size(M.m)
+Base.IndexStyle(::Type{<:CMMatrix}) = IndexCartesian()
 
-function Base.getindex(M::CCMatrix, s::Integer, t::Integer)
+function Base.getindex(M::CMMatrix, s::Integer, t::Integer)
     if isone(-M.m[s,t])
         out = one(first(first(M.cc)))
 

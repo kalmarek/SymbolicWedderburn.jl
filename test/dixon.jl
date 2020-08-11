@@ -1,7 +1,7 @@
 function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
-    Ns = [SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG)]
+    Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
     @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
     esd = SymbolicWedderburn.common_esd(Ns, F)
 
@@ -90,13 +90,13 @@ end
 
             let ccG = ccG, p = 29
                 F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG)]
+                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
                 @test_throws AssertionError SymbolicWedderburn.common_esd(Ns, F)
             end
 
             let ccG = ccG, p = 31
                 F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG)]
+                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
                 esd = SymbolicWedderburn.EigenSpaceDecomposition(F.(Ns[1]))
                 esd = SymbolicWedderburn.refine(esd, F.(Ns[2]))
                 esd = SymbolicWedderburn.refine(esd, F.(Ns[3]))

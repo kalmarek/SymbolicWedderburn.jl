@@ -8,7 +8,7 @@ using Cyclotomics
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")
-include("ccmatrix.jl")
+include("cmmatrix.jl")
 
 include("characters.jl")
 include("powermap.jl")
