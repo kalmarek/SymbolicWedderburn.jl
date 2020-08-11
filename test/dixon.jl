@@ -1,4 +1,4 @@
-function _dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
+function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
     Ns = [SymbolicWedderburn.CCMatrix(ccG, i) for i = 1:length(ccG)]
@@ -28,7 +28,7 @@ function _dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
     @test [dot(χ, ψ) for χ in chars, ψ in chars] == I
 end
 
-function _dixon_C(G, p=SymbolicWedderburn.dixon_prime(G))
+function generictest_dixon_C(G, p=SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
     chars_Fp = SymbolicWedderburn.characters_dixon(ccG, F)
@@ -105,7 +105,7 @@ end
             end
 
             # generic tests
-            _dixon_Fp(G)
+            generictest_dixon_Fp(G)
 
             # tests specific to G
             p = SymbolicWedderburn.dixon_prime(ccG)
@@ -150,17 +150,28 @@ end
             end
 
             # generic tests
-            _dixon_C(G)
+            generictest_dixon_C(G)
 
             chars_C = SymbolicWedderburn.characters_dixon(G)
             E = SymbolicWedderburn.Cyclotomics.E
 
             @test [χ.vals for χ in chars_C] == [
                 E(3,0)*[3, 0, 0, -1],
-                [E(3,0), E(3,1), E(3,2), E(3,0)],
                 [E(3,0), E(3,2), E(3,1), E(3,0)],
+                [E(3,0), E(3,1), E(3,2), E(3,0)],
                 E(3,0)*[1, 1, 1,  1],
             ]
+        end
+    end
+
+    @testset "SmallPermGroups" begin
+        include("smallgroups.jl")
+        for (ord, groups) in SmallPermGroups
+            @testset "SmallGroup(ord, $n)" for (n, G) in enumerate(groups)
+                @test SymbolicWedderburn.characters_dixon(G) isa Vector{<:SymbolicWedderburn.Character}
+                generictest_dixon_Fp(G)
+                generictest_dixon_C(G)
+            end
         end
     end
 end
