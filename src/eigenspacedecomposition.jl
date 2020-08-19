@@ -1,4 +1,4 @@
-function row_echelon_form!(A::AbstractMatrix{T}) where T <: FiniteFields.GF
+function row_echelon_form!(A::AbstractMatrix{T}) where T 
     c, d = size(A)
     l = Int[]
     pos = 0
