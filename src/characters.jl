@@ -101,8 +101,13 @@ function Base.show(io::IO, ::MIME"text/plain", χ::Character{T}) where {T}
     cc_reps = string.(first.(χ.cc))
     k = maximum(length.(cc_reps))
 
-    for (c, v) in zip(cc_reps, χ.vals)
-        println(io, rpad("$c^G", k + 3), "→ \t", v)
+    for i in 1:length(χ.vals)
+        (c, v) = cc_reps[i], χ.vals[i]
+        if i == length(χ.vals)
+            print(io, rpad("$c^G", k + 3), "→ \t", v,)
+        else
+            print(io, rpad("$c^G", k + 3), "→ \t", v, "\n")
+        end
     end
 end
 
@@ -114,8 +119,9 @@ function Base.show(io::IO, χ::Character{T}) where {T}
 
     print(io, "Character: ")
     if limited && length(v) > 20
-        Base.show_delim_array(io, v, opn, ",", "", false, 1, f+9)
+        Base.show_delim_array(io, v, opn, ",", "", false, 1, 9)
         print(io, "  …  ")
+        l = length(v)
         Base.show_delim_array(io, v, "", ",", cls, false, l-9, l)
     else
         Base.show_delim_array(io, v, opn, ",", cls, false)
