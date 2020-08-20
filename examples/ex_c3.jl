@@ -3,44 +3,13 @@ using PermutationGroups
 using Cyclotomics
 
 
-
-
-Cyclotomics.Cyclotomic{T, V}(a::R) where {T, V, R<:Real} = Cyclotomics.Cyclotomic{T, V}(1, [a])
-
-Cyclotomics.Cyclotomic{T}(α::Cyclotomics.Cyclotomic) where {T} =
-           Cyclotomics.Cyclotomic(conductor(α), convert.(T, α.coeffs))
-
-
-function central_projection(chi::SymbolicWedderburn.AbstractClassFunction{T}) where T
-    ccls = conjugacy_classes(chi)
-    d = degree(one(first(first(ccls))))
-
-    result = zeros(T, d, d)
-
-    for cc in ccls
-        val = chi(first(cc))
-        for g in cc
-            for i in 1:d
-                result[i, i^g] += val
-            end
-        end
-    end
-    deg = degree(chi)
-    ordG = sum(length, ccls)
-
-    return deg//ordG, result
-end
-
 using DynamicPolynomials
 using SumOfSquares
-using MosekTools
-
+using SCS
 
 
 C3 = PermGroup([perm"(1,2,3)"])
-
 @polyvar x[1:3]
-
 
 # @constraint m  sum(x.^2) - t in SOSCone() symmetry_group = C2
 using MultivariateBases
@@ -63,23 +32,39 @@ c1, U1 = central_projection(chars[1])
 c2, U2 = central_projection(chars[2])
 c3, U3 = central_projection(chars[3])
 
+@assert conj(U2) ==  U3
 
-#Int64 will not work for all Groups
-R1, ids1 = SymbolicWedderburn.row_echelon_form(1.0.*(U1))
-R2, ids2 = SymbolicWedderburn.row_echelon_form(1.0.*(U2))
-R3, ids3 = SymbolicWedderburn.row_echelon_form(1.0.*(U3))
+R1, ids1 = SymbolicWedderburn.row_echelon_form(float(U1))
+R2, ids2 = SymbolicWedderburn.row_echelon_form(float(U2+U3))
+R3, ids3 = SymbolicWedderburn.row_echelon_form(float(-E(4)*(U2-U3)))
 
-#=
-msym = SOSModel(Mosek.Optimizer)
+msym = SOSModel(SCS.Optimizer)
 @variable   msym t
 @objective  msym Max t
 @variable   msym sos1 SOSPoly(FixedPolynomialBasis(R1[1:length(ids1),:]*mvec))
 @variable   msym sos2 SOSPoly(FixedPolynomialBasis(R2[1:length(ids2),:]*mvec))
+@variable   msym sos3 SOSPoly(FixedPolynomialBasis(R3[1:length(ids3),:]*mvec))
 
-@constraint msym sum(x.^2) - t == sos1 + sos2
+@constraint msym sum(x.^2) - t == sos1 + sos2 + sos3
 optimize!(msym)
+#=  
+    Variables n = 10, constraints m = 19
+    Cones:	primal zero / dual free vars: 10
+	        soc vars: 9, soc blks: 3  
 =#
-# do we scale or not? 
 
-# if we have a complex character, we need to find its conjugate
-# 
+m = let 
+    m = SOSModel(SCS.Optimizer)
+    @variable m t
+    @objective m Max t
+    @constraint m  sum(x.^2) - t in SOSCone()
+    optimize!(m)
+
+    #=
+    Variables n = 11, constraints m = 20
+    Cones:	primal zero / dual free vars: 10
+	        sd vars: 10, sd blks: 1
+    =#
+end
+
+
