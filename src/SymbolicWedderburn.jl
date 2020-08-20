@@ -13,6 +13,8 @@ include("cmmatrix.jl")
 include("characters.jl")
 include("powermap.jl")
 include("dixon.jl")
+
+include("actions.jl")
 include("projections.jl")
 
 end # module
