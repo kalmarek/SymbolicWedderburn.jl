@@ -127,7 +127,7 @@ function normalize!(χ::Character)
 
     k = χ(id)
     if !isone(k)
-        values(χ) .*= inv(k)
+        χ.vals .*= inv(k)
     end
 
     # ⟨χ, χ⟩ = 1/d²
@@ -136,7 +136,7 @@ function normalize!(χ::Character)
     # @debug "normalizing with" n dot(χ, χ) χ(id) χ
 
     # normalizing χ
-    values(χ) .*= deg
+    χ.vals .*= deg
 
     return χ
 end
@@ -165,7 +165,7 @@ for C in (:Character, :VirtualCharacter)
             limited = get(io, :limit, false)
             opn, cls = '[', ']'
 
-            print(io, string($C) * " : ")
+            print(io, string($C) * ": ")
             if limited && length(v) > 20
                 Base.show_delim_array(io, v, opn, ",", "", false, 1, 9)
                 print(io, "  …  ")
