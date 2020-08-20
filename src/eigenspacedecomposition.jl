@@ -1,4 +1,4 @@
-function row_echelon_form!(A::AbstractMatrix{T}) where T 
+function row_echelon_form!(A::AbstractMatrix{T}) where T <: Number
     c, d = size(A)
     l = Int[]
     pos = 0
