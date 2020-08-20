@@ -1,13 +1,13 @@
-function central_projection(χ::Character{T}) where {T}
-    U = projection(χ.vals, conjugacy_classes(χ))
+function matrix_projection(χ::AbstractClassFunction)
+    U = matrix_projection(values(χ), conjugacy_classes(χ))
     deg = degree(χ)
     ordG = sum(length, conjugacy_classes(χ))
     return deg // ordG, U
 end
 
-function projection(
+function matrix_projection(
     vals::AbstractVector{T},
-    ccls::AbstractVector{<:AbstractOrbit},
+    ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
     d::Integer = degree(first(first(ccls))),
 ) where {T}
 
