@@ -235,7 +235,7 @@ end
     @test sprint(show, chars[2]) == "Character: [1, -1]"
 
     @test sprint(show, MIME"text/plain"(), chars[1]) ==
-        "Character over Cyclotomics.Cyclotomic{Int64,SparseArrays.SparseVector{Int64,Int64}}\n()^G         → \t +1*E(1)^0\n(2,3)(4,5)^G → \t +1*E(1)^0"
+        "Character over Cyclotomic{Int64,SparseArrays.SparseVector{Int64,Int64}}\n()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t 1*E(1)^0"
     @test sprint(show, MIME"text/plain"(), chars[2]) ==
-        "Character over Cyclotomics.Cyclotomic{Int64,SparseArrays.SparseVector{Int64,Int64}}\n()^G         → \t +1*E(1)^0\n(2,3)(4,5)^G → \t -1*E(1)^0"
+        "Character over Cyclotomic{Int64,SparseArrays.SparseVector{Int64,Int64}}\n()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t-1*E(1)^0"
 end
