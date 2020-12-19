@@ -1,11 +1,11 @@
 function generic_tests_ccmatrix(C)
     r = length(C)
     for i = 1:r
-        ccm = SymbolicWedderburn.CCMatrix(C, i)
+        ccm = SymbolicWedderburn.CMMatrix(C, i)
         l = length(C[i])
         @test all([sum(ccm[:,j]) == l for j = 1:r])
     end
-    ccm1 = SymbolicWedderburn.CCMatrix(C, 1)
+    ccm1 = SymbolicWedderburn.CMMatrix(C, 1)
     @test all([isone(ccm1[i,i]) for i = 1:r])
 end
 
@@ -14,22 +14,22 @@ end
         G = PermutationGroups.SymmetricGroup(4)
         C = conjugacy_classes(G)
         generic_tests_ccmatrix(C)
-        @test SymbolicWedderburn.CCMatrix(C, 2)  == [0 1 0 0 0;
+        @test SymbolicWedderburn.CMMatrix(C, 2)  == [0 1 0 0 0;
                                                      6 0 3 0 2;
                                                      0 4 0 4 0;
                                                      0 0 3 0 4;
                                                      0 1 0 2 0]
-        @test SymbolicWedderburn.CCMatrix(C, 3)  == [0 0 1 0 0;
+        @test SymbolicWedderburn.CMMatrix(C, 3)  == [0 0 1 0 0;
                                                      0 4 0 4 0;
                                                      8 0 4 0 8;
                                                      0 4 0 4 0;
                                                      0 0 3 0 0]
-        @test SymbolicWedderburn.CCMatrix(C, 4)  == [0 0 0 1 0;
+        @test SymbolicWedderburn.CMMatrix(C, 4)  == [0 0 0 1 0;
                                                      0 0 3 0 4;
                                                      0 4 0 4 0;
                                                      6 0 3 0 2;
                                                      0 2 0 1 0]
-        @test SymbolicWedderburn.CCMatrix(C, 5)  == [0 0 0 0 1;
+        @test SymbolicWedderburn.CMMatrix(C, 5)  == [0 0 0 0 1;
                                                      0 1 0 2 0;
                                                      0 0 3 0 0;
                                                      0 2 0 1 0;
@@ -47,19 +47,19 @@ end
             ]
 
         generic_tests_ccmatrix(C)
-        @test SymbolicWedderburn.CCMatrix(C, 1) == [1 0 0 0
+        @test SymbolicWedderburn.CMMatrix(C, 1) == [1 0 0 0
                                                     0 1 0 0
                                                     0 0 1 0
                                                     0 0 0 1]
-        @test SymbolicWedderburn.CCMatrix(C, 2) == [0 1 0 0
+        @test SymbolicWedderburn.CMMatrix(C, 2) == [0 1 0 0
                                                     3 2 0 0
                                                     0 0 3 0
                                                     0 0 0 3]
-        @test SymbolicWedderburn.CCMatrix(C, 3) == [0 0 1 0
+        @test SymbolicWedderburn.CMMatrix(C, 3) == [0 0 1 0
                                                     0 0 3 0
                                                     0 0 0 4
                                                     4 4 0 0]
-        @test SymbolicWedderburn.CCMatrix(C, 4) == [0 0 0 1
+        @test SymbolicWedderburn.CMMatrix(C, 4) == [0 0 0 1
                                                     0 0 0 3
                                                     4 4 0 0
                                                     0 0 4 0]
@@ -80,31 +80,31 @@ end
 
         @assert sum(length, ccG) == order(G)
 
-        @test SymbolicWedderburn.CCMatrix(ccG, 1) ==
+        @test SymbolicWedderburn.CMMatrix(ccG, 1) ==
         [ 1  0  0  0  0
           0  1  0  0  0
           0  0  1  0  0
           0  0  0  1  0
           0  0  0  0  1 ]
-        @test SymbolicWedderburn.CCMatrix(ccG, 2) ==
+        @test SymbolicWedderburn.CMMatrix(ccG, 2) ==
         [ 0  1  0  0  0
           5  0  0  0  5
           0  0  0  5  0
           0  0  5  0  0
           0  4  0  0  0 ]
-        @test SymbolicWedderburn.CCMatrix(ccG, 3) ==
+        @test SymbolicWedderburn.CMMatrix(ccG, 3) ==
         [ 0  0  1  0  0
           0  0  0  5  0
           0  5  0  0  0
           5  0  0  0  5
           0  0  4  0  0 ]
-        @test SymbolicWedderburn.CCMatrix(ccG, 4) ==
+        @test SymbolicWedderburn.CMMatrix(ccG, 4) ==
         [ 0  0  0  1  0
           0  0  5  0  0
           5  0  0  0  5
           0  5  0  0  0
           0  0  0  4  0 ]
-        @test SymbolicWedderburn.CCMatrix(ccG, 5) ==
+        @test SymbolicWedderburn.CMMatrix(ccG, 5) ==
         [ 0  0  0  0  1
           0  4  0  0  0
           0  0  4  0  0
