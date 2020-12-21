@@ -2,15 +2,21 @@ abstract type AbstractAction{T} end
 
 struct InducingHomomorphism{T} <: AbstractAction{T}
     features::Vector{T}
-    reversef::Dict{T, Int}
+    reversef::Dict{T,Int}
 end
 
-Base.getindex(act::InducingHomomorphism, i::Integer) = act.features[i]
-Base.getindex(act::InducingHomomorphism{T}, f::T) where T = act.reversef[f]
-(act::InducingHomomorphism)(p::Perm{I}) where I = Perm(I[act[f^p] for f in act.features])
+Base.getindex(ihom::InducingHomomorphism, i::Integer) = ihom.features[i]
+Base.getindex(ihom::InducingHomomorphism{T}, f::T) where {T} = ihom.reversef[f]
+(ihom::InducingHomomorphism)(p::Perm{I}) where {I} =
+    Perm(I[ihom[f^p] for f in ihom.features])
 
-function (act::InducingHomomorphism)(orb::O) where {T, O<:AbstractOrbit{T, Nothing}}
-    elts = act.(orb)
-    dict = Dict(e=>nothing for e in elts)
+function (ihom::InducingHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+    elts = ihom.(orb)
+    dict = Dict(e => nothing for e in elts)
     return O(elts, dict)
+end
+
+function (ihom::InducingHomomorphism)(χ::CF) where {CF<:ClassFunction}
+    iccG = ihom.(conjugacy_classes(χ))
+    return CF(values(χ), χ.inv_of, iccG)
 end

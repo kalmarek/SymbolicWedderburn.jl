@@ -122,20 +122,23 @@ function symmetry_adapted_basis(G::PermutationGroups.Group, basis)
         χ.inv_of == first(chars).inv_of for χ in chars
     )
 
-    h = InducingHomomorphism(basis)
-    ccG_large = h.(conjugacy_classes(first(chars)))
+    if length(basis) > degree(G)
 
-    @debug "Double-checking the induced action..." let ccls = ccG_large,
-        large_gens = h.(gens(G))
+        ihom = InducingHomomorphism(basis)
+        chars = ihom.(chars)
 
-        G_large = PermGroup(large_gens)
-        ccG_large = conjugacy_classes(G_large)
-        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
+        @debug "Double-checking the induced action..." let ccls =
+                conjugacy_classes(first(chars)),
+            large_gens = ihom.(gens(G))
+
+            G_large = PermGroup(large_gens)
+            ccG_large = conjugacy_classes(G_large)
+            @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
+        end
     end
 
-    chars_action_on_basis = [Character(values(χ), χ.inv_of, ccG_large) for χ in chars]
-    vr_chars = real_vchars(chars_action_on_basis)
+    vr_chars = real_vchars(chars)
 
-    # return ony the non-zero subbases:
+    # return ony the non-zero blocks:
     return filter!(!iszero ∘ first ∘ size, isotypical_basis.(vr_chars))
 end
