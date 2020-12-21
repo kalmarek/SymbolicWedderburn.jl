@@ -1,3 +1,11 @@
+"""
+    matrix_projection(χ::AbstractClassFunction)
+Compute matrix projection associated to the abstract class function `χ` and
+permutation action on the set `1:d`. The dimension `d` of the projection is
+equal to the degree of the permutations in `conjugacy_classes(χ)`.
+
+Returned tuple consist of coefficient (weight) and the matrix realization of the projection.
+"""
 function matrix_projection(χ::AbstractClassFunction)
     U = matrix_projection(values(χ), conjugacy_classes(χ))
     deg = degree(χ)
@@ -5,17 +13,24 @@ function matrix_projection(χ::AbstractClassFunction)
     return deg // ordG, U
 end
 
+"""
+    matrix_projection(vals, ccls)
+Return matrix projection defined by an abstract class function with values `vals`
+attained on conjugacy classes in `ccls` (`vals` and `ccls` must be paired). The
+dimension of the projection is equal to the degree of the permutations in `ccls`
+"""
 function matrix_projection(
     vals::AbstractVector{T},
     ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
-    d::Integer = degree(first(first(ccls))),
 ) where {T}
 
-    result = zeros(T, d, d)
+    dim = degree(first(first(ccls)))
+
+    result = zeros(T, dim, dim)
 
     for (val, cc) in zip(vals, ccls)
         for g in cc
-            for i = 1:d
+            for i = 1:dim
                 result[i, i^g] += val
             end
         end
@@ -24,28 +39,39 @@ function matrix_projection(
     return result
 end
 
-function _conjugate_pairs(chars::Vector{<:AbstractClassFunction})
+function _conjugate_pairs(chars::AbstractVector{<:ClassFunction})
     vals = values.(chars)
     tovisit = trues(length(vals))
-    conjugate_pairs = Dict{Int, Int}()
+    conjugate_pairs = Dict{Int,Int}()
     for (i, v) in enumerate(vals)
         tovisit[i] || continue
-        k = findfirst(==(conj(v)), vals)
-        conjugate_pairs[i] = k
         tovisit[i] = false
-        tovisit[k] = false
+        if all(isreal, v)
+            tovisit[i] = false
+            conjugate_pairs[i] = i
+        else
+            k = findfirst(==(conj(v)), vals)
+            conjugate_pairs[i] = k
+            tovisit[k] = false
+        end
     end
     conjugate_pairs
 end
 
+"""
+    real_vchars(chars::AbstractVector{<:ClassFunction})
+Return _real_ virtual characters out of `chars` by pairing conjugate characters
+with each other, i.e. every such pair `(a, ā)`, is replaced by a new pair
+`(a+ā, -im*(a-ā))` of real (virtual) characters.
+"""
 function real_vchars(chars::AbstractVector{<:AbstractClassFunction})
     pairs = _conjugate_pairs(chars)
-    res = [VirtualCharacter(chars[i]) for (i,j) in pairs if i == j] # real ones
-    for (i,j) in pairs
+    res = [VirtualCharacter(chars[i]) for (i, j) in pairs if i == j] # real ones
+    for (i, j) in pairs
         i == j && continue
         χ, χ_bar = chars[i], chars[j]
         push!(res, χ + χ_bar)
-        push!(res, -E(4)*(χ - χ_bar))
+        push!(res, -E(4) * (χ - χ_bar))
     end
 
     return res
