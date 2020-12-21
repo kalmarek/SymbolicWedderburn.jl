@@ -50,3 +50,66 @@ function real_vchars(chars::AbstractVector{<:AbstractClassFunction})
 
     return res
 end
+
+"""
+    isotypical_basis(χ::Union{<:Character, VirtualCharacter<:})
+Compute a basis of the image of the projection corresponding to a (virtual) character `χ`.
+
+Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
+(so called _isotypical subspace_) in the permutation action on `ℝⁿ`
+encoded by the conjugacy classes of `χ`.
+"""
+function isotypical_basis(χ::ClassFunction)
+    isreal(χ) || throw("Isotypical projection for complex characters is not implemented.")
+
+    c, u = matrix_projection(χ)
+    if iszero(c)
+        u = similar(u, 0, size(u, 2))
+    end
+
+    # we stop doing things symbolicaly in this call to float:
+    image, pivots = SymbolicWedderburn.row_echelon_form(float.(u))
+    dim = length(pivots)
+    image_basis = image[1:dim, :]
+
+    @debug "isotypical subspace corresponding to χ has dimension $dim" χ
+
+    return image_basis
+end
+
+"""
+    symmetry_adapted_basis(G::Group, basis)
+Compute a basis for the linear space spanned by `basis` which is invariant under
+the symmetry of `G`. The action used in these computations is `(b,g) → b^g`
+(for an element `b ∈ basis` and a group element `g ∈ G`) and needs to be defined by the user.
+
+Return coefficients of the invariant basis in (orthogonal) blocks corresponding to irreducible characters of `G`.
+
+!!! Note:
+Each block is invariant under the action of `G`, i.e. the action may permute vectors from
+symmetry adapted basis within each block.
+"""
+function symmetry_adapted_basis(G::PermutationGroups.Group, basis)
+    chars = characters_dixon(G)
+
+    @debug "Characters share conjugacy classes" @assert all(
+        χ.inv_of == first(chars).inv_of for χ in chars
+    )
+
+    h = InducingHomomorphism(basis)
+    ccG_large = h.(conjugacy_classes(first(chars)))
+
+    @debug "Double-checking the induced action..." let ccls = ccG_large,
+        large_gens = h.(gens(G))
+
+        G_large = PermGroup(large_gens)
+        ccG_large = conjugacy_classes(G_large)
+        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
+    end
+
+    chars_action_on_basis = [Character(values(χ), χ.inv_of, ccG_large) for χ in chars]
+    vr_chars = real_vchars(chars_action_on_basis)
+
+    # return ony the non-zero subbases:
+    return filter!(!iszero ∘ first ∘ size, isotypical_basis.(vr_chars))
+end
