@@ -20,25 +20,8 @@ m = let m = SOSModel(optimizer_with_attributes(SCS.Optimizer, "eps"=>1e-5, "acce
     m
 end
 
+include("action_polynomials.jl")
 
-using DynamicPolynomials
-using MultivariatePolynomials
-const MP = MultivariatePolynomials
-using MultivariateBases
-
-function SymbolicWedderburn.OnPoints(basis::Union{<:MonomialVector, AbstractVector{<:Monomial}})
-    basis_exps = Vector{Vector{Int}}(undef, length(basis))
-    basis_dict = Dict{Vector{Int}, Int}()
-    sizehint!(basis_dict, length(basis))
-
-    for (i, b) in enumerate(basis)
-        e = MP.exponents(b) # so that we allocate exponents only once
-        basis_exps[i] = e
-        basis_dict[e] = i
-    end
-
-    return SymbolicWedderburn.OnPoints(basis_exps, basis_dict)
-end
 
 include(joinpath(@__DIR__, "..", "test", "smallgroups.jl"));
 G = PermGroup([perm"(1,2)"])
