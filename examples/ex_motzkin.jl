@@ -26,7 +26,7 @@ include("action_polynomials.jl")
 G = PermGroup([perm"(1,2)"])
 basis = monomials([x,y], 0:3)
 
-R = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+R = symmetry_adapted_basis_float(G, basis)
 
 msym = let R=R, msym = SOSModel(optimizer_with_attributes(SCS.Optimizer,
     "eps"=>3e-11,

@@ -94,7 +94,7 @@ function isotypical_basis(χ::ClassFunction)
     end
 
     # we stop doing things symbolicaly in this call to float:
-    image, pivots = SymbolicWedderburn.row_echelon_form(float.(u))
+    image, pivots = row_echelon_form(float.(u))
     dim = length(pivots)
     image_basis = image[1:dim, :]
 
@@ -104,7 +104,7 @@ function isotypical_basis(χ::ClassFunction)
 end
 
 """
-    symmetry_adapted_basis(G::Group, basis)
+    symmetry_adapted_basis_float(G::Group, basis)
 Compute a basis for the linear space spanned by `basis` which is invariant under
 the symmetry of `G`. The action used in these computations is `(b,g) → b^g`
 (for an element `b ∈ basis` and a group element `g ∈ G`) and needs to be defined by the user.
@@ -115,7 +115,7 @@ Return coefficients of the invariant basis in (orthogonal) blocks corresponding 
 Each block is invariant under the action of `G`, i.e. the action may permute vectors from
 symmetry adapted basis within each block.
 """
-function symmetry_adapted_basis(G::PermutationGroups.Group, basis)
+function symmetry_adapted_basis_float(G::PermutationGroups.Group, basis)
     chars = characters_dixon(G)
 
     @debug "Characters share conjugacy classes" @assert all(

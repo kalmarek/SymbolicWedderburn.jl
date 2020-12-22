@@ -28,7 +28,7 @@ G = PermGroup([perm"(1,2,3,4)"])
 
 basis = monomials(x, 0:1)
 
-R = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+R = symmetry_adapted_basis_float(G, basis)
 
 msym = let msym = SOSModel(SCS.Optimizer), basis = basis, R = R
     @variable msym t
