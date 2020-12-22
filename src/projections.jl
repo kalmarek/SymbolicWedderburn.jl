@@ -1,10 +1,11 @@
 """
     matrix_projection(χ::AbstractClassFunction)
 Compute matrix projection associated to the abstract class function `χ` and
-permutation action on the set `1:d`. The dimension `d` of the projection is
-equal to the degree of the permutations in `conjugacy_classes(χ)`.
+permutation action on the set `1:d`.
 
-Returned tuple consist of coefficient (weight) and the matrix realization of the projection.
+The dimension `d` of the projection is equal to the degree of the permutations
+in `conjugacy_classes(χ)`. Returned tuple consist of coefficient (weight) and
+the matrix realization of the projection.
 """
 function matrix_projection(χ::AbstractClassFunction)
     U = matrix_projection(values(χ), conjugacy_classes(χ))
@@ -16,8 +17,9 @@ end
 """
     matrix_projection(vals, ccls)
 Return matrix projection defined by an abstract class function with values `vals`
-attained on conjugacy classes in `ccls` (`vals` and `ccls` must be paired). The
-dimension of the projection is equal to the degree of the permutations in `ccls`
+attained on (the corresponding) conjugacy classes `ccls`.
+
+The dimension of the projection is equal to the degree of the permutations in `ccls`.
 """
 function matrix_projection(
     vals::AbstractVector{T},
@@ -60,8 +62,9 @@ end
 
 """
     real_vchars(chars::AbstractVector{<:ClassFunction})
-Return _real_ virtual characters out of `chars` by pairing conjugate characters
-with each other, i.e. every such pair `(a, ā)`, is replaced by a new pair
+Return _real_ virtual characters formed from `chars` by pairing conjugates with each other.
+
+I.e. for every pair `(a, ā)` of conjugate functions is replaced by a new pair
 `(a+ā, -im*(a-ā))` of real (virtual) characters.
 """
 function real_vchars(chars::AbstractVector{<:AbstractClassFunction})
@@ -71,7 +74,7 @@ function real_vchars(chars::AbstractVector{<:AbstractClassFunction})
         i == j && continue
         χ, χ_bar = chars[i], chars[j]
         push!(res, χ + χ_bar)
-        push!(res, -E(4) * (χ - χ_bar))
+        push!(res, -im * (χ - χ_bar))
     end
 
     return res
