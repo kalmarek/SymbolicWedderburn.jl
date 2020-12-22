@@ -82,8 +82,8 @@ end
 Compute a basis of the image of the projection corresponding to a (virtual) character `χ`.
 
 Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
-(so called _isotypical subspace_) in the permutation action on `ℝⁿ`
-encoded by the conjugacy classes of `χ`.
+(so called _isotypical subspace_) in the permutation action on `ℝⁿ` encoded by
+the conjugacy classes of `χ`.
 """
 function isotypical_basis(χ::ClassFunction)
     isreal(χ) || throw("Isotypical projection for complex characters is not implemented.")
@@ -104,41 +104,54 @@ function isotypical_basis(χ::ClassFunction)
 end
 
 """
-    symmetry_adapted_basis_float(G::Group, basis)
-Compute a basis for the linear space spanned by `basis` which is invariant under
-the symmetry of `G`. The action used in these computations is `(b,g) → b^g`
-(for an element `b ∈ basis` and a group element `g ∈ G`) and needs to be defined by the user.
+    symmetry_adapted_basis_float(G::PermGroup)
+Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
-Return coefficients of the invariant basis in (orthogonal) blocks corresponding to irreducible characters of `G`.
+The group is considered to act by permutations on set `1:n`. The coefficients of
+the invariant basis are returned in (orthogonal) blocks corresponding to irreducible
+characters of `G`.
 
 !!! Note:
-Each block is invariant under the action of `G`, i.e. the action may permute vectors from
-symmetry adapted basis within each block.
+Each block is invariant under the action of `G`, i.e. the action may permute
+vectors from symmetry adapted basis within each block.
 """
-function symmetry_adapted_basis_float(G::PermutationGroups.Group, basis)
+symmetry_adapted_basis_float(G::PermutationGroups.PermGroup) =
+    _symmetry_adapted_basis_float(characters_dixon(G))
+
+"""
+    symmetry_adapted_basis_float(G::PermGroup, basis)
+Compute a basis for the linear space spanned by `basis` which is invariant under
+the symmetry of `G`.
+
+* The action used in these computations is `(b,g) → b^g` (for an element `b ∈ basis` and a group element `g ∈ G`) and needs to be defined by the user.
+* It is assumed that `G` is a permutation group acting on a subset of basis and the action needs to be induced to an the whole `basis`. If `G` already acts on the whole `basis`, a call to `symmetry_adapted_basis_float(G)` is preferred.
+* For inducing the action `basis` needs to be indexable and iterable (e.g. in the form of an `AbstractVector`).
+
+The coefficients of the invariant basis are returned in (orthogonal) blocks
+corresponding to irreducible characters of `G`.
+
+!!! Note:
+Each block is invariant under the action of `G`, i.e. the action may permute
+vectors from symmetry adapted basis within each block.
+"""
+function symmetry_adapted_basis_float(G::PermutationGroups.PermGroup, basis)
     chars = characters_dixon(G)
+    induced_chars = ihom.(chars)
 
-    @debug "Characters share conjugacy classes" @assert all(
-        χ.inv_of == first(chars).inv_of for χ in chars
-    )
+    @debug "Double-checking the induced action..." let ccls =
+            conjugacy_classes(first(chars)),
+        large_gens = ihom.(gens(G))
 
-    if length(basis) > degree(G)
-
-        ihom = InducingHomomorphism(basis)
-        chars = ihom.(chars)
-
-        @debug "Double-checking the induced action..." let ccls =
-                conjugacy_classes(first(chars)),
-            large_gens = ihom.(gens(G))
-
-            G_large = PermGroup(large_gens)
-            ccG_large = conjugacy_classes(G_large)
-            @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
-        end
+        G_large = PermGroup(large_gens)
+        ccG_large = conjugacy_classes(G_large)
+        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
     end
 
-    vr_chars = real_vchars(chars)
+    return _symmetry_adapted_basis_float(induced_chars)
+end
 
+function _symmetry_adapted_basis_float(chars::AbstractVector{<:AbstractClassFunction})
+    vr_chars = real_vchars(chars)
     # return ony the non-zero blocks:
     return filter!(!iszero ∘ first ∘ size, isotypical_basis.(vr_chars))
 end
