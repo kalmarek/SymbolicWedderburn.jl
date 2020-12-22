@@ -21,13 +21,13 @@ Base.isreal(χ::AbstractClassFunction) = all(isreal, values(χ))
 ####################################
 # Characters
 
-struct VirtualCharacter{T,CCl<:AbstractOrbit} <: AbstractClassFunction{T}
+struct VirtualCharacter{T,CCl} <: AbstractClassFunction{T}
     vals::Vector{T}
     inv_of::Vector{Int}
     cc::Vector{CCl}
 end
 
-struct Character{T,CCl<:AbstractOrbit} <: AbstractClassFunction{T}
+struct Character{T,CCl} <: AbstractClassFunction{T}
     vals::Vector{T}
     inv_of::Vector{Int}
     cc::Vector{CCl}
@@ -69,7 +69,7 @@ end
 function Character(
     vals::AbstractVector{T},
     ccls::AbstractVector{CCl},
-) where {T,CCl<:AbstractOrbit}
+) where {T,CCl}
     χ = Character{T,CCl}(vals, _inv_of(ccls), ccls)
     return χ
 end
@@ -77,7 +77,7 @@ end
 function VirtualCharacter(
     vals::AbstractVector{T},
     ccls::AbstractVector{CCl},
-) where {T,CCl<:AbstractOrbit}
+) where {T,CCl}
     χ = VirtualCharacter{T,CCl}(vals, _inv_of(ccls), ccls)
     return χ
 end
@@ -133,7 +133,7 @@ function normalize!(χ::Character)
     # ⟨χ, χ⟩ = 1/d²
 
     deg = sqrt(inv(dot(χ, χ)))
-    # @debug "normalizing with" n dot(χ, χ) χ(id) χ
+    @debug "normalizing with" n dot(χ, χ) χ(id) χ
 
     # normalizing χ
     χ.vals .*= deg

@@ -28,19 +28,15 @@ function common_esd(Ns, F::Type{<:FiniteFields.GF})
     return esd
 end
 
-characters_dixon(G::AbstractPermutationGroup) =
-    characters_dixon(conjugacy_classes(G))
+characters_dixon(G::AbstractPermutationGroup) = characters_dixon(conjugacy_classes(G))
 
-function characters_dixon(cclasses::AbstractVector{<:AbstractOrbit})
+function characters_dixon(cclasses::AbstractVector)
     p = dixon_prime(cclasses)
     chars_𝔽p = characters_dixon(cclasses, FiniteFields.GF{p})
     return complex_characters(chars_𝔽p)
 end
 
-function characters_dixon(
-    cclasses::AbstractVector{<:AbstractOrbit},
-    F::Type{<:FiniteFields.GF},
-)
+function characters_dixon(cclasses::AbstractVector, F::Type{<:FiniteFields.GF})
     Ns = [CMMatrix(cclasses, i) for i = 1:length(cclasses)]
     esd = common_esd(Ns, F)
     @assert isdiag(esd) "Class Matricies failed to diagonalize! $esd"
@@ -72,7 +68,6 @@ function _multiplicities(
 
     return multiplicities
 end
-
 
 function complex_characters(
     chars::AbstractVector{<:Character{F}},

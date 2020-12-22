@@ -1,7 +1,7 @@
-abstract type AbstractAction{T} end
+abstract type AbstractActionHomomorphism{T} end
 
-struct InducingHomomorphism{T} <: AbstractAction{T}
-    features::Vector{T}
+struct InducingHomomorphism{T,V} <: AbstractActionHomomorphism{T}
+    features::V
     reversef::Dict{T,Int}
 end
 
