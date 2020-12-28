@@ -1,9 +1,9 @@
 using DynamicPolynomials
 using MultivariatePolynomials
 
-function SymbolicWedderburn.InducingHomomorphism(basis::Union{<:MonomialVector, AbstractVector{<:Monomial}})
+function SymbolicWedderburn.InducingHomomorphism(basis::AbstractVector{<:AbstractMonomial})
     basis_exps = Vector{Vector{Int}}(undef, length(basis))
-    basis_dict = Dict{Vector{Int}, Int}()
+    basis_dict = Dict{Vector{Int},Int}()
     sizehint!(basis_dict, length(basis))
 
     for (i, b) in enumerate(basis)
