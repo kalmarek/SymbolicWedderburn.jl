@@ -20,7 +20,7 @@ end
 function common_esd(Ns, F::Type{<:FiniteFields.GF})
     @assert !isempty(Ns)
     esd = EigenSpaceDecomposition(F.(first(Ns)))
-    for N in Iterators.rest(Ns, 2)
+    for N in Iterators.drop(Ns, 1)
         esd = refine(esd, F.(N))
         @debug N esd.eigspace_ptrs
         isdiag(esd) && return esd
