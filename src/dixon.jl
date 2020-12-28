@@ -21,9 +21,10 @@ function dixon_prime(ordG::Integer, exponent::Integer)
 end
 
 function common_esd(Ns, F::Type{<:FiniteFields.GF})
-    @assert !isempty(Ns)
-    esd = EigenSpaceDecomposition(F.(first(Ns)))
-    for N in Iterators.rest(Ns, 2)
+    itr = iterate(Ns)
+    @assert itr !== nothing
+    esd = EigenSpaceDecomposition(F.(first(itr)))
+    for N in Iterators.rest(Ns, last(itr))
         esd = refine(esd, F.(N))
         @debug N esd.eigspace_ptrs
         isdiag(esd) && return esd
