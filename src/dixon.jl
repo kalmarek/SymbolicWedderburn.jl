@@ -9,7 +9,10 @@ function dixon_prime(cclasses::AbstractVector)
 end
 
 function dixon_prime(ordG::Integer, exponent::Integer)
-    p = 2 * isqrt(ordG)
+    # `FiniteFields.GF{p}` needs `p` to be `Int` so no need to do the
+    # computations of this function over `BigInt` if `ordG` is so we convert
+    # to `Int`.
+    p = 2 * convert(Int, isqrt(ordG))
     while true
         p = nextprime(p + 1)
         isone(p % exponent) && break # we need -1 to be in the field
