@@ -139,6 +139,7 @@ vectors from symmetry adapted basis within each block.
 """
 function symmetry_adapted_basis_float(G::PermutationGroups.PermGroup, basis)
     chars = characters_dixon(G)
+    ihom = InducingHomomorphism(basis)
     induced_chars = ihom.(chars)
 
     @debug "Double-checking the induced action..." let ccls =
