@@ -9,7 +9,7 @@ function dixon_prime(cclasses::AbstractVector)
 end
 
 function dixon_prime(ordG::Integer, exponent::Integer)
-    p = 2 * floor(Int, sqrt(ordG))
+    p = 2 * isqrt(ordG)
     while true
         p = nextprime(p + 1)
         isone(p % exponent) && break # we need -1 to be in the field
