@@ -127,7 +127,7 @@ Compute a basis for the linear space spanned by `basis` which is invariant under
 the symmetry of `G`.
 
 * The action used in these computations is `(b,g) → b^g` (for an element `b ∈ basis` and a group element `g ∈ G`) and needs to be defined by the user.
-* It is assumed that `G` is a permutation group acting on a subset of basis and the action needs to be induced to an the whole `basis`. If `G` already acts on the whole `basis`, a call to `symmetry_adapted_basis_float(G)` is preferred.
+* It is assumed that `G` is a permutation group acting on a subset of basis and the action needs to be induced to the whole `basis`. If `G` already acts on the whole `basis`, a call to `symmetry_adapted_basis_float(G)` is preferred.
 * For inducing the action `basis` needs to be indexable and iterable (e.g. in the form of an `AbstractVector`).
 
 The coefficients of the invariant basis are returned in (orthogonal) blocks
