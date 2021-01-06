@@ -43,18 +43,16 @@ end
 
 function _conjugate_pairs(chars::AbstractVector{<:ClassFunction})
     vals = values.(chars)
-    tovisit = trues(length(vals))
     conjugate_pairs = Dict{Int,Int}()
     for (i, v) in enumerate(vals)
-        tovisit[i] || continue
-        tovisit[i] = false
+        haskey(conjugate_pairs, i) && continue
         if all(isreal, v)
-            tovisit[i] = false
             conjugate_pairs[i] = i
         else
             k = findfirst(==(conj(v)), vals)
-            conjugate_pairs[i] = k
-            tovisit[k] = false
+            # Use `k` as key so that we hit `continue`
+            # at that iteration.
+            conjugate_pairs[k] = i
         end
     end
     conjugate_pairs
