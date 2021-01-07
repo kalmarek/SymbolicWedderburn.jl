@@ -75,7 +75,6 @@ end
                   SymbolicWedderburn.dixon_prime(ccG)
         end
     end
-#=
     @testset "Dixon over GF{p}" begin
         @testset "Example: Alt(4)" begin
             G = PermGroup([perm"(1,2,3)(4)", perm"(2,3,4)"])
@@ -225,7 +224,6 @@ end
             end
         end
     end
-    =#
 end
 #=
 @testset "Characters io" begin
