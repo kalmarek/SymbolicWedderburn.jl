@@ -75,7 +75,7 @@ end
                   SymbolicWedderburn.dixon_prime(ccG)
         end
     end
-
+#=
     @testset "Dixon over GF{p}" begin
         @testset "Example: Alt(4)" begin
             G = PermGroup([perm"(1,2,3)(4)", perm"(2,3,4)"])
@@ -225,8 +225,9 @@ end
             end
         end
     end
+    =#
 end
-
+#=
 @testset "Characters io" begin
     G = PermGroup([perm"(2,3)(4,5)"])
     chars = SymbolicWedderburn.characters_dixon(G)
@@ -239,3 +240,4 @@ end
     @test sprint(show, MIME"text/plain"(), chars[2]) ==
         "SymbolicWedderburn.Character over Cyclotomic{Int64,SparseArrays.SparseVector{Int64,Int64}}\n()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t-1*E(1)^0"
 end
+=#

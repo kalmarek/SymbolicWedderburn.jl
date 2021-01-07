@@ -10,7 +10,7 @@ using Cyclotomics
 include("gf.jl")
 include("eigenspacedecomposition.jl")
 include("ccmatrix.jl")
-#include("dixon.jl")
+include("dixon.jl")
 
 import MultivariatePolynomials
 using DynamicPolynomials
