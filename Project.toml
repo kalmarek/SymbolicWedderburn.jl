@@ -12,6 +12,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 Cyclotomics = "0.1.5"
-PermutationGroups = "0.1.3"
+PermutationGroups = "0.2.1"
 Primes = "0.4, 0.5"
 julia = "1"

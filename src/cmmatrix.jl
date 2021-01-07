@@ -34,3 +34,25 @@ function Base.getindex(M::CMMatrix, s::Integer, t::Integer)
     end
     return M.m[s,t]
 end
+
+conjugacy_classes(G::PermutationGroups.Group) = conjugacy_classes_orbit(G)
+
+function conjugacy_classes_orbit(G::PermutationGroups.Group)
+    id = one(G)
+    S = gens(G)
+    ordG = order(Int, G)
+
+    cclasses = [PermutationGroups.Orbit([id], Dict(id=>nothing))]
+    elts_counted = 1
+
+    for g in G
+        any(ccl -> g ∈ ccl, cclasses) && continue
+        ccl_g = PermutationGroups.Orbit(S, g, ^)
+        elts_counted += length(ccl_g)
+        push!(cclasses, ccl_g)
+        elts_counted == ordG && break
+    end
+
+    @assert elts_counted == ordG
+    return cclasses
+end

@@ -6,7 +6,7 @@ using Primes
 using PermutationGroups
 using Cyclotomics
 
-export symmetry_adapted_basis_float
+export conjugacy_classes, symmetry_adapted_basis_float
 
 include("gf.jl")
 include("eigenspacedecomposition.jl")

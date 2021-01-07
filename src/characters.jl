@@ -87,7 +87,7 @@ VirtualCharacter{T,Cl}(χ::Character{S,Cl}) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
 
 Base.values(χ::ClassFunction) = χ.vals
-PermutationGroups.conjugacy_classes(χ::ClassFunction) = χ.cc
+conjugacy_classes(χ::ClassFunction) = χ.cc
 
 PermutationGroups.degree(χ::Character) =
     Int(χ(one(first(first(conjugacy_classes(χ))))))

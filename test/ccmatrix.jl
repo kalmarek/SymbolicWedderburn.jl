@@ -12,6 +12,13 @@ end
 @testset "ConjClassMatrix" begin
     @testset "example: Symmetric group (4)" begin
         G = PermutationGroups.SymmetricGroup(4)
+
+        @test conjugacy_classes(G) isa AbstractVector{<:AbstractOrbit}
+
+        for cc in conjugacy_classes(G)
+            @test all(permtype(g) == permtype(first(cc)) for g in cc)
+        end
+
         C = conjugacy_classes(G)
         generic_tests_ccmatrix(C)
         @test SymbolicWedderburn.CMMatrix(C, 2)  == [0 1 0 0 0;
