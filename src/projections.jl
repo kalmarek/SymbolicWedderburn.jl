@@ -107,7 +107,7 @@ function isotypical_basis(χ::ClassFunction)
 end
 
 """
-    symmetry_adapted_basis_float(G::PermGroup)
+    symmetry_adapted_basis_float(G::Group)
 Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
 The group is considered to act by permutations on set `1:n`. The coefficients of
@@ -118,11 +118,11 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis_float(G::PermutationGroups.PermGroup) =
+symmetry_adapted_basis_float(G::PermutationGroups.Group) =
     _symmetry_adapted_basis_float(characters_dixon(G))
 
 """
-    symmetry_adapted_basis_float(G::PermGroup, basis)
+    symmetry_adapted_basis_float(G::Group, basis)
 Compute a basis for the linear space spanned by `basis` which is invariant under
 the symmetry of `G`.
 
@@ -137,7 +137,7 @@ corresponding to irreducible characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-function symmetry_adapted_basis_float(G::PermutationGroups.PermGroup, basis)
+function symmetry_adapted_basis_float(G::PermutationGroups.Group, basis)
     chars = characters_dixon(G)
     ihom = InducingHomomorphism(basis)
     induced_chars = ihom.(chars)
