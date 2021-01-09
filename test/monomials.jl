@@ -1,30 +1,56 @@
-#= 
+function all_variables(poly, vars)
+    return sum(vars) + poly - sum(vars)
+end
+
 function Base.:^(m::MultivariatePolynomials.AbstractMonomialLike, g::Perm{Int64})
-
-# This function does not work at the moment, since DynamicPolynomials sometimes reduces the number of variables (see https://github.com/JuliaAlgebra/DynamicPolynomials.jl/issues/79 )
-
-return prod(variables(m).^(exponents(m)^g))
+    return prod(variables(m).^(exponents(m)^g))
 end
 
 function Base.:^(t::MultivariatePolynomials.AbstractTermLike, g::Perm{Int64})
-return coefficient(t)*monomial(t)^g
+    return coefficient(t)*monomial(t)^g
 end
 
 function Base.:^(p::MultivariatePolynomials.AbstractPolynomialLike, g::Perm{Int64})
-return sum([t^g for t in terms(p)])    
+    return sum([t^g for t in terms(p)])    
 end
 
-function test_invariant(G, poly)
-@show poly
-@show variables(poly)
-# should probably only iterate over a subgroup
-for g in Iterators.drop(G, 0)
-@show(g)
-@test poly^g == poly
-end
-end
-=#
+function test_invariant(G, poly, vars)
+    @show poly
+    @show variables(poly)
+    # should probably only iterate over a subgroup
+    for g in Iterators.drop(G, 0)
+        @show(g)
+        @show variables(all_variables(poly, vars))
 
+        @show all_variables(poly, vars)^g 
+        @show all_variables(poly, vars)
+    end
+end
+
+
+
+@testset "test" begin
+    @polyvar x[1:2]
+    @polyvar y[1:2]
+    basis = [x; y]
+    G = PermGroup([perm"(1,2,3,4)"])
+    R = symmetry_adapted_basis_float(G)
+    new_bases = map(R) do Ri
+        FixedPolynomialBasis(Ri * basis)
+    end
+    
+    for b in new_bases
+        for p in b.polynomials
+            test_invariant(G, p, basis)
+        end
+    end
+
+ 
+
+end
+
+
+#=
 @testset "Symmetry on PolyVar" begin
     @polyvar x[1:2]
     @polyvar y[1:2]
@@ -75,3 +101,4 @@ end
     @test new_bases[2].polynomials[3] ==  x[1] + x[2]
     @test new_bases[2].polynomials[4] == 1
 end
+=#
