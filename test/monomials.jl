@@ -11,19 +11,22 @@ function Base.:^(t::MultivariatePolynomials.AbstractTermLike, g::Perm{Int64})
 end
 
 function Base.:^(p::MultivariatePolynomials.AbstractPolynomialLike, g::Perm{Int64})
-    return sum([t^g for t in terms(p)])    
+    return sum([t^g for t in terms(p)])
 end
 
 function test_invariant(G, poly, vars)
-    @show poly
-    @show variables(poly)
+    # @show poly
+    # @show variables(poly)
     # should probably only iterate over a subgroup
     for g in Iterators.drop(G, 0)
         @show(g)
-        @show variables(all_variables(poly, vars))
+        # @show variables(all_variables(poly, vars))
 
-        @show all_variables(poly, vars)^g 
+        @show all_variables(poly, vars)^g
         @show all_variables(poly, vars)
+
+
+
     end
 end
 
@@ -34,18 +37,26 @@ end
     @polyvar y[1:2]
     basis = [x; y]
     G = PermGroup([perm"(1,2,3,4)"])
+    projs = let chars = SymbolicWedderburn.characters_dixon(G)
+        vr_chars = SymbolicWedderburn.real_vchars(chars)
+        [last(SymbolicWedderburn.matrix_projection(χ)) for χ in vr_chars]
+    end
+
     R = symmetry_adapted_basis_float(G)
     new_bases = map(R) do Ri
         FixedPolynomialBasis(Ri * basis)
     end
-    
+
     for b in new_bases
         for p in b.polynomials
-            test_invariant(G, p, basis)
+            v = MultivariatePolynomials.coefficients(p)
+            @test all([χ*v == v for χ in projs])
+
+            # test_invariant(G, p, basis)
         end
     end
 
- 
+
 
 end
 
