@@ -1,22 +1,22 @@
 abstract type AbstractActionHomomorphism{T} end
 
-struct InducingHomomorphism{T,V} <: AbstractActionHomomorphism{T}
+struct ExtensionHomomorphism{T,V} <: AbstractActionHomomorphism{T}
     features::V
     reversef::Dict{T,Int}
 end
 
-Base.getindex(ihom::InducingHomomorphism, i::Integer) = ihom.features[i]
-Base.getindex(ihom::InducingHomomorphism{T}, f::T) where {T} = ihom.reversef[f]
-(ihom::InducingHomomorphism)(p::Perm{I}) where {I} =
-    Perm(I[ihom[f^p] for f in ihom.features])
+Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
+Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
+(ehom::ExtensionHomomorphism)(p::Perm{I}) where {I} =
+    Perm(I[ehom[f^p] for f in ehom.features])
 
-function (ihom::InducingHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
-    elts = ihom.(orb)
+function (ehom::ExtensionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+    elts = ehom.(orb)
     dict = Dict(e => nothing for e in elts)
     return O(elts, dict)
 end
 
-function (ihom::InducingHomomorphism)(χ::CF) where {CF<:ClassFunction}
-    iccG = ihom.(conjugacy_classes(χ))
+function (ehom::ExtensionHomomorphism)(χ::CF) where {CF<:ClassFunction}
+    iccG = ehom.(conjugacy_classes(χ))
     return CF(values(χ), χ.inv_of, iccG)
 end
