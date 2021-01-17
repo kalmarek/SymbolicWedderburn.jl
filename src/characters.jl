@@ -8,8 +8,8 @@ function LinearAlgebra.dot(
 ) where {T}
 
     val = sum(
-        length(cc) * χ[i] * ψ[-i]
-        for (i, cc) in enumerate(conjugacy_classes(χ))
+        length(cc) * χ[i] * ψ[-i] for
+        (i, cc) in enumerate(conjugacy_classes(χ))
     )
     orderG = sum(length, conjugacy_classes(χ))
     val = div(val, orderG)
@@ -40,29 +40,26 @@ if VERSION >= v"1.3.0"
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
-        throw(DomainError(
-            g,
-            "element does not belong to conjugacy classes of χ",
-        ))
+        throw(
+            DomainError(g, "element does not belong to conjugacy classes of χ"),
+        )
     end
 else
     function (χ::Character)(g::PermutationGroups.GroupElem)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
-        throw(DomainError(
-            g,
-            "element does not belong to conjugacy classes of χ",
-        ))
+        throw(
+            DomainError(g, "element does not belong to conjugacy classes of χ"),
+        )
     end
     function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
-        throw(DomainError(
-            g,
-            "element does not belong to conjugacy classes of χ",
-        ))
+        throw(
+            DomainError(g, "element does not belong to conjugacy classes of χ"),
+        )
     end
 end
 
@@ -83,16 +80,16 @@ function VirtualCharacter(
 end
 
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
-VirtualCharacter{T,Cl}(χ::Character{S,Cl}) where {T,S,Cl} =
+VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} = VirtualCharacter{T,Cl}(χ)
+VirtualCharacter(χ::VirtualCharacter) = deepcopy(χ)
+
+VirtualCharacter{T,Cl}(χ::ClassFunction) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
 
 Base.values(χ::ClassFunction) = χ.vals
 conjugacy_classes(χ::ClassFunction) = χ.cc
 
-PermutationGroups.degree(χ::Character) =
-    Int(χ(one(first(first(conjugacy_classes(χ))))))
-
-PermutationGroups.degree(χ::VirtualCharacter) =
+PermutationGroups.degree(χ::ClassFunction) =
     χ(one(first(first(conjugacy_classes(χ)))))
 
 Base.conj(χ::Cf) where {Cf<:ClassFunction} =
@@ -107,7 +104,8 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     end
 end
 
-Base.eltype(χ::ClassFunction) = eltype(values(χ))
+Base.valtype(χ::ClassFunction) = eltype(values(χ))
+Base.eltype(χ::ClassFunction) = valtype(χ)
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
@@ -115,8 +113,11 @@ function _inv_of(cc::AbstractVector{<:AbstractOrbit})
         g = inv(first(c))
         inv_of[i] = something(findfirst(k -> g in k, cc), 0)
     end
-    any(iszero, inv_of) &&
-        throw(ArgumentError("Could not find the conjugacy class for inverse of $(first(cc[findfirst(iszero, inv_of)]))."))
+    any(iszero, inv_of) && throw(
+        ArgumentError(
+            "Could not find the conjugacy class for inverse of $(first(cc[findfirst(iszero, inv_of)])).",
+        ),
+    )
     return inv_of
 end
 

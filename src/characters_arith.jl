@@ -5,7 +5,7 @@ Base.promote_rule(
 
 for f in (:+, :-)
     @eval begin
-        function Base.$f(χ::Character{T,Cl}, ψ::Character{S,Cl}) where {T,S,Cl}
+        function Base.$f(χ::ClassFunction, ψ::ClassFunction)
             @assert χ.inv_of == ψ.inv_of
             return VirtualCharacter(
                 $f.(values(χ), values(ψ)),
