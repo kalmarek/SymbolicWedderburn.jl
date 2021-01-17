@@ -89,7 +89,10 @@ VirtualCharacter{T,Cl}(χ::ClassFunction) where {T,S,Cl} =
 Base.values(χ::ClassFunction) = χ.vals
 conjugacy_classes(χ::ClassFunction) = χ.cc
 
-PermutationGroups.degree(χ::ClassFunction) =
+PermutationGroups.degree(χ::Character) =
+    Int(χ(one(first(first(conjugacy_classes(χ))))))
+
+PermutationGroups.degree(χ::AbstractClassFunction) =
     χ(one(first(first(conjugacy_classes(χ)))))
 
 Base.conj(χ::Cf) where {Cf<:ClassFunction} =

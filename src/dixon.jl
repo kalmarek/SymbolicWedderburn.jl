@@ -1,6 +1,6 @@
-Base.exponent(G::AbstractPermutationGroup) = exponent(conjugacy_classes(G))
+Base.exponent(G::PermutationGroups.Group) = exponent(conjugacy_classes(G))
 Base.exponent(cclasses::AbstractVector) = lcm(order.(first.(cclasses)))
-dixon_prime(G::AbstractPermutationGroup) = dixon_prime(order(G), exponent(G))
+dixon_prime(G::PermutationGroups.Group) = dixon_prime(order(G), exponent(G))
 
 function dixon_prime(cclasses::AbstractVector)
     ordG = sum(length, cclasses)
@@ -28,22 +28,25 @@ function common_esd(Ns, F::Type{<:FiniteFields.GF})
     return esd
 end
 
-characters_dixon(G::AbstractPermutationGroup) = characters_dixon(conjugacy_classes(G))
+characters_dixon(G::PermutationGroups.Group) =
+    characters_dixon(Rational{Int}, G)
+characters_dixon(::Type{R}, G::PermutationGroups.Group) where {R<:Real} =
+    characters_dixon(R, conjugacy_classes(G))
 
-function characters_dixon(cclasses::AbstractVector)
+function characters_dixon(::Type{R}, cclasses::AbstractVector) where {R}
     p = dixon_prime(cclasses)
-    chars_𝔽p = characters_dixon(cclasses, FiniteFields.GF{p})
-    return complex_characters(chars_𝔽p)
+    chars_𝔽p = characters_dixon(FiniteFields.GF{p}, cclasses)
+    return complex_characters(R, chars_𝔽p)
 end
 
-function characters_dixon(cclasses::AbstractVector, F::Type{<:FiniteFields.GF})
+function characters_dixon(F::Type{<:FiniteFields.GF}, cclasses::AbstractVector)
     Ns = [CMMatrix(cclasses, i) for i = 1:length(cclasses)]
     esd = common_esd(Ns, F)
     @assert isdiag(esd) "Class Matricies failed to diagonalize! $esd"
     inv_ccls = _inv_of(cclasses)
     return [
-        normalize!(Character(vec(eigensubspace), inv_ccls, cclasses))
-        for eigensubspace in esd
+        normalize!(Character(vec(eigensubspace), inv_ccls, cclasses)) for
+        eigensubspace in esd
     ]
 end
 
@@ -55,7 +58,6 @@ function _multiplicities(
     e = Int(exponent(cclasses))
     ie = inv(F(e))
     ω = FiniteFields.rootofunity(F, e)
-
 
     multiplicities = zeros(Int, length(chars), length(cclasses), e)
     powermap = PowerMap(cclasses)
@@ -70,8 +72,9 @@ function _multiplicities(
 end
 
 function complex_characters(
-    chars::AbstractVector{<:Character{F}},
-) where {F<:FiniteFields.GF}
+    ::Type{R},
+    chars::AbstractVector{<:Character{F,CCl}},
+) where {R,F<:FiniteFields.GF,CCl}
 
     cclasses = conjugacy_classes(first(chars))
     lccl = length(cclasses)
@@ -80,18 +83,17 @@ function complex_characters(
 
     inv_of_cls = first(chars).inv_of
 
-    C = Cyclotomics.Cyclotomic{Int,Cyclotomics.SparseVector{Int,Int}}
+    C = Cyclotomics.Cyclotomic{R,Cyclotomics.SparseVector{R,Int}}
     # C = typeof(Cyclotomics.E(5))
 
-    complex_chars = Vector{Character{C,eltype(cclasses)}}(undef, length(chars))
-
+    complex_chars = Vector{Character{C,CCl}}(undef, length(chars))
 
     for i = 1:length(complex_chars)
-        complex_chars[i] = Character(
+        complex_chars[i] = Character{C,CCl}(
             [
-                Cyclotomics.reduced_embedding(sum(
-                    mult_c[i, j, k+1] * E(e, k) for k = 0:e-1
-                )) for j = 1:lccl
+                Cyclotomics.reduced_embedding(
+                    sum(mult_c[i, j, k+1] * E(e, k) for k = 0:e-1),
+                ) for j = 1:lccl
             ],
             inv_of_cls,
             cclasses,

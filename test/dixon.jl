@@ -16,13 +16,13 @@ function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
         end
     end
 
-    @test SymbolicWedderburn.characters_dixon(ccG, F) isa
+    @test SymbolicWedderburn.characters_dixon(F, ccG) isa
           Vector{<:SymbolicWedderburn.Character}
 
-    chars = SymbolicWedderburn.characters_dixon(ccG, F)
+    chars = SymbolicWedderburn.characters_dixon(F, ccG)
 
     # checking the degrees
-    @test sum(degree.(chars) .^ 2) == order(G)
+    @test sum(Int.(degree.(chars)) .^ 2) == order(G)
 
     # orthogonality of characters over F
     @test [dot(χ, ψ) for χ in chars, ψ in chars] == I
@@ -31,7 +31,7 @@ end
 function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
-    chars_Fp = SymbolicWedderburn.characters_dixon(ccG, F)
+    chars_Fp = SymbolicWedderburn.characters_dixon(F, ccG)
 
     degrees = degree.(chars_Fp)
 
@@ -40,11 +40,11 @@ function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
         @test all(Int.(m[i, :, :]) .<= degrees[i])
     end
 
-    @test SymbolicWedderburn.complex_characters(chars_Fp) isa
+    @test SymbolicWedderburn.complex_characters(Int, chars_Fp) isa
           Vector{<:SymbolicWedderburn.Character}
-    @test length(SymbolicWedderburn.complex_characters(chars_Fp[1:1])) == 1
+    @test length(SymbolicWedderburn.complex_characters(Int, chars_Fp[1:1])) == 1
 
-    chars_CC = SymbolicWedderburn.complex_characters(chars_Fp)
+    chars_CC = SymbolicWedderburn.complex_characters(Int, chars_Fp)
     id = one(first(first(ccG)))
     @test [ψ(id) for ψ in chars_CC] == degrees
 
@@ -112,7 +112,7 @@ end
             p = SymbolicWedderburn.dixon_prime(ccG)
             F = SymbolicWedderburn.FiniteFields.GF{p}
 
-            chars = SymbolicWedderburn.characters_dixon(ccG, F)
+            chars = SymbolicWedderburn.characters_dixon(F, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 1, 3]
 
@@ -149,7 +149,7 @@ end
             # generic tests
             generictest_dixon_C(G)
 
-            chars_C = SymbolicWedderburn.characters_dixon(G)
+            chars_C = SymbolicWedderburn.characters_dixon(Int, G)
             E = SymbolicWedderburn.Cyclotomics.E
 
             @test [χ.vals for χ in chars_C] == [
@@ -174,7 +174,7 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(ccG)
+            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 2, 3, 3]
             @test [χ.vals for χ in chars] == [
@@ -201,7 +201,7 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(ccG)
+            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 1, 1, 4]
             @test [χ.vals for χ in chars] == [
@@ -212,6 +212,17 @@ end
                 E(4, 0) .* [1, -1, -E(4), E(4), 1],
             ]
         end
+    end
+
+    @testset "Different base rings for characters_dixon" begin
+        G = PermGroup(perm"(1,2,3,4)")
+        @test valtype(first(SymbolicWedderburn.characters_dixon(Float64, G))) <:
+              Cyclotomic{Float64}
+        @test valtype(first(SymbolicWedderburn.characters_dixon(Int, G))) <:
+              Cyclotomic{Int}
+        @test valtype(
+            first(SymbolicWedderburn.characters_dixon(Rational{Int}, G)),
+        ) <: Cyclotomic{Rational{Int}}
     end
 
     @testset "SmallPermGroups" begin
@@ -229,7 +240,7 @@ end
 
 @testset "Characters io" begin
     G = PermGroup([perm"(2,3)(4,5)"])
-    chars = SymbolicWedderburn.characters_dixon(G)
+    chars = SymbolicWedderburn.characters_dixon(Int, G)
 
     @test sprint(show, chars[1]) == "SymbolicWedderburn.Character: [1, 1]"
     @test sprint(show, chars[2]) == "SymbolicWedderburn.Character: [1, -1]"
