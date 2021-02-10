@@ -194,7 +194,7 @@ end
 function _complex_symmetry_adapted_basis(chars)
     return filter!(
         !iszero ∘ first ∘ size,
-        isotypical_basis.(VirtualCharacter.(chars)),
+        isotypical_basis.(chars),
     )
 end
 
