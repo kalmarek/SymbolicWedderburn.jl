@@ -80,7 +80,8 @@ function VirtualCharacter(
 end
 
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
-VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} = VirtualCharacter{T,Cl}(χ)
+VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} =
+    VirtualCharacter{T,Cl}(χ)
 VirtualCharacter(χ::VirtualCharacter) = deepcopy(χ)
 
 VirtualCharacter{T,Cl}(χ::ClassFunction) where {T,S,Cl} =

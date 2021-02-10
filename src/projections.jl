@@ -7,23 +7,24 @@ The dimension `d` of the projection is equal to the degree of the permutations
 in `conjugacy_classes(χ)`. Returned tuple consist of coefficient (weight) and
 the matrix realization of the projection.
 """
-function matrix_projection(χ::Character{T}) where T
+function matrix_projection(χ::Character{T}) where {T}
     U = matrix_projection(values(χ), conjugacy_classes(χ))
     deg = degree(χ)
     ordG = sum(length, conjugacy_classes(χ))
 
-    return U, T(deg)/ordG
+    return U, T(deg) / ordG
 end
 
 function matrix_projection(χ::AbstractClassFunction)
     deg = degree(χ)
     if iszero(deg) # short circuting the trivial case
-        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))), deg
+        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))),
+        deg
     end
     ordG = sum(length, conjugacy_classes(χ))
     U = matrix_projection(values(χ), conjugacy_classes(χ))
 
-    return U, deg/ordG
+    return U, deg / ordG
 end
 
 """
@@ -36,7 +37,7 @@ The dimension of the projection is equal to the degree of the permutations in `c
 function matrix_projection(
     vals::AbstractVector{T},
     ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
-    dim = degree(first(first(ccls)))
+    dim = degree(first(first(ccls))),
 ) where {T}
 
     result = zeros(T, dim, dim)
@@ -131,9 +132,14 @@ vectors from symmetry adapted basis within each block.
 """
 symmetry_adapted_basis(G::PermutationGroups.PermGroup) =
     symmetry_adapted_basis(Rational{Int}, G)
-symmetry_adapted_basis(::Type{T}, G::PermutationGroups.PermGroup) where {T<:Real} =
-    _real_symmetry_adapted_basis(characters_dixon(T, G))
-symmetry_adapted_basis(::Type{T}, G::PermutationGroups.PermGroup) where {T<:Complex} =
+symmetry_adapted_basis(
+    ::Type{T},
+    G::PermutationGroups.PermGroup,
+) where {T<:Real} = _real_symmetry_adapted_basis(characters_dixon(T, G))
+symmetry_adapted_basis(
+    ::Type{T},
+    G::PermutationGroups.PermGroup,
+) where {T<:Complex} =
     _complex_symmetry_adapted_basis(characters_dixon(real(T), G))
 
 """
@@ -178,7 +184,7 @@ function symmetry_adapted_basis(
         @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
     end
 
-    if T<:Real
+    if T <: Real
         return _real_symmetry_adapted_basis(chars_ext)
     else # if T <: Complex
         return _complex_symmetry_adapted_basis(chars_ext)
@@ -188,13 +194,13 @@ end
 function _complex_symmetry_adapted_basis(chars)
     return filter!(
         !iszero ∘ first ∘ size,
-        isotypical_basis.(VirtualCharacter.(chars))
+        isotypical_basis.(VirtualCharacter.(chars)),
     )
 end
 
 function _real_symmetry_adapted_basis(chars)
     return filter!(
         !iszero ∘ first ∘ size,
-        isotypical_basis.(_real_vchars(chars))
+        isotypical_basis.(_real_vchars(chars)),
     )
 end
