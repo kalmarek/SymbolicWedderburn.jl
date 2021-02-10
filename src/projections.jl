@@ -7,13 +7,23 @@ The dimension `d` of the projection is equal to the degree of the permutations
 in `conjugacy_classes(χ)`. Returned tuple consist of coefficient (weight) and
 the matrix realization of the projection.
 """
-function matrix_projection(χ::AbstractClassFunction)
+function matrix_projection(χ::Character{T}) where T
     U = matrix_projection(values(χ), conjugacy_classes(χ))
     deg = degree(χ)
     ordG = sum(length, conjugacy_classes(χ))
 
-    c = deg / ordG
-    return c, U
+    return U, T(deg)/ordG
+end
+
+function matrix_projection(χ::AbstractClassFunction)
+    deg = degree(χ)
+    if iszero(deg) # short circuting the trivial case
+        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))), deg
+    end
+    ordG = sum(length, conjugacy_classes(χ))
+    U = matrix_projection(values(χ), conjugacy_classes(χ))
+
+    return U, deg/ordG
 end
 
 """
@@ -26,9 +36,8 @@ The dimension of the projection is equal to the degree of the permutations in `c
 function matrix_projection(
     vals::AbstractVector{T},
     ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
-) where {T}
-
     dim = degree(first(first(ccls)))
+) where {T}
 
     result = zeros(T, dim, dim)
 
@@ -92,12 +101,13 @@ Return the coefficients of basis vectors in an invariant subspace corresponding 
 """
 function isotypical_basis(χ::AbstractClassFunction) where {T}
 
-    weight, u = matrix_projection(χ)
+    u, weight = matrix_projection(χ)
     image, pivots = if iszero(weight)
         u_ = similar(u, 0, size(u, 2))
         row_echelon_form(u_)
     else
-        row_echelon_form(u ./ weight)
+        u .*= weight
+        row_echelon_form(u)
     end
     dim = length(pivots)
     image_basis = image[1:dim, :]
