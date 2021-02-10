@@ -50,6 +50,8 @@ function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
 
     # orthogonality of characters over ℂ
     @test [dot(χ, ψ) for χ in chars_CC, ψ in chars_CC] == I
+
+    @test sum(χ -> degree(χ)^2, chars_CC) == order(G)
 end
 
 @testset "Dixon Algorithm" begin
@@ -226,7 +228,6 @@ end
     end
 
     @testset "SmallPermGroups" begin
-        include("smallgroups.jl")
         for (ord, groups) in SmallPermGroups
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
                 @test SymbolicWedderburn.characters_dixon(G) isa
