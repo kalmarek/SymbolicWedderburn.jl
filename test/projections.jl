@@ -4,10 +4,10 @@ function test_orthogonality(chars)
     res = map(Iterators.product(projs, projs)) do (p,q)
         if p == q
             # p^2 == p
-            all(isapprox(0.0; atol=1e-12), p^2-p)
+            all(x->isapprox(0.0, x; atol=1e-12), p^2-p)
         else
             res = p*q
-            all(isapprox(0; atol=1e-12), p*q)
+            all(x->isapprox(0.0, x; atol=1e-12), p*q)
         end
     end
 
