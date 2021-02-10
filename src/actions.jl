@@ -5,12 +5,19 @@ struct ExtensionHomomorphism{T,V} <: AbstractActionHomomorphism{T}
     reversef::Dict{T,Int}
 end
 
+ExtensionHomomorphism(features) = ExtensionHomomorphism(
+    features,
+    Dict(f => idx for (idx, f) in enumerate(features)),
+)
+
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
 Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
 (ehom::ExtensionHomomorphism)(p::Perm{I}) where {I} =
-    Perm(I[ehom[f^p] for f in ehom.features])
+    Perm(vec(I[ehom[f^p] for f in ehom.features]))
 
-function (ehom::ExtensionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+function (ehom::ExtensionHomomorphism)(
+    orb::O,
+) where {T,O<:AbstractOrbit{T,Nothing}}
     elts = ehom.(orb)
     dict = Dict(e => nothing for e in elts)
     return O(elts, dict)
