@@ -130,9 +130,11 @@ Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
 symmetry_adapted_basis(G::PermutationGroups.PermGroup) =
-    symmetry_adapted_basis(characters_dixon(Rational{Int}, G))
-symmetry_adapted_basis(::Type{T}, G::PermutationGroups.PermGroup) where {T} =
-    symmetry_adapted_basis(characters_dixon(T, G))
+    symmetry_adapted_basis(Rational{Int}, G)
+symmetry_adapted_basis(::Type{T}, G::PermutationGroups.PermGroup) where {T<:Real} =
+    _real_symmetry_adapted_basis(characters_dixon(T, G))
+symmetry_adapted_basis(::Type{T}, G::PermutationGroups.PermGroup) where {T<:Complex} =
+    _complex_symmetry_adapted_basis(characters_dixon(real(T), G))
 
 """
     symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup, basis)
@@ -162,7 +164,7 @@ function symmetry_adapted_basis(
     ::Type{T},
     G::AbstractPermutationGroup,
     basis,
-) where {T}
+) where {T<:Number}
     chars = characters_dixon(real(T), G)
     ehom = ExtensionHomomorphism(basis)
     chars_ext = ehom.(chars)
@@ -176,14 +178,23 @@ function symmetry_adapted_basis(
         @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
     end
 
-    return symmetry_adapted_basis(T, chars_ext)
+    if T<:Real
+        return _real_symmetry_adapted_basis(chars_ext)
+    else # if T <: Complex
+        return _complex_symmetry_adapted_basis(chars_ext)
+    end
 end
 
-function symmetry_adapted_basis(
-    ::Type{T},
-    chars::AbstractVector{<:AbstractClassFunction},
-) where {T}
-    v_chars = (T <: Complex ? VirtualCharacter.(chars) : _real_vchars(chars))
-    # return ony the non-zero blocks:
-    return filter!(!iszero ∘ first ∘ size, isotypical_basis.(v_chars))
+function _complex_symmetry_adapted_basis(chars)
+    return filter!(
+        !iszero ∘ first ∘ size,
+        isotypical_basis.(VirtualCharacter.(chars))
+    )
+end
+
+function _real_symmetry_adapted_basis(chars)
+    return filter!(
+        !iszero ∘ first ∘ size,
+        isotypical_basis.(_real_vchars(chars))
+    )
 end
