@@ -1,5 +1,6 @@
 using Test
 
+using LinearAlgebra
 using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields
 using LinearAlgebra
