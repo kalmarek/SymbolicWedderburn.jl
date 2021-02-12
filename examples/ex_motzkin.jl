@@ -2,105 +2,72 @@ using SymbolicWedderburn
 using PermutationGroups
 using Cyclotomics
 
+using SparseArrays
+
 using DynamicPolynomials
 using SumOfSquares
 using SCS
 
+include(joinpath(@__DIR__, "action_polynomials.jl"))
+
+SCS_Indirect, SCS_Direct =
+    let params = (
+            "acceleration_lookback" => 0,
+            "max_iters" => 50_000,
+            "eps" => 1e-5,
+            # "verbose" => false,
+        )
+        indir = optimizer_with_attributes(
+            SCS.Optimizer,
+            params...,
+            "linear_solver" => SCS.IndirectSolver,
+        )
+
+        dir = optimizer_with_attributes(
+            SCS.Optimizer,
+            params...,
+            "linear_solver" => SCS.DirectSolver,
+        )
+        indir, dir
+    end
+
+OPTIMIZER = SCS_Direct
+
 @polyvar x y z
 
-motzkin = x^4*y^2 + y^4*x^2 - 3*x^2*y^2 + 1
+motzkin = x^4 * y^2 + y^4 * x^2 - 3 * x^2 * y^2 + 1
+g = (x^2 + y^2 + 1)
+basis = monomials([x, y], 0:7)
 
-m = let m = SOSModel(optimizer_with_attributes(SCS.Optimizer, "eps"=>1e-5, "acceleration_lookback"=>10))
-
+@time let f = motzkin, basis = basis, m = SOSModel(OPTIMIZER)
     @variable m t
     @objective m Max t
-    @variable m sos SOSPoly(monomials([x, y], 0:5))
-    @constraint m motzkin - t == sos
+    @variable m sos SOSPoly(basis)
+    @constraint m f - t == sos
     optimize!(m)
-    m
+    @info (m,) termination_status(m) objective_value(m) solve_time(m)
 end
 
+@time let f = motzkin,
+    basis = basis,
+    m = SOSModel(OPTIMIZER),
+    G = PermGroup(perm"(1,2)")
 
-using DynamicPolynomials
-using MultivariatePolynomials
-const MP = MultivariatePolynomials
-using MultivariateBases
-
-function SymbolicWedderburn.OnPoints(basis::Union{<:MonomialVector, AbstractVector{<:Monomial}})
-    basis_exps = Vector{Vector{Int}}(undef, length(basis))
-    basis_dict = Dict{Vector{Int}, Int}()
-    sizehint!(basis_dict, length(basis))
-
-    for (i, b) in enumerate(basis)
-        e = MP.exponents(b) # so that we allocate exponents only once
-        basis_exps[i] = e
-        basis_dict[e] = i
+    t = @timed let
+        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+        SparseMatrixCSC{Float64,Int}.(sa_basis)
     end
 
-    return SymbolicWedderburn.OnPoints(basis_exps, basis_dict)
-end
+    sa_basis, symmetry_adaptation_time = t.value, t.time
 
-include(joinpath(@__DIR__, "..", "test", "smallgroups.jl"));
-G = PermGroup([perm"(1,2)"])
-chars_vars = SymbolicWedderburn.characters_dixon(G)
+    let m = m, basis = basis, R = sa_basis
+        @variable m t
+        @objective m Max t
 
-mvec = monomials([x,y], 0:3)
+        soses = @variable m [r in R] SOSPoly(FixedPolynomialBasis(r * basis))
+        @constraint m f - t == sum(soses)
 
-chars_mvec = let chars = chars_vars, basis = mvec
-
-    @assert all(χ.inv_of == first(chars).inv_of for χ in chars)
-
-    induced_action = SymbolicWedderburn.OnPoints(basis)
-    ccG_large = induced_action.(conjugacy_classes(first(chars)))
-
-    # double check:
-    let ccls = ccG_large, large_gens = induced_action.(gens(G))
-        G_large = PermGroup(large_gens)
-        ccG_large = conjugacy_classes(G_large)
-        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
-    end
-
-    [SymbolicWedderburn.Character(values(χ), χ.inv_of, ccG_large) for χ in chars]
-end
-
-vr_chars = SymbolicWedderburn.real_vchars(chars_mvec)
-
-U = filter!(x->all(!iszero, x), [SymbolicWedderburn.matrix_projection(χ) for χ in vr_chars])
-
-R = map(U) do c_u
-    u = last(c_u)
-    if all(isreal, u)
-        image_coeffs, pivots = SymbolicWedderburn.row_echelon_form(float.(u))
-        dim = length(pivots)
-        image_coeffs[1:dim, :]
-    else
-        throw("Not Implemented")
+        optimize!(m)
+        @info (m,) termination_status(m) objective_value(m) solve_time(m) symmetry_adaptation_time
     end
 end
-
-R = filter!(!iszero ∘ first ∘ size, R)
-
-msym = let msym = SOSModel(optimizer_with_attributes(SCS.Optimizer,
-    "eps"=>1e-12,
-    "max_iters"=>100_000,
-    "acceleration_lookback"=>0,
-    "alpha"=>1.95,
-    ))
-
-    @variable   msym t
-    @objective  msym Max t
-
-    @variable   msym sos1 SOSPoly(FixedPolynomialBasis(R[1]*mvec))
-    @variable   msym sos2 SOSPoly(FixedPolynomialBasis(R[2]*mvec))
-
-    @variable   msym sos3 SOSPoly(monomials([x,y], 0:1))
-
-    @constraint msym motzkin - t + 0.125 == sos1 + sos2 + (2 - x^2 - y^2)*sos3
-    @constraint msym t <= -0.05
-    optimize!(msym)
-    msym
-end
-
-
-termination_status(msym)
-
