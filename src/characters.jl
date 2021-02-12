@@ -41,7 +41,7 @@ if VERSION >= v"1.3.0"
             g ∈ cc && return χ[i]
         end
         throw(
-            DomainError(g, "element does not belong to conjugacy classes of χ"),
+            DomainError(g, "element does not belong to conjugacy classes of $χ"),
         )
     end
 else
@@ -50,7 +50,7 @@ else
             g ∈ cc && return χ[i]
         end
         throw(
-            DomainError(g, "element does not belong to conjugacy classes of χ"),
+            DomainError(g, "element does not belong to conjugacy classes of $χ"),
         )
     end
     function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
@@ -58,7 +58,7 @@ else
             g ∈ cc && return χ[i]
         end
         throw(
-            DomainError(g, "element does not belong to conjugacy classes of χ"),
+            DomainError(g, "element does not belong to conjugacy classes of $χ"),
         )
     end
 end
