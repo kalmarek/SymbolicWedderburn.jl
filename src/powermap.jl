@@ -7,7 +7,9 @@ struct PowerMap{T<:AbstractOrbit} <: AbstractMatrix{Int}
         exp = exponent(ccG),
     ) where {T<:AbstractOrbit}
         cache = zeros(Int, length(ccG), exp)
-        cache[:, 1] .= 1
+        id = one(first(first(ccG)))
+        idx = findfirst(cc -> id ∈ cc, ccG)
+        cache[:, 1] .= idx
         cache[:, 2] .= 1:length(ccG)
         return new{T}(ccG, cache)
     end
