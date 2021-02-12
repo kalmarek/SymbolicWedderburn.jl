@@ -2,50 +2,72 @@ using SymbolicWedderburn
 using PermutationGroups
 using Cyclotomics
 
+using SparseArrays
+
 using DynamicPolynomials
 using SumOfSquares
 using SCS
 
+include(joinpath(@__DIR__, "action_polynomials.jl"))
+
+SCS_Indirect, SCS_Direct =
+    let params = (
+            "acceleration_lookback" => 0,
+            "max_iters" => 50_000,
+            "eps" => 1e-5,
+            # "verbose" => false,
+        )
+        indir = optimizer_with_attributes(
+            SCS.Optimizer,
+            params...,
+            "linear_solver" => SCS.IndirectSolver,
+        )
+
+        dir = optimizer_with_attributes(
+            SCS.Optimizer,
+            params...,
+            "linear_solver" => SCS.DirectSolver,
+        )
+        indir, dir
+    end
+
+OPTIMIZER = SCS_Direct
+
 @polyvar x y z
 
-motzkin = x^4*y^2 + y^4*x^2 - 3*x^2*y^2 + 1
+motzkin = x^4 * y^2 + y^4 * x^2 - 3 * x^2 * y^2 + 1
+g = (x^2 + y^2 + 1)
+basis = monomials([x, y], 0:7)
 
-m = let m = SOSModel(optimizer_with_attributes(SCS.Optimizer, "eps"=>1e-5, "acceleration_lookback"=>10))
-
+@time let f = motzkin, basis = basis, m = SOSModel(OPTIMIZER)
     @variable m t
     @objective m Max t
-    @variable m sos SOSPoly(monomials([x, y], 0:5))
-    @constraint m motzkin - t == sos
+    @variable m sos SOSPoly(basis)
+    @constraint m f - t == sos
     optimize!(m)
-    @info termination_status(m)
-    m
+    @info (m,) termination_status(m) objective_value(m) solve_time(m)
 end
 
-include("action_polynomials.jl")
+@time let f = motzkin,
+    basis = basis,
+    m = SOSModel(OPTIMIZER),
+    G = PermGroup(perm"(1,2)")
 
-G = PermGroup([perm"(1,2)"])
-basis = monomials([x,y], 0:3)
+    t = @timed let
+        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+        SparseMatrixCSC{Float64,Int}.(sa_basis)
+    end
 
-R = symmetry_adapted_basis_float(G, basis)
+    sa_basis, symmetry_adaptation_time = t.value, t.time
 
-msym = let R=R, msym = SOSModel(optimizer_with_attributes(SCS.Optimizer,
-    "eps"=>3e-11,
-    "max_iters"=>100_000,
-    "acceleration_lookback"=>0,
-    "alpha"=>1.95,
-    ))
+    let m = m, basis = basis, R = sa_basis
+        @variable m t
+        @objective m Max t
 
-    @variable   msym t
-    @objective  msym Max t
+        soses = @variable m [r in R] SOSPoly(FixedPolynomialBasis(r * basis))
+        @constraint m f - t == sum(soses)
 
-    @variable   msym sos1 SOSPoly(FixedPolynomialBasis(R[1]*basis))
-    @variable   msym sos2 SOSPoly(FixedPolynomialBasis(R[2]*basis))
-
-    @variable   msym sos3 SOSPoly(monomials([x,y], 0:1))
-
-    @constraint msym motzkin - t + 0.125 == sos1 + sos2 + (2 - x^2 - y^2)*sos3
-    @constraint msym t <= -0.05
-    optimize!(msym)
-    @info termination_status(msym)
-    msym
+        optimize!(m)
+        @info (m,) termination_status(m) objective_value(m) solve_time(m) symmetry_adaptation_time
+    end
 end
