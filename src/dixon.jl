@@ -9,7 +9,10 @@ function dixon_prime(cclasses::AbstractVector)
 end
 
 function dixon_prime(ordG::Integer, exponent::Integer)
-    p = 2 * floor(Int, sqrt(ordG))
+    # `FiniteFields.GF{p}` needs `p` to be `Int` so no need to do the
+    # computations of this function over `BigInt` if `ordG` is so we convert
+    # to `Int`.
+    p = 2 * convert(Int, isqrt(ordG))
     while true
         p = nextprime(p + 1)
         isone(p % exponent) && break # we need -1 to be in the field
@@ -18,9 +21,10 @@ function dixon_prime(ordG::Integer, exponent::Integer)
 end
 
 function common_esd(Ns, F::Type{<:FiniteFields.GF})
-    @assert !isempty(Ns)
-    esd = EigenSpaceDecomposition(F.(first(Ns)))
-    for N in Iterators.rest(Ns, 2)
+    itr = iterate(Ns)
+    @assert itr !== nothing
+    esd = EigenSpaceDecomposition(F.(first(itr)))
+    for N in Iterators.rest(Ns, last(itr))
         esd = refine(esd, F.(N))
         @debug N esd.eigspace_ptrs
         isdiag(esd) && return esd
@@ -42,7 +46,7 @@ end
 function characters_dixon(F::Type{<:FiniteFields.GF}, cclasses::AbstractVector)
     Ns = [CMMatrix(cclasses, i) for i = 1:length(cclasses)]
     esd = common_esd(Ns, F)
-    @assert isdiag(esd) "Class Matricies failed to diagonalize! $esd"
+    @assert isdiag(esd) "Class Matrices failed to diagonalize! $esd"
     inv_ccls = _inv_of(cclasses)
     return [
         normalize!(Character(vec(eigensubspace), inv_ccls, cclasses)) for
