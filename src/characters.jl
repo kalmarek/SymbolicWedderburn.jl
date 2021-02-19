@@ -49,6 +49,32 @@ end
 
 const ClassFunction = Union{Character,VirtualCharacter}
 
+"""
+    frobenius_schur_indicator(χ::AbstractClassFunction[, pmap::PowerMap])
+Return Frobenius-Schur indicator of `χ`, i.e. `Σχ(g²)` where sum is taken over
+the whole group.
+
+If χ is an irreducible `Character`, Frobenius-Schur indicator takes values in
+`{1, 0, -1}` which correspond to the following situations:
+ 1. `χ` is real-valued and is afforded by an irreducible real representation,
+ 2. `χ` is a complex character which is not afforded by a real representation, and
+ 3. `χ` is quaternionic character, i.e. it is real valued, but is not afforded a real representation.
+
+In cases 2. and 3. `2re(χ) = χ + conj(χ)` corresponds to an irreducible character
+afforded by a real representation.
+"""
+function frobenius_schur_indicator(
+    χ::AbstractClassFunction,
+    pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
+)
+    res = sum(
+        length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
+    )
+    return res / order(G)
+end
+
+Base.isreal(χ::AbstractClassFunction) = frobenius_schur_indicator(χ) > 0
+
 if VERSION >= v"1.3.0"
     function (χ::AbstractClassFunction)(g::PermutationGroups.GroupElem)
         for (i, cc) in enumerate(conjugacy_classes(χ))
@@ -171,6 +197,21 @@ function normalize!(χ::Character)
     χ.vals .*= deg
 
     return χ
+end
+
+function frobenius_schur_indicator(
+    χ::Character,
+    pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
+)
+    ι = sum(
+        length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
+    )
+
+    ι_int = Int(ι)
+    ordG = sum(length, conjugacy_classes(χ))
+    d,r = divrem(ι_int, ordG)
+    @assert r == 0 "Non integral Frobenius Schur Indicator: $(ι_int) = $d * $ordG + $r"
+    return d
 end
 
 for C in (:Character, :VirtualCharacter)
