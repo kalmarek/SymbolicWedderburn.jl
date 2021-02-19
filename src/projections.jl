@@ -76,7 +76,7 @@ Compute a basis of the image of the projection corresponding to a class function
 Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
 (so called _isotypical subspace_) in the action on `ℝⁿ` encoded by the conjugacy classes of `χ`.
 """
-function isotypical_basis(χ::AbstractClassFunction) where {T}
+function isotypical_basis(χ::AbstractClassFunction)
 
     u, weight = matrix_projection(χ)
     image, pivots = if iszero(weight)
@@ -98,7 +98,7 @@ end
     symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup)
 Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
-The group is considered to act by permutations on set `1:n`. The coefficients of
+The permutation group is acting naturally on `1:degree(G)`. The coefficients of
 the invariant basis are returned in (orthogonal) blocks corresponding to irreducible
 characters of `G`.
 
@@ -106,27 +106,21 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermutationGroups.PermGroup) =
-    symmetry_adapted_basis(Rational{Int}, G)
-symmetry_adapted_basis(
-    ::Type{T},
-    G::PermutationGroups.PermGroup,
-) where {T<:Real} = _real_symmetry_adapted_basis(characters_dixon(T, G))
-symmetry_adapted_basis(
-    ::Type{T},
-    G::PermutationGroups.PermGroup,
-) where {T<:Complex} =
-    _complex_symmetry_adapted_basis(characters_dixon(real(T), G))
+symmetry_adapted_basis(G::PermGroup) = symmetry_adapted_basis(Rational{Int}, G)
+
+symmetry_adapted_basis(::Type{T}, G::PermGroup) where {T} =
+    symmetry_adapted_basis(T, characters_dixon(real(T), G))
 
 """
-    symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup, basis)
+    symmetry_adapted_basis([T::Type=Rational{Int},] G::Group, basis, action)
 Compute a basis for the linear space spanned by `basis` which is invariant under
 the symmetry of `G`.
 
-* The action used in these computations is `(b,g) → b^g` (for an element `b ∈ basis`
-and a group element `g ∈ G`) and needs to be defined by the user.
-* It is assumed that `G` acts by permutations on a subset of basis and the action
-needs to be extended to the whole `basis`. If `G` already acts on the whole `basis`,
+* The action used in these computations is
+> `(b,g) → action(b,g)` for `b ∈ basis`, `g ∈ G`
+and needs to be defined by the user.
+* It is assumed that `G` acts on a subset of basis and the action needs to be
+extended to the whole `basis`. If `G` already acts on the whole `basis`,
 a call to `symmetry_adapted_basis(G)` is preferred.
 * For inducing the action `basis` needs to be indexable and iterable
 (e.g. in the form of an `AbstractVector`).
@@ -139,8 +133,19 @@ The `eltype` of each of those blocks will be `Cyclotomic{real(T)}`, if possible.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermutationGroups.PermGroup, basis) =
-    symmetry_adapted_basis(Rational{Int}, G::PermutationGroups.PermGroup, basis)
+symmetry_adapted_basis(G::Group, basis, action) =
+    symmetry_adapted_basis(Rational{Int}, G, basis, action)
+
+function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
+    chars = characters_dixon(real(T), G)
+    ehom = ExtensionHomomorphism(basis, action)
+    chars_ext = let chars = chars, ehom = ehom
+        ψ = ehom(first(chars))
+        ext_ccG = conjugacy_classes(ψ)
+        [Character(values(χ), χ.inv_of, ext_ccG) for χ in chars]
+    end
+    return symmetry_adapted_basis(T, chars_ext)
+end
 
 function symmetry_adapted_basis(
     ::Type{T},

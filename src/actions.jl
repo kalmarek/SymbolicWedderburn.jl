@@ -1,19 +1,21 @@
 abstract type AbstractActionHomomorphism{T} end
 
-struct ExtensionHomomorphism{T,V} <: AbstractActionHomomorphism{T}
+struct ExtensionHomomorphism{T,V,Op} <: AbstractActionHomomorphism{T}
     features::V
     reversef::Dict{T,Int}
+    op::Op
 end
 
-ExtensionHomomorphism(features) = ExtensionHomomorphism(
+ExtensionHomomorphism(features, op) = ExtensionHomomorphism(
     features,
     Dict(f => idx for (idx, f) in enumerate(features)),
+    op
 )
 
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
 Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
 (ehom::ExtensionHomomorphism)(p::Perm{I}) where {I} =
-    Perm(vec(I[ehom[f^p] for f in ehom.features]))
+    Perm(vec(I[ehom[ehom.op(f, p)] for f in ehom.features]))
 
 function (ehom::ExtensionHomomorphism)(
     orb::O,
