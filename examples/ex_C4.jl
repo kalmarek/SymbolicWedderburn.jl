@@ -14,7 +14,7 @@ SCS_Indirect, SCS_Direct =
     let params = (
             "acceleration_lookback" => 10,
             "max_iters" => 10_000,
-            "eps" => 1e-7,
+            "eps" => 1e-6,
         )
         indir = optimizer_with_attributes(
             SCS.Optimizer,
@@ -30,7 +30,9 @@ SCS_Indirect, SCS_Direct =
         indir, dir
     end
 
-OPTIMIZER = SCS_Direct
+OPTIMIZER = let
+    SCS_Direct
+end
 
 N = 4
 
@@ -59,7 +61,7 @@ end
     G = PermGroup([perm"(1,2)", Perm([2:N; 1])])
 
     t = @timed let
-        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, exponents.(basis), permuted)
         SparseMatrixCSC{Float64,Int}.(sa_basis)
     end
 

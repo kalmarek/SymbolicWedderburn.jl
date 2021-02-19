@@ -54,7 +54,7 @@ end
     G = PermGroup(perm"(1,2)")
 
     t = @timed let
-        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis)
+        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, exponents.(basis), permuted)
         SparseMatrixCSC{Float64,Int}.(sa_basis)
     end
 
