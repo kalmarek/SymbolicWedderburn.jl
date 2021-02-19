@@ -1,12 +1,22 @@
+"""
+    AbstractClassFunction
+Abstract type representing functions constant on conjugacy classes of a group (e.g. characters).
+
+Subtypes need to implement:
+ * `getindex(χ, i::Integer)`: return the value on `i`-th conjugacy class.
+ * Indexing with negative integers should return values on the class which contains inverses of the `i`-th class
+ * `χ(g::GroupElem)`: return value of `χ` on a group element (only for julia < 1.3)
+ * `values(χ)`: return an iterator over values
+ * `conjugacy_classes(χ)`: return iterator over conjugacy classes of `χ`.
+ * `conj(χ)`: return the conjugate function
+
+It is assumed that two class functions on the same group will return **identical** (ie. `===`) conjugacy_classes.
+"""
 abstract type AbstractClassFunction{T} end # <: AbstractVector{T} ??
 
 Base.eltype(::AbstractClassFunction{T}) where {T} = T
 
-function LinearAlgebra.dot(
-    χ::AbstractClassFunction{T},
-    ψ::AbstractClassFunction{T},
-) where {T}
-
+function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     val = sum(
         length(cc) * χ[i] * ψ[-i] for
         (i, cc) in enumerate(conjugacy_classes(χ))
@@ -16,7 +26,11 @@ function LinearAlgebra.dot(
     return val
 end
 
-Base.isreal(χ::AbstractClassFunction) = all(isreal, values(χ))
+Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
+    conjugacy_classes(χ) === conjugacy_classes(ψ) && values(χ) == values(ψ)
+
+Base.hash(χ::AbstractClassFunction, h::UInt = UInt(0)) =
+    hash(conjugacy_classes(χ), hash(values(χ), hash(AbstractClassFunction, h)))
 
 ####################################
 # Characters
@@ -41,27 +55,17 @@ if VERSION >= v"1.3.0"
             g ∈ cc && return χ[i]
         end
         throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
-        )
-    end
-else
-    function (χ::Character)(g::PermutationGroups.GroupElem)
-        for (i, cc) in enumerate(conjugacy_classes(χ))
-            g ∈ cc && return χ[i]
-        end
-        throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
-        )
-    end
-    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
-        for (i, cc) in enumerate(conjugacy_classes(χ))
-            g ∈ cc && return χ[i]
-        end
-        throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
         )
     end
 end
+
+###################################
+# Specific definitions for ClassFunction
+const ClassFunction = Union{Character,VirtualCharacter}
 
 function Character(
     vals::AbstractVector{T},
@@ -79,6 +83,10 @@ function VirtualCharacter(
     return χ
 end
 
+function Base.deepcopy_internal(χ::CF, dict::IdDict) where {CF<:ClassFunction}
+    return CF(copy(χ.vals), χ.inv_of, conjugacy_classes(χ))
+end
+
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
 VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(χ)
@@ -86,18 +94,6 @@ VirtualCharacter(χ::VirtualCharacter) = deepcopy(χ)
 
 VirtualCharacter{T,Cl}(χ::ClassFunction) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
-
-Base.values(χ::ClassFunction) = χ.vals
-conjugacy_classes(χ::ClassFunction) = χ.cc
-
-PermutationGroups.degree(χ::Character) =
-    Int(χ(one(first(first(conjugacy_classes(χ))))))
-
-PermutationGroups.degree(χ::AbstractClassFunction) =
-    χ(one(first(first(conjugacy_classes(χ)))))
-
-Base.conj(χ::Cf) where {Cf<:ClassFunction} =
-    Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
 
 Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     @boundscheck checkbounds(values(χ), abs(i))
@@ -108,8 +104,39 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     end
 end
 
-Base.valtype(χ::ClassFunction) = eltype(values(χ))
-Base.eltype(χ::ClassFunction) = valtype(χ)
+if VERSION < v"1.3.0"
+    function (χ::Character)(g::PermutationGroups.GroupElem)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
+        )
+    end
+    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
+        )
+    end
+end
+
+Base.values(χ::ClassFunction) = χ.vals
+conjugacy_classes(χ::ClassFunction) = χ.cc
+
+Base.conj(χ::Cf) where {Cf<:ClassFunction} =
+    Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
+
+PermutationGroups.degree(χ::Character) =
+    Int(χ(one(first(first(conjugacy_classes(χ))))))
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
