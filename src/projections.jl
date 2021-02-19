@@ -54,8 +54,21 @@ function matrix_projection(
 end
 
 """
+    action_character(conjugacy_cls)
+Return the character of the representation given by the elements in the conjugacy classes
+`conjugacy_cls`.
 
+This corresponds to the classical definition of character as a trace of corresponding matrices.
+If the action is given by permutaion, this will be an `Int`-valued Character.
 """
+function action_character(
+    conjugacy_cls::AbstractVector{<:AbstractOrbit{<:Perm}},
+)
+    vals = Int[nfixedpoints(first(cc)) for cc in conjugacy_cls]
+    # in general:
+    # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
+    return SymbolicWedderburn.Character(vals, conjugacy_cls)
+end
 
 """
     affordable_real!(chars::AbstractVector{<:AbstractClassFunction})
@@ -149,39 +162,23 @@ end
 
 function symmetry_adapted_basis(
     ::Type{T},
-    G::AbstractPermutationGroup,
-    basis,
-) where {T<:Number}
-    chars = characters_dixon(real(T), G)
-    ehom = ExtensionHomomorphism(basis)
-    chars_ext = ehom.(chars)
+    chars::AbstractVector{<:AbstractClassFunction},
+) where {T}
+    ψ = action_character(conjugacy_classes(first(chars)))
 
-    @debug "Double-checking the induced action..." let ccls =
-            conjugacy_classes(first(chars)),
-        large_gens = ehom.(gens(G))
+    chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
-        G_large = PermGroup(large_gens)
-        ccG_large = conjugacy_classes(G_large)
-        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
-    end
+    multiplicities = Int[dot(ψ, χ)/dot(χ, χ) for χ in chars]
+    degrees = PermutationGroups.degree.(chars)
 
-    if T <: Real
-        return _real_symmetry_adapted_basis(chars_ext)
-    else # if T <: Complex
-        return _complex_symmetry_adapted_basis(chars_ext)
-    end
-end
+    @debug info "Decomposition into character spaces:
+    degrees=$(join([lpad(d, 5) for d in degrees], ""))
+    multips=$(join([lpad(m, 5) for m in multiplicities], ""))"
 
-function _complex_symmetry_adapted_basis(chars)
-    return filter!(
-        !iszero ∘ first ∘ size,
-        isotypical_basis.(chars),
-    )
-end
+    dot(multiplicities, degrees) == degree(ψ) ||
+        @warn "chars do not constitute a complete basis for action:
+        $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
+    constituents = [χ for (χ, m) in zip(chars, multiplicities) if m ≠ 0]
 
-function _real_symmetry_adapted_basis(chars)
-    return filter!(
-        !iszero ∘ first ∘ size,
-        isotypical_basis.(_real_vchars(chars)),
-    )
+    return isotypical_basis.(constituents)
 end
