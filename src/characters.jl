@@ -199,6 +199,23 @@ function normalize!(χ::Character)
     return χ
 end
 
+"""
+    affordable_real!(χ::ClassFunction[, pmap::PowerMap])
+Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real representation, modifying `χ` in place.
+"""
+function affordable_real!(
+    χ::ClassFunction,
+    pmap = PowerMap(conjugacy_classes(χ)),
+)
+    ι = frobenius_schur_indicator(χ, pmap)
+    if !isone(ι) # χ is complex or quaternionic
+        for i in eachindex(χ.vals)
+            χ.vals[i] += conj(χ.vals[i])
+        end
+    end
+    return χ
+end
+
 function frobenius_schur_indicator(
     χ::Character,
     pmap::PowerMap = PowerMap(conjugacy_classes(χ)),

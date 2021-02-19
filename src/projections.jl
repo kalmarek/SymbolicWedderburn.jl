@@ -53,44 +53,20 @@ function matrix_projection(
     return result
 end
 
-function _conjugate_pairs(chars::AbstractVector{<:ClassFunction})
-    vals = values.(chars)
-    tovisit = trues(length(vals))
-    conjugate_pairs = Dict{Int,Int}()
-    for (i, v) in enumerate(vals)
-        tovisit[i] || continue
-        tovisit[i] = false
-        if all(isreal, v)
-            tovisit[i] = false
-            conjugate_pairs[i] = i
-        else
-            k = findfirst(==(conj(v)), vals)
-            conjugate_pairs[i] = k
-            tovisit[k] = false
-        end
-    end
-    return conjugate_pairs
-end
+"""
 
 """
-    _real_vchars(chars::AbstractVector{<:AbstractClassFunction})
-Return _real_ virtual characters formed from `chars` by pairing conjugates with each other.
 
-That is for every pair `(a, ā)` of conjugate functions is replaced by a new pair
-`( (a+ā)/2, -im*(a-ā)/2 )` of real (virtual) characters.
 """
-function _real_vchars(chars::AbstractVector{<:AbstractClassFunction})
-    pairs = _conjugate_pairs(chars)
-
-    res = [VirtualCharacter(chars[i]) for (i, j) in pairs if i == j] # real ones
-    for (i, j) in pairs
-        i == j && continue
-        χ, χ_bar = chars[i], chars[j]
-        push!(res, (χ + χ_bar) / 2)
-        push!(res, -im * (χ - χ_bar) / 2)
-    end
-
-    return res
+    affordable_real!(chars::AbstractVector{<:AbstractClassFunction})
+Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
+"""
+function affordable_real!(
+    chars::AbstractVector{T},
+) where {T<:AbstractClassFunction}
+    pmap = PowerMap(conjugacy_classes(first(chars)))
+    res = affordable_real!.(chars, Ref(pmap))
+    return unique!(res)
 end
 
 """
