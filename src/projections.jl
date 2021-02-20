@@ -168,7 +168,7 @@ function symmetry_adapted_basis(
 
     chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
-    multiplicities = Int[dot(ψ, χ)/dot(χ, χ) for χ in chars]
+    multiplicities = Int[dot(ψ, χ) / dot(χ, χ) for χ in chars]
     degrees = PermutationGroups.degree.(chars)
 
     @debug info "Decomposition into character spaces:

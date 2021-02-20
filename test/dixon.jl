@@ -218,11 +218,11 @@ end
 
     @testset "Different base rings for characters_dixon" begin
         G = PermGroup(perm"(1,2,3,4)")
-        @test valtype(first(SymbolicWedderburn.characters_dixon(Float64, G))) <:
+        @test eltype(first(SymbolicWedderburn.characters_dixon(Float64, G))) <:
               Cyclotomic{Float64}
-        @test valtype(first(SymbolicWedderburn.characters_dixon(Int, G))) <:
+        @test eltype(first(SymbolicWedderburn.characters_dixon(Int, G))) <:
               Cyclotomic{Int}
-        @test valtype(
+        @test eltype(
             first(SymbolicWedderburn.characters_dixon(Rational{Int}, G)),
         ) <: Cyclotomic{Rational{Int}}
     end

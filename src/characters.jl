@@ -226,7 +226,7 @@ function frobenius_schur_indicator(
 
     ι_int = Int(ι)
     ordG = sum(length, conjugacy_classes(χ))
-    d,r = divrem(ι_int, ordG)
+    d, r = divrem(ι_int, ordG)
     @assert r == 0 "Non integral Frobenius Schur Indicator: $(ι_int) = $d * $ordG + $r"
     return d
 end

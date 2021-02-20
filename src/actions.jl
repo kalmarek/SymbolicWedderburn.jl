@@ -9,7 +9,7 @@ end
 ExtensionHomomorphism(features, op) = ExtensionHomomorphism(
     features,
     Dict(f => idx for (idx, f) in enumerate(features)),
-    op
+    op,
 )
 
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
