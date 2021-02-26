@@ -53,44 +53,33 @@ function matrix_projection(
     return result
 end
 
-function _conjugate_pairs(chars::AbstractVector{<:ClassFunction})
-    vals = values.(chars)
-    tovisit = trues(length(vals))
-    conjugate_pairs = Dict{Int,Int}()
-    for (i, v) in enumerate(vals)
-        tovisit[i] || continue
-        tovisit[i] = false
-        if all(isreal, v)
-            tovisit[i] = false
-            conjugate_pairs[i] = i
-        else
-            k = findfirst(==(conj(v)), vals)
-            conjugate_pairs[i] = k
-            tovisit[k] = false
-        end
-    end
-    return conjugate_pairs
+"""
+    action_character(conjugacy_cls)
+Return the character of the representation given by the elements in the conjugacy classes
+`conjugacy_cls`.
+
+This corresponds to the classical definition of character as a trace of corresponding matrices.
+If the action is given by permutaion, this will be an `Int`-valued Character.
+"""
+function action_character(
+    conjugacy_cls::AbstractVector{<:AbstractOrbit{<:Perm}},
+)
+    vals = Int[nfixedpoints(first(cc)) for cc in conjugacy_cls]
+    # in general:
+    # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
+    return SymbolicWedderburn.Character(vals, conjugacy_cls)
 end
 
 """
-    _real_vchars(chars::AbstractVector{<:AbstractClassFunction})
-Return _real_ virtual characters formed from `chars` by pairing conjugates with each other.
-
-That is for every pair `(a, ā)` of conjugate functions is replaced by a new pair
-`( (a+ā)/2, -im*(a-ā)/2 )` of real (virtual) characters.
+    affordable_real!(chars::AbstractVector{<:AbstractClassFunction})
+Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
 """
-function _real_vchars(chars::AbstractVector{<:AbstractClassFunction})
-    pairs = _conjugate_pairs(chars)
-
-    res = [VirtualCharacter(chars[i]) for (i, j) in pairs if i == j] # real ones
-    for (i, j) in pairs
-        i == j && continue
-        χ, χ_bar = chars[i], chars[j]
-        push!(res, (χ + χ_bar) / 2)
-        push!(res, -im * (χ - χ_bar) / 2)
-    end
-
-    return res
+function affordable_real!(
+    chars::AbstractVector{T},
+) where {T<:AbstractClassFunction}
+    pmap = PowerMap(conjugacy_classes(first(chars)))
+    res = affordable_real!.(chars, Ref(pmap))
+    return unique!(res)
 end
 
 """
@@ -100,7 +89,7 @@ Compute a basis of the image of the projection corresponding to a class function
 Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
 (so called _isotypical subspace_) in the action on `ℝⁿ` encoded by the conjugacy classes of `χ`.
 """
-function isotypical_basis(χ::AbstractClassFunction) where {T}
+function isotypical_basis(χ::AbstractClassFunction)
 
     u, weight = matrix_projection(χ)
     image, pivots = if iszero(weight)
@@ -122,7 +111,7 @@ end
     symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup)
 Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
-The group is considered to act by permutations on set `1:n`. The coefficients of
+The permutation group is acting naturally on `1:degree(G)`. The coefficients of
 the invariant basis are returned in (orthogonal) blocks corresponding to irreducible
 characters of `G`.
 
@@ -130,27 +119,21 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermutationGroups.PermGroup) =
-    symmetry_adapted_basis(Rational{Int}, G)
-symmetry_adapted_basis(
-    ::Type{T},
-    G::PermutationGroups.PermGroup,
-) where {T<:Real} = _real_symmetry_adapted_basis(characters_dixon(T, G))
-symmetry_adapted_basis(
-    ::Type{T},
-    G::PermutationGroups.PermGroup,
-) where {T<:Complex} =
-    _complex_symmetry_adapted_basis(characters_dixon(real(T), G))
+symmetry_adapted_basis(G::PermGroup) = symmetry_adapted_basis(Rational{Int}, G)
+
+symmetry_adapted_basis(::Type{T}, G::PermGroup) where {T} =
+    symmetry_adapted_basis(T, characters_dixon(real(T), G))
 
 """
-    symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup, basis)
+    symmetry_adapted_basis([T::Type=Rational{Int},] G::Group, basis, action)
 Compute a basis for the linear space spanned by `basis` which is invariant under
 the symmetry of `G`.
 
-* The action used in these computations is `(b,g) → b^g` (for an element `b ∈ basis`
-and a group element `g ∈ G`) and needs to be defined by the user.
-* It is assumed that `G` acts by permutations on a subset of basis and the action
-needs to be extended to the whole `basis`. If `G` already acts on the whole `basis`,
+* The action used in these computations is
+> `(b,g) → action(b,g)` for `b ∈ basis`, `g ∈ G`
+and needs to be defined by the user.
+* It is assumed that `G` acts on a subset of basis and the action needs to be
+extended to the whole `basis`. If `G` already acts on the whole `basis`,
 a call to `symmetry_adapted_basis(G)` is preferred.
 * For inducing the action `basis` needs to be indexable and iterable
 (e.g. in the form of an `AbstractVector`).
@@ -163,44 +146,39 @@ The `eltype` of each of those blocks will be `Cyclotomic{real(T)}`, if possible.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermutationGroups.PermGroup, basis) =
-    symmetry_adapted_basis(Rational{Int}, G::PermutationGroups.PermGroup, basis)
+symmetry_adapted_basis(G::Group, basis, action) =
+    symmetry_adapted_basis(Rational{Int}, G, basis, action)
+
+function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
+    chars = characters_dixon(real(T), G)
+    ehom = ExtensionHomomorphism(basis, action)
+    chars_ext = let chars = chars, ehom = ehom
+        ψ = ehom(first(chars))
+        ext_ccG = conjugacy_classes(ψ)
+        [Character(values(χ), χ.inv_of, ext_ccG) for χ in chars]
+    end
+    return symmetry_adapted_basis(T, chars_ext)
+end
 
 function symmetry_adapted_basis(
     ::Type{T},
-    G::AbstractPermutationGroup,
-    basis,
-) where {T<:Number}
-    chars = characters_dixon(real(T), G)
-    ehom = ExtensionHomomorphism(basis)
-    chars_ext = ehom.(chars)
+    chars::AbstractVector{<:AbstractClassFunction},
+) where {T}
+    ψ = action_character(conjugacy_classes(first(chars)))
 
-    @debug "Double-checking the induced action..." let ccls =
-            conjugacy_classes(first(chars)),
-        large_gens = ehom.(gens(G))
+    chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
-        G_large = PermGroup(large_gens)
-        ccG_large = conjugacy_classes(G_large)
-        @assert all(Set.(collect.(ccG_large)) .== Set.(collect.(ccls)))
-    end
+    multiplicities = Int[dot(ψ, χ) / dot(χ, χ) for χ in chars]
+    degrees = PermutationGroups.degree.(chars)
 
-    if T <: Real
-        return _real_symmetry_adapted_basis(chars_ext)
-    else # if T <: Complex
-        return _complex_symmetry_adapted_basis(chars_ext)
-    end
-end
+    @debug info "Decomposition into character spaces:
+    degrees=$(join([lpad(d, 5) for d in degrees], ""))
+    multips=$(join([lpad(m, 5) for m in multiplicities], ""))"
 
-function _complex_symmetry_adapted_basis(chars)
-    return filter!(
-        !iszero ∘ first ∘ size,
-        isotypical_basis.(chars),
-    )
-end
+    dot(multiplicities, degrees) == degree(ψ) ||
+        @warn "chars do not constitute a complete basis for action:
+        $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
+    constituents = [χ for (χ, m) in zip(chars, multiplicities) if m ≠ 0]
 
-function _real_symmetry_adapted_basis(chars)
-    return filter!(
-        !iszero ∘ first ∘ size,
-        isotypical_basis.(_real_vchars(chars)),
-    )
+    return isotypical_basis.(constituents)
 end

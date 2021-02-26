@@ -7,6 +7,7 @@ for f in (:+, :-)
     @eval begin
         function Base.$f(χ::ClassFunction, ψ::ClassFunction)
             @assert χ.inv_of == ψ.inv_of
+            @assert conjugacy_classes(χ) === conjugacy_classes(ψ)
             return VirtualCharacter(
                 $f.(values(χ), values(ψ)),
                 χ.inv_of,

@@ -52,13 +52,12 @@ end
 
 function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
     @assert ==(size(M)...)
-    Id = Matrix{T}(I, size(M)...)
     eigen = Dict{T,typeof(M)}()
     cumdim = 0
     for i in T # brute force; TODO: use factorization of characteristic/minimal polynomials
         cumdim >= size(M, 1) && break
         #do left eigenspaces!
-        basis = first(row_echelon_form!(left_nullspace(M - i * Id)))
+        basis = first(row_echelon_form!(left_nullspace(M - i * I)))
         nullity = size(basis, 1)
         if (nullity == 1) && all(iszero, basis)
             nullity -= 1 # left_nullspace returns trivial kernel if kernel is empty

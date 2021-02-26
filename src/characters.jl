@@ -1,12 +1,22 @@
+"""
+    AbstractClassFunction
+Abstract type representing functions constant on conjugacy classes of a group (e.g. characters).
+
+Subtypes need to implement:
+ * `getindex(χ, i::Integer)`: return the value on `i`-th conjugacy class.
+ * Indexing with negative integers should return values on the class which contains inverses of the `i`-th class
+ * `χ(g::GroupElem)`: return value of `χ` on a group element (only for julia < 1.3)
+ * `values(χ)`: return an iterator over values
+ * `conjugacy_classes(χ)`: return iterator over conjugacy classes of `χ`.
+ * `conj(χ)`: return the conjugate function
+
+It is assumed that two class functions on the same group will return **identical** (ie. `===`) conjugacy_classes.
+"""
 abstract type AbstractClassFunction{T} end # <: AbstractVector{T} ??
 
 Base.eltype(::AbstractClassFunction{T}) where {T} = T
 
-function LinearAlgebra.dot(
-    χ::AbstractClassFunction{T},
-    ψ::AbstractClassFunction{T},
-) where {T}
-
+function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     val = sum(
         length(cc) * χ[i] * ψ[-i] for
         (i, cc) in enumerate(conjugacy_classes(χ))
@@ -16,7 +26,11 @@ function LinearAlgebra.dot(
     return val
 end
 
-Base.isreal(χ::AbstractClassFunction) = all(isreal, values(χ))
+Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
+    conjugacy_classes(χ) === conjugacy_classes(ψ) && values(χ) == values(ψ)
+
+Base.hash(χ::AbstractClassFunction, h::UInt = UInt(0)) =
+    hash(conjugacy_classes(χ), hash(values(χ), hash(AbstractClassFunction, h)))
 
 ####################################
 # Characters
@@ -35,33 +49,49 @@ end
 
 const ClassFunction = Union{Character,VirtualCharacter}
 
+"""
+    frobenius_schur_indicator(χ::AbstractClassFunction[, pmap::PowerMap])
+Return Frobenius-Schur indicator of `χ`, i.e. `Σχ(g²)` where sum is taken over
+the whole group.
+
+If χ is an irreducible `Character`, Frobenius-Schur indicator takes values in
+`{1, 0, -1}` which correspond to the following situations:
+ 1. `χ` is real-valued and is afforded by an irreducible real representation,
+ 2. `χ` is a complex character which is not afforded by a real representation, and
+ 3. `χ` is quaternionic character, i.e. it is real valued, but is not afforded a real representation.
+
+In cases 2. and 3. `2re(χ) = χ + conj(χ)` corresponds to an irreducible character
+afforded by a real representation.
+"""
+function frobenius_schur_indicator(
+    χ::AbstractClassFunction,
+    pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
+)
+    res = sum(
+        length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
+    )
+    return res / order(G)
+end
+
+Base.isreal(χ::AbstractClassFunction) = frobenius_schur_indicator(χ) > 0
+
 if VERSION >= v"1.3.0"
     function (χ::AbstractClassFunction)(g::PermutationGroups.GroupElem)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
         throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
-        )
-    end
-else
-    function (χ::Character)(g::PermutationGroups.GroupElem)
-        for (i, cc) in enumerate(conjugacy_classes(χ))
-            g ∈ cc && return χ[i]
-        end
-        throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
-        )
-    end
-    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
-        for (i, cc) in enumerate(conjugacy_classes(χ))
-            g ∈ cc && return χ[i]
-        end
-        throw(
-            DomainError(g, "element does not belong to conjugacy classes of $χ"),
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
         )
     end
 end
+
+###################################
+# Specific definitions for ClassFunction
+const ClassFunction = Union{Character,VirtualCharacter}
 
 function Character(
     vals::AbstractVector{T},
@@ -79,6 +109,10 @@ function VirtualCharacter(
     return χ
 end
 
+function Base.deepcopy_internal(χ::CF, dict::IdDict) where {CF<:ClassFunction}
+    return CF(copy(χ.vals), χ.inv_of, conjugacy_classes(χ))
+end
+
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
 VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(χ)
@@ -86,18 +120,6 @@ VirtualCharacter(χ::VirtualCharacter) = deepcopy(χ)
 
 VirtualCharacter{T,Cl}(χ::ClassFunction) where {T,S,Cl} =
     VirtualCharacter{T,Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
-
-Base.values(χ::ClassFunction) = χ.vals
-conjugacy_classes(χ::ClassFunction) = χ.cc
-
-PermutationGroups.degree(χ::Character) =
-    Int(χ(one(first(first(conjugacy_classes(χ))))))
-
-PermutationGroups.degree(χ::AbstractClassFunction) =
-    χ(one(first(first(conjugacy_classes(χ)))))
-
-Base.conj(χ::Cf) where {Cf<:ClassFunction} =
-    Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
 
 Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     @boundscheck checkbounds(values(χ), abs(i))
@@ -108,8 +130,39 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     end
 end
 
-Base.valtype(χ::ClassFunction) = eltype(values(χ))
-Base.eltype(χ::ClassFunction) = valtype(χ)
+if VERSION < v"1.3.0"
+    function (χ::Character)(g::PermutationGroups.GroupElem)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
+        )
+    end
+    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
+        for (i, cc) in enumerate(conjugacy_classes(χ))
+            g ∈ cc && return χ[i]
+        end
+        throw(
+            DomainError(
+                g,
+                "element does not belong to conjugacy classes of $χ",
+            ),
+        )
+    end
+end
+
+Base.values(χ::ClassFunction) = χ.vals
+conjugacy_classes(χ::ClassFunction) = χ.cc
+
+Base.conj(χ::Cf) where {Cf<:ClassFunction} =
+    Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
+
+PermutationGroups.degree(χ::Character) =
+    Int(χ(one(first(first(conjugacy_classes(χ))))))
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
@@ -144,6 +197,38 @@ function normalize!(χ::Character)
     χ.vals .*= deg
 
     return χ
+end
+
+"""
+    affordable_real!(χ::ClassFunction[, pmap::PowerMap])
+Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real representation, modifying `χ` in place.
+"""
+function affordable_real!(
+    χ::ClassFunction,
+    pmap = PowerMap(conjugacy_classes(χ)),
+)
+    ι = frobenius_schur_indicator(χ, pmap)
+    if !isone(ι) # χ is complex or quaternionic
+        for i in eachindex(χ.vals)
+            χ.vals[i] += conj(χ.vals[i])
+        end
+    end
+    return χ
+end
+
+function frobenius_schur_indicator(
+    χ::Character,
+    pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
+)
+    ι = sum(
+        length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
+    )
+
+    ι_int = Int(ι)
+    ordG = sum(length, conjugacy_classes(χ))
+    d, r = divrem(ι_int, ordG)
+    @assert r == 0 "Non integral Frobenius Schur Indicator: $(ι_int) = $d * $ordG + $r"
+    return d
 end
 
 for C in (:Character, :VirtualCharacter)

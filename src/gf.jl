@@ -25,7 +25,7 @@ characteristic(::Type{GF{q}}) where {q} = q
 characteristic(::GF{q}) where {q} = q
 
 Base.:(==)(n::GF{q}, m::GF{q}) where {q} = Int(n) == Int(m)
-# hash(RamanujanGraphs.GF) == 0x04fd9e474909f8bf
+# hash(GF) == 0x04fd9e474909f8bf
 Base.hash(n::GF{q}, h::UInt) where {q} =
     xor(0x04fd9e474909f8bf, hash(q, hash(Int(n), h)))
 
@@ -44,8 +44,8 @@ end
 
 Base.zero(::Type{GF{q}}) where {q} = GF{q}(0, false)
 Base.one(::Type{GF{q}}) where {q} = GF{q}(1, false)
-Base.iszero(n::GF) = Int(n) == 0
-Base.isone(n::GF) = Int(n) == 1
+Base.iszero(n::GF) = iszero(Int(n))
+Base.isone(n::GF) = isone(Int(n))
 
 Base.promote_rule(::Type{GF{q}}, ::Type{I}) where {q,I<:Integer} = GF{q}
 Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q} = throw(

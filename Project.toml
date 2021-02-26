@@ -11,7 +11,7 @@ Primes = "27ebfcd6-29c5-5fa9-bf4b-fb8fc14df3ae"
 
 [compat]
 Cyclotomics = "0.2.1"
-PermutationGroups = "0.2.1"
+PermutationGroups = "0.2.3"
 Primes = "0.4, 0.5"
 julia = "1"
 
