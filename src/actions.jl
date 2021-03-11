@@ -18,11 +18,11 @@ Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
     Perm(vec(I[ehom[ehom.op(f, p)] for f in ehom.features]))
 
 function (ehom::ExtensionHomomorphism)(
-    orb::O,
-) where {T,O<:AbstractOrbit{T,Nothing}}
+    orb::PermutationGroups.Orbit1{T,Nothing},
+) where {T}
     elts = ehom.(orb)
     dict = Dict(e => nothing for e in elts)
-    return O(elts, dict)
+    return PermutationGroups.Orbit1(elts, dict)
 end
 
 function (ehom::ExtensionHomomorphism)(χ::CF) where {CF<:ClassFunction}
