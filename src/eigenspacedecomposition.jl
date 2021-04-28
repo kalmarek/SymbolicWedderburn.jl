@@ -1,27 +1,29 @@
+# Version over exact field:
 function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Number}
-    c, d = size(A)
-    l = Int[]
+    pivots = Int[]
     pos = 0
-    i = 0
-    for i = 1:d
+    for i = 1:size(A, 2)
         j = findfirst(x -> !iszero(x), @view A[pos+1:end, i])
         j === nothing && continue
         j += pos
         pos += 1
-        push!(l, i)
+        push!(pivots, i)
 
         if (pos != j)
-            A[[pos, j], :] = A[[j, pos], :]
+            A[[pos, j], :] .= A[[j, pos], :]
         end
-        A[pos, :] ./= A[pos, i]
 
-        for j = 1:c
+        w = inv(A[pos, i])
+        A[pos, :] .*= w
+
+        for j = 1:size(A, 1)
             if j != pos
-                A[j, :] -= A[j, i] .* A[pos, :]
+                @. A[j, :] -= A[j, i] * A[pos, :]
             end
         end
     end
-    return A, l
+    return A, pivots
+end
 end
 
 function row_echelon_form(A::AbstractMatrix)
@@ -47,7 +49,7 @@ function right_nullspace(M::AbstractMatrix{T}) where {T}
 end
 
 function left_nullspace(M::AbstractMatrix)
-    return Matrix(transpose(right_nullspace(Matrix(transpose(M)))))
+    return transpose(right_nullspace(transpose(M)))
 end
 
 function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
