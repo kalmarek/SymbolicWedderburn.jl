@@ -76,7 +76,7 @@ end
 Base.isreal(χ::AbstractClassFunction) = frobenius_schur_indicator(χ) > 0
 
 if VERSION >= v"1.3.0"
-    function (χ::AbstractClassFunction)(g::PermutationGroups.GroupElem)
+    function (χ::AbstractClassFunction)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
@@ -131,7 +131,7 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
 end
 
 if VERSION < v"1.3.0"
-    function (χ::Character)(g::PermutationGroups.GroupElem)
+    function (χ::Character)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
@@ -142,7 +142,7 @@ if VERSION < v"1.3.0"
             ),
         )
     end
-    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
+    function (χ::VirtualCharacter)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end

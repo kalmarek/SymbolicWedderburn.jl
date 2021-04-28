@@ -1,8 +1,8 @@
-Base.exponent(G::PermutationGroups.Group) = exponent(conjugacy_classes(G))
-Base.exponent(cclasses::AbstractVector) = lcm(order.(first.(cclasses)))
-dixon_prime(G::PermutationGroups.Group) = dixon_prime(order(G), exponent(G))
+Base.exponent(G::GroupsCore.Group) = exponent(conjugacy_classes(G))
+Base.exponent(cclasses::AbstractArray) = lcm(order.(first.(cclasses)))
+dixon_prime(G::GroupsCore.Group) = dixon_prime(order(G), exponent(G))
 
-function dixon_prime(cclasses::AbstractVector)
+function dixon_prime(cclasses::AbstractArray)
     ordG = sum(length, cclasses)
     m = exponent(cclasses)
     return dixon_prime(ordG, m)
@@ -32,9 +32,9 @@ function common_esd(Ns, F::Type{<:FiniteFields.GF})
     return esd
 end
 
-characters_dixon(G::PermutationGroups.Group) =
+characters_dixon(G::GroupsCore.Group) =
     characters_dixon(Rational{Int}, G)
-characters_dixon(::Type{R}, G::PermutationGroups.Group) where {R<:Real} =
+characters_dixon(::Type{R}, G::GroupsCore.Group) where {R<:Real} =
     characters_dixon(R, conjugacy_classes(G))
 
 function characters_dixon(::Type{R}, cclasses::AbstractVector) where {R}

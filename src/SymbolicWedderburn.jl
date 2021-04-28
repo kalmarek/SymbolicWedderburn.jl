@@ -3,8 +3,12 @@ module SymbolicWedderburn
 using LinearAlgebra
 using Primes
 
-using PermutationGroups
 using Cyclotomics
+using GroupsCore
+
+import PermutationGroups:
+    AbstractOrbit, AbstractPerm, AbstractPermutationGroup, Orbit, Perm, degree
+import PermutationGroups
 
 export conjugacy_classes, symmetry_adapted_basis
 

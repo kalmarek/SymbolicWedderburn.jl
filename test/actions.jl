@@ -12,7 +12,7 @@ Base.show(io::IO, w::Word) = join(io, w.alphabet[w.letters], "·")
 Base.:(==)(w::Word, v::Word) = w.alphabet == v.alphabet && w.letters == v.letters
 Base.hash(w::Word, h::UInt=UInt(0)) = hash(w.alphabet, hash(w.letters, hash(Word, h)))
 
-my_action(w::Word, p::Perm) = Word(w.alphabet, p.d[w.letters])
+my_action(w::Word, p::PermutationGroups.AbstractPerm) = Word(w.alphabet, [l^p for l in w.letters])
 
 @testset "Extending homomorphism" begin
     words = let A = [:a, :b, :c]

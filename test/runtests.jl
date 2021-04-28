@@ -5,6 +5,7 @@ using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields
 using LinearAlgebra
 
+using GroupsCore
 using PermutationGroups
 using Cyclotomics
 

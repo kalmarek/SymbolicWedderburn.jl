@@ -36,7 +36,7 @@ The dimension of the projection is equal to the degree of the permutations in `c
 """
 function matrix_projection(
     vals::AbstractVector{T},
-    ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
+    ccls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}},
     dim = degree(first(first(ccls))),
 ) where {T}
 
@@ -61,10 +61,8 @@ Return the character of the representation given by the elements in the conjugac
 This corresponds to the classical definition of character as a trace of corresponding matrices.
 If the action is given by permutaion, this will be an `Int`-valued Character.
 """
-function action_character(
-    conjugacy_cls::AbstractVector{<:AbstractOrbit{<:Perm}},
-)
-    vals = Int[nfixedpoints(first(cc)) for cc in conjugacy_cls]
+function action_character(conjugacy_cls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}})
+    vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return SymbolicWedderburn.Character(vals, conjugacy_cls)
@@ -108,7 +106,7 @@ function isotypical_basis(χ::AbstractClassFunction)
 end
 
 """
-    symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup)
+    symmetry_adapted_basis([T::Type=Rational{Int},] G::AbstractPermutationGroup)
 Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
 The permutation group is acting naturally on `1:degree(G)`. The coefficients of
@@ -119,9 +117,9 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermGroup) = symmetry_adapted_basis(Rational{Int}, G)
+symmetry_adapted_basis(G::AbstractPermutationGroup) = symmetry_adapted_basis(Rational{Int}, G)
 
-symmetry_adapted_basis(::Type{T}, G::PermGroup) where {T} =
+symmetry_adapted_basis(::Type{T}, G::AbstractPermutationGroup) where {T} =
     symmetry_adapted_basis(T, characters_dixon(real(T), G))
 
 """

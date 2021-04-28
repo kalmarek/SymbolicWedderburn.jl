@@ -25,7 +25,7 @@ function Base.getindex(M::CMMatrix, s::Integer, t::Integer)
 
         for g in M.cc[r]
             for h in M.cc[s]
-                out = PermutationGroups.mul!(out, g, h)
+                out = GroupsCore.mul!(out, g, h)
                 for t = 1:size(M, 2)
                     if out == first(M.cc[t])
                         M.m[s, t] += 1
@@ -38,19 +38,19 @@ function Base.getindex(M::CMMatrix, s::Integer, t::Integer)
     return M.m[s, t]
 end
 
-conjugacy_classes(G::PermutationGroups.Group) = conjugacy_classes_orbit(G)
+conjugacy_classes(G::GroupsCore.Group) = conjugacy_classes_orbit(G)
 
-function conjugacy_classes_orbit(G::PermutationGroups.Group)
+function conjugacy_classes_orbit(G::GroupsCore.Group)
     id = one(G)
     S = gens(G)
     ordG = order(Int, G)
 
-    cclasses = [PermutationGroups.Orbit([id], Dict(id => nothing))]
+    cclasses = [Orbit([id], Dict(id => nothing))]
     elts_counted = 1
 
     for g in G
         any(ccl -> g ∈ ccl, cclasses) && continue
-        ccl_g = PermutationGroups.Orbit(S, g, ^)
+        ccl_g = Orbit(S, g, ^)
         elts_counted += length(ccl_g)
         push!(cclasses, ccl_g)
         elts_counted == ordG && break
