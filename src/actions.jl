@@ -1,31 +1,32 @@
 abstract type AbstractActionHomomorphism{T} end
 
-struct ExtensionHomomorphism{T,V,Op} <: AbstractActionHomomorphism{T}
+struct ExtensionHomomorphism{T,I<:Integer,V,Op} <: AbstractActionHomomorphism{T}
     features::V
-    reversef::Dict{T,Int}
+    reversef::Dict{T,I}
     op::Op
 end
 
-ExtensionHomomorphism(features, op) = ExtensionHomomorphism(
-    features,
-    Dict(f => idx for (idx, f) in enumerate(features)),
-    op,
-)
+function ExtensionHomomorphism{I}(features, op) where I<:Integer
+    @assert typemax(I) >= length(features) "Use wider Integer type!"
+    reversef = Dict{eltype(features), I}(f => idx for (idx, f) in pairs(features))
+    return ExtensionHomomorphism(features, reversef, op)
+end
+
+ExtensionHomomorphism(features, op) = ExtensionHomomorphism{Int16}(features, op)
 
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
 Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
-(ehom::ExtensionHomomorphism)(p::Perm{I}) where {I} =
-    Perm(vec(I[ehom[ehom.op(f, p)] for f in ehom.features]))
-
-function (ehom::ExtensionHomomorphism)(
-    orb::O,
-) where {T,O<:AbstractOrbit{T,Nothing}}
-    elts = ehom.(orb)
-    dict = Dict(e => nothing for e in elts)
-    return O(elts, dict)
+function (ehom::ExtensionHomomorphism)(g::GroupsCore.GroupElement)
+    return Perm(vec([ehom[ehom.op(f, g)] for f in ehom.features]))
 end
 
-function (ehom::ExtensionHomomorphism)(χ::CF) where {CF<:ClassFunction}
+function (ehom::ExtensionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+    elts = ehom.(orb)
+    dict = Dict(e => nothing for e in elts)
+    return Orbit(elts, dict)
+end
+
+function (ehom::ExtensionHomomorphism)(χ::Character)
     iccG = ehom.(conjugacy_classes(χ))
-    return CF(values(χ), χ.inv_of, iccG)
+    return Character(values(χ), χ.inv_of, iccG)
 end
