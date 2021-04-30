@@ -84,9 +84,9 @@ end
             ccG = let S = gens(G)
                 [
                     Orbit(S, one(G)),
-                    Orbit(S, perm"(2,3,4)"),
-                    Orbit(S, perm"(2,4,3)"),
-                    Orbit(S, perm"(1,2)(3,4)"),
+                    Orbit(S, G(perm"(2,3,4)")),
+                    Orbit(S, G(perm"(2,4,3)")),
+                    Orbit(S, G(perm"(1,2)(3,4)")),
                 ] # the order is taken from GAP
             end
 
@@ -130,9 +130,9 @@ end
             ccG = let S = gens(G)
                 [
                     Orbit(S, one(G)),
-                    Orbit(S, perm"(2,3,4)"),
-                    Orbit(S, perm"(2,4,3)"),
-                    Orbit(S, perm"(1,2)(3,4)"),
+                    Orbit(S, G(perm"(2,3,4)")),
+                    Orbit(S, G(perm"(2,4,3)")),
+                    Orbit(S, G(perm"(1,2)(3,4)")),
                 ] # the order of cclasses is taken from GAP
             end
 
@@ -167,10 +167,10 @@ end
             ccG = let S = gens(G)
                 ccG = [
                     Orbit(S, one(G)),
-                    Orbit(S, perm"(1,2)(4)"),
-                    Orbit(S, perm"(1,2)(3,4)"),
-                    Orbit(S, perm"(1,2,3)(4)"),
-                    Orbit(S, perm"(1,2,3,4)"),
+                    Orbit(S, G(perm"(1,2)(4)")),
+                    Orbit(S, G(perm"(1,2)(3,4)")),
+                    Orbit(S, G(perm"(1,2,3)(4)")),
+                    Orbit(S, G(perm"(1,2,3,4)")),
                 ] # the order of cclasses is taken from GAP
             end
             generictest_dixon_Fp(G)
@@ -189,15 +189,15 @@ end
         end
 
         @testset "example: C₅ ⋊ C₄" begin
-            S = [perm"(1,2,4,5,3)", perm"(2,5,3,4)"]
-            G = PermGroup(S)
+            G = PermGroup(perm"(1,2,4,5,3)", perm"(2,5,3,4)")
+            S = gens(G)
 
             ccG = [
                 Orbit(S, one(G)),
-                Orbit(S, perm"(2,3)(4,5)"),
-                Orbit(S, perm"(2,4,3,5)"),
-                Orbit(S, perm"(2,5,3,4)"),
-                Orbit(S, perm"(1,2,4,5,3)"),
+                Orbit(S, G(perm"(2,3)(4,5)")),
+                Orbit(S, G(perm"(2,4,3,5)")),
+                Orbit(S, G(perm"(2,5,3,4)")),
+                Orbit(S, G(perm"(1,2,4,5,3)")),
             ]
             # the order of cclasses is taken from GAP
             generictest_dixon_Fp(G)
@@ -227,7 +227,7 @@ end
         ) <: Cyclotomic{Rational{Int}}
     end
 
-    @testset "SmallPermGroups" begin
+    @time @testset "SmallPermGroups" begin
         for (ord, groups) in SmallPermGroups
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
                 @test SymbolicWedderburn.characters_dixon(G) isa

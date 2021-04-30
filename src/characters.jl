@@ -29,7 +29,7 @@ end
 Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
     conjugacy_classes(χ) === conjugacy_classes(ψ) && values(χ) == values(ψ)
 
-Base.hash(χ::AbstractClassFunction, h::UInt = UInt(0)) =
+Base.hash(χ::AbstractClassFunction, h::UInt) =
     hash(conjugacy_classes(χ), hash(values(χ), hash(AbstractClassFunction, h)))
 
 ####################################
@@ -50,6 +50,23 @@ end
 const ClassFunction = Union{Character,VirtualCharacter}
 
 """
+    affordable_real!(χ::ClassFunction[, pmap::PowerMap])
+Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real representation, modifying `χ` in place.
+"""
+function affordable_real!(
+    χ::ClassFunction,
+    pmap = PowerMap(conjugacy_classes(χ)),
+)
+    ι = frobenius_schur_indicator(χ, pmap)
+    if ι <= 0 # i.e. χ is complex or quaternionic
+        for i in eachindex(χ.vals)
+            χ.vals[i] += conj(χ.vals[i])
+        end
+    end
+    return χ
+end
+
+"""
     frobenius_schur_indicator(χ::AbstractClassFunction[, pmap::PowerMap])
 Return Frobenius-Schur indicator of `χ`, i.e. `Σχ(g²)` where sum is taken over
 the whole group.
@@ -67,16 +84,21 @@ function frobenius_schur_indicator(
     χ::AbstractClassFunction,
     pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
 )
-    res = sum(
+    ι = sum(
         length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
     )
-    return res / order(G)
+
+    ι_int = Int(ι)
+    ordG = sum(length, conjugacy_classes(χ))
+    d, r = divrem(ι_int, ordG)
+    @assert r == 0 "Non integral Frobenius Schur Indicator: $(ι_int) = $d * $ordG + $r"
+    return d
 end
 
 Base.isreal(χ::AbstractClassFunction) = frobenius_schur_indicator(χ) > 0
 
 if VERSION >= v"1.3.0"
-    function (χ::AbstractClassFunction)(g::PermutationGroups.GroupElem)
+    function (χ::AbstractClassFunction)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
@@ -131,7 +153,7 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
 end
 
 if VERSION < v"1.3.0"
-    function (χ::Character)(g::PermutationGroups.GroupElem)
+    function (χ::Character)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
@@ -142,7 +164,7 @@ if VERSION < v"1.3.0"
             ),
         )
     end
-    function (χ::VirtualCharacter)(g::PermutationGroups.GroupElem)
+    function (χ::VirtualCharacter)(g::GroupsCore.GroupElement)
         for (i, cc) in enumerate(conjugacy_classes(χ))
             g ∈ cc && return χ[i]
         end
@@ -197,38 +219,6 @@ function normalize!(χ::Character)
     χ.vals .*= deg
 
     return χ
-end
-
-"""
-    affordable_real!(χ::ClassFunction[, pmap::PowerMap])
-Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real representation, modifying `χ` in place.
-"""
-function affordable_real!(
-    χ::ClassFunction,
-    pmap = PowerMap(conjugacy_classes(χ)),
-)
-    ι = frobenius_schur_indicator(χ, pmap)
-    if !isone(ι) # χ is complex or quaternionic
-        for i in eachindex(χ.vals)
-            χ.vals[i] += conj(χ.vals[i])
-        end
-    end
-    return χ
-end
-
-function frobenius_schur_indicator(
-    χ::Character,
-    pmap::PowerMap = PowerMap(conjugacy_classes(χ)),
-)
-    ι = sum(
-        length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
-    )
-
-    ι_int = Int(ι)
-    ordG = sum(length, conjugacy_classes(χ))
-    d, r = divrem(ι_int, ordG)
-    @assert r == 0 "Non integral Frobenius Schur Indicator: $(ι_int) = $d * $ordG + $r"
-    return d
 end
 
 for C in (:Character, :VirtualCharacter)

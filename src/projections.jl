@@ -18,8 +18,7 @@ end
 function matrix_projection(χ::AbstractClassFunction)
     deg = degree(χ)
     if iszero(deg) # short circuting the trivial case
-        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))),
-        deg
+        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))), deg
     end
     ordG = sum(length, conjugacy_classes(χ))
     U = matrix_projection(values(χ), conjugacy_classes(χ))
@@ -36,7 +35,7 @@ The dimension of the projection is equal to the degree of the permutations in `c
 """
 function matrix_projection(
     vals::AbstractVector{T},
-    ccls::AbstractVector{<:AbstractOrbit{<:Perm}},
+    ccls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}},
     dim = degree(first(first(ccls))),
 ) where {T}
 
@@ -44,7 +43,7 @@ function matrix_projection(
 
     for (val, cc) in zip(vals, ccls)
         for g in cc
-            for i = 1:dim
+            for i in 1:dim
                 result[i, i^g] += val
             end
         end
@@ -61,10 +60,8 @@ Return the character of the representation given by the elements in the conjugac
 This corresponds to the classical definition of character as a trace of corresponding matrices.
 If the action is given by permutaion, this will be an `Int`-valued Character.
 """
-function action_character(
-    conjugacy_cls::AbstractVector{<:AbstractOrbit{<:Perm}},
-)
-    vals = Int[nfixedpoints(first(cc)) for cc in conjugacy_cls]
+function action_character(conjugacy_cls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}})
+    vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return SymbolicWedderburn.Character(vals, conjugacy_cls)
@@ -74,9 +71,7 @@ end
     affordable_real!(chars::AbstractVector{<:AbstractClassFunction})
 Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
 """
-function affordable_real!(
-    chars::AbstractVector{T},
-) where {T<:AbstractClassFunction}
+function affordable_real!(chars::AbstractVector{T}) where {T<:AbstractClassFunction}
     pmap = PowerMap(conjugacy_classes(first(chars)))
     res = affordable_real!.(chars, Ref(pmap))
     return unique!(res)
@@ -108,7 +103,7 @@ function isotypical_basis(χ::AbstractClassFunction)
 end
 
 """
-    symmetry_adapted_basis([T::Type=Rational{Int},] G::PermGroup)
+    symmetry_adapted_basis([T::Type=Rational{Int},] G::AbstractPermutationGroup)
 Compute a basis for the linear space `ℝⁿ` which is invariant under the symmetry of `G`.
 
 The permutation group is acting naturally on `1:degree(G)`. The coefficients of
@@ -119,9 +114,9 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::PermGroup) = symmetry_adapted_basis(Rational{Int}, G)
+symmetry_adapted_basis(G::AbstractPermutationGroup) = symmetry_adapted_basis(Rational{Int}, G)
 
-symmetry_adapted_basis(::Type{T}, G::PermGroup) where {T} =
+symmetry_adapted_basis(::Type{T}, G::AbstractPermutationGroup) where {T} =
     symmetry_adapted_basis(T, characters_dixon(real(T), G))
 
 """
@@ -165,20 +160,19 @@ function symmetry_adapted_basis(
     chars::AbstractVector{<:AbstractClassFunction},
 ) where {T}
     ψ = action_character(conjugacy_classes(first(chars)))
+    real_chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
-    chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
+    multiplicities = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in real_chars]
+    degrees = degree.(real_chars)
 
-    multiplicities = Int[dot(ψ, χ) / dot(χ, χ) for χ in chars]
-    degrees = PermutationGroups.degree.(chars)
-
-    @debug info "Decomposition into character spaces:
+    @debug "Decomposition into character spaces:
     degrees=$(join([lpad(d, 5) for d in degrees], ""))
     multips=$(join([lpad(m, 5) for m in multiplicities], ""))"
 
     dot(multiplicities, degrees) == degree(ψ) ||
         @warn "chars do not constitute a complete basis for action:
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
-    constituents = [χ for (χ, m) in zip(chars, multiplicities) if m ≠ 0]
+    constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
     return isotypical_basis.(constituents)
 end

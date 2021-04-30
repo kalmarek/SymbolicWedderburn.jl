@@ -47,10 +47,10 @@ end
         b = perm"(1,2,4)"
         G = PermGroup([a,b])
         C = [
-            Orbit([a,b], one(G)),
-            Orbit([a,b], perm"(1,2)(3,4)"),
-            Orbit([a,b], perm"(1,2,3)(4)"),
-            Orbit([a,b], perm"(1,3,2)(4)"),
+            Orbit(gens(G), one(G)),
+            Orbit(gens(G), G(perm"(1,2)(3,4)")),
+            Orbit(gens(G), G(perm"(1,2,3)(4)")),
+            Orbit(gens(G), G(perm"(1,3,2)(4)")),
             ]
 
         generic_tests_ccmatrix(C)
@@ -73,15 +73,15 @@ end
     end
 
     @testset "example: C₅ ⋊ C₄" begin
-        S = [perm"(1,2,4,5,3)", perm"(2,5,3,4)"]
-        G = PermGroup(S);
+        G = PermGroup([perm"(1,2,4,5,3)", perm"(2,5,3,4)"]);
+        S = gens(G)
 
         ccG = [
             Orbit(S, one(G)),
-            Orbit(S, perm"(2,3)(4,5)"),
-            Orbit(S, perm"(2,4,3,5)"),
-            Orbit(S, perm"(2,5,3,4)"),
-            Orbit(S, perm"(1,2,4,5,3)"),
+            Orbit(S, G(perm"(2,3)(4,5)")),
+            Orbit(S, G(perm"(2,4,3,5)")),
+            Orbit(S, G(perm"(2,5,3,4)")),
+            Orbit(S, G(perm"(1,2,4,5,3)")),
             ]
         # the order of cclasses is taken from GAP
 
