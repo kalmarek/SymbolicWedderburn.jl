@@ -16,8 +16,13 @@ ExtensionHomomorphism(features, op) = ExtensionHomomorphism{Int16}(features, op)
 
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
 Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
-function (ehom::ExtensionHomomorphism)(g::GroupsCore.GroupElement)
-    return Perm(vec([ehom[ehom.op(f, g)] for f in ehom.features]))
+
+function permutation(ehom::SymbolicWedderburn.ExtensionHomomorphism{T}, els::Vector{T}) where {T}
+    return Perm([ehom[el] for el in els])
+end
+
+function (ehom::SymbolicWedderburn.ExtensionHomomorphism)(g::GroupsCore.GroupElement)
+    return permutation(ehom, [ehom.op(f, g) for f in ehom.features])
 end
 
 function (ehom::ExtensionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
