@@ -27,6 +27,10 @@ function matrix_projection(χ::AbstractClassFunction)
     return U, deg / ordG
 end
 
+function add_inverse_permutation!(result, val, i::Int, j::Int)
+    result[i, j] += val
+end
+
 """
     matrix_projection(vals, ccls)
 Return matrix projection defined by an abstract class function with values `vals`
@@ -45,7 +49,7 @@ function matrix_projection(
     for (val, cc) in zip(vals, ccls)
         for g in cc
             for i in 1:dim
-                result[i, i^g] += val
+                add_inverse_permutation!(result, val, i, i^g)
             end
         end
     end
@@ -188,5 +192,5 @@ function symmetry_adapted_basis(
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
     constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
-    return isotypical_basis.(constituents)
+    return isotypical_basis.(constituents), filter!(!iszero, multiplicities)
 end
