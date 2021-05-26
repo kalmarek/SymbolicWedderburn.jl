@@ -54,17 +54,18 @@ end
 
 """
     action_character(conjugacy_cls)
-Return the character of the representation given by the elements in the conjugacy classes
-`conjugacy_cls`.
+Return the character of the representation given by the elements in the
+conjugacy classes `conjugacy_cls`.
 
-This corresponds to the classical definition of character as a trace of corresponding matrices.
-If the action is given by permutaion, this will be an `Int`-valued Character.
+This corresponds to the classical definition of characters as a traces of the
+representation matrices.
 """
-function action_character(conjugacy_cls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}})
+function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl<:AbstractOrbit{<:AbstractPerm}}
     vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
-    return SymbolicWedderburn.Character(vals, conjugacy_cls)
+    return Character(vals, inv_of, conjugacy_cls)
+end
 end
 
 """
@@ -114,7 +115,8 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::AbstractPermutationGroup) = symmetry_adapted_basis(Rational{Int}, G)
+symmetry_adapted_basis(G::AbstractPermutationGroup) =
+    symmetry_adapted_basis(Rational{Int}, G)
 
 symmetry_adapted_basis(::Type{T}, G::AbstractPermutationGroup) where {T} =
     symmetry_adapted_basis(T, characters_dixon(real(T), G))
@@ -159,7 +161,8 @@ function symmetry_adapted_basis(
     ::Type{T},
     chars::AbstractVector{<:AbstractClassFunction},
 ) where {T}
-    ψ = action_character(conjugacy_classes(first(chars)))
+    χ = first(chars)
+    ψ = action_character(conjugacy_classes(χ), χ.inv_of)
     real_chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
     multiplicities = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in real_chars]
