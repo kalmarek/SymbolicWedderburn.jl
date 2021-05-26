@@ -53,6 +53,15 @@ function matrix_projection(
     return result
 end
 
+function matrix_projection(
+    vals::AbstractVector{T},
+    ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
+    dim = size(first(first(ccls)), 1),
+) where T
+
+    return sum(val .* sum(g->inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
+end
+
 """
     action_character(conjugacy_cls)
 Return the character of the representation given by the elements in the
@@ -67,6 +76,10 @@ function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(con
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Character(vals, inv_of, conjugacy_cls)
 end
+
+function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl <: AbstractOrbit{<:AbstractMatrix}}
+    vals = [tr(first(cc)) for cc in conjugacy_cls]
+    return Character(vals, inv_of, conjugacy_cls)
 end
 
 """
@@ -74,6 +87,7 @@ end
 Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
 """
 function affordable_real!(chars::AbstractVector{T}) where {T<:AbstractClassFunction}
+    all(all(isreal, values(χ)) for χ in chars) && return chars
     pmap = PowerMap(conjugacy_classes(first(chars)))
     res = affordable_real!.(chars, Ref(pmap))
     return unique!(res)
