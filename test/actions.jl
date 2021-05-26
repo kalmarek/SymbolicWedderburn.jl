@@ -12,7 +12,12 @@ Base.show(io::IO, w::Word) = join(io, w.alphabet[w.letters], "·")
 Base.:(==)(w::Word, v::Word) = w.alphabet == v.alphabet && w.letters == v.letters
 Base.hash(w::Word, h::UInt=UInt(0)) = hash(w.alphabet, hash(w.letters, hash(Word, h)))
 
-my_action(w::Word, p::PermutationGroups.AbstractPerm) = Word(w.alphabet, [l^p for l in w.letters])
+struct OnLetters <: SymbolicWedderburn.ByPermutations end
+function SymbolicWedderburn.action(a::OnLetters, p::PermutationGroups.AbstractPerm, w::Word)
+    return Word(w.alphabet, [l^p for l in w.letters])
+end
+
+my_action(w::Word, g) = SymbolicWedderburn.action(OnLetters(), g, w)
 
 @testset "Extending homomorphism" begin
     words = let A = [:a, :b, :c]
@@ -32,7 +37,7 @@ my_action(w::Word, p::PermutationGroups.AbstractPerm) = Word(w.alphabet, [l^p fo
     end
 
     G = PermGroup(perm"(1,2,3)",perm"(1,2)") # G acts on words permuting letters
-    sa_basis = symmetry_adapted_basis(G, words, my_action)
+    sa_basis = symmetry_adapted_basis(G, words, OnLetters())
 
     @test sa_basis isa Vector{<:Matrix{<:SymbolicWedderburn.Cyclotomic}}
     @test Matrix{Int}.(sa_basis) isa Vector{Matrix{Int}}

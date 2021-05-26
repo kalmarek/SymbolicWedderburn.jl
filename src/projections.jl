@@ -149,12 +149,8 @@ symmetry_adapted_basis(G::Group, basis, action) =
 
 function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
     chars = characters_dixon(real(T), G)
-    ehom = ExtensionHomomorphism(basis, action)
-    chars_ext = let chars = chars, ehom = ehom
-        ψ = ehom(first(chars))
-        ext_ccG = conjugacy_classes(ψ)
-        [Character(values(χ), χ.inv_of, ext_ccG) for χ in chars]
-    end
+    ehom = ExtensionHomomorphism(action, basis)
+    chars_ext = ehom(chars)
     return symmetry_adapted_basis(T, chars_ext)
 end
 
