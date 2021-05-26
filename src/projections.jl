@@ -1,11 +1,12 @@
 """
     matrix_projection(χ::AbstractClassFunction)
-Compute matrix projection associated to the abstract class function `χ` and
-permutation action on the set `1:d`.
+Compute matrix projection associated to the abstract class function `χ`.
 
-The dimension `d` of the projection is equal to the degree of the permutations
-in `conjugacy_classes(χ)`. Returned tuple consist of coefficient (weight) and
-the matrix realization of the projection.
+The dimension `d` of the projection is derived from `conjugacy_classes(χ)`.
+E.g. if `conjugacy_classes(χ)` consist of permutations of degree `d` (i.e.
+acting naturally on the set `1:d`) the result will be a matrix of size `(d,d)`.
+
+Returned tuple consist of the matrix realization of the projection and a coefficient (its weight).
 """
 function matrix_projection(χ::Character{T}) where {T}
     U = matrix_projection(values(χ), conjugacy_classes(χ))
