@@ -4,18 +4,6 @@ abstract type ByLinearTransformation <: Action end
 
 abstract type InducedActionHomomorphism{T} end
 
-function (hom::InducedActionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
-    elts = hom.(orb)
-    dict = Dict(e => nothing for e in elts)
-    return Orbit(elts, dict)
-end
-
-function (hom::InducedActionHomomorphism)(chars::AbstractArray{<:Character})
-    χ = first(chars)
-    iccG = hom.(conjugacy_classes(χ))
-    return [Character(values(χ), χ.inv_of, iccG) for χ in chars]
-end
-
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     throw(
         "No fallback is provided for $(typeof(ac)). You need to implement `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.",
@@ -44,9 +32,34 @@ struct ExtensionHomomorphism{T,A,I,V} <: InducedActionHomomorphism{T}
 end
 
 @static if VERSION < v"1.3.0"
+    # cannot add methods to an abstract type in pre Julia v1.3
     (hom::ExtensionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
+
+    function (hom::ExtensionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+        elts = hom.(orb)
+        dict = Dict(e => nothing for e in elts)
+        return Orbit(elts, dict)
+    end
+
+    function (hom::ExtensionHomomorphism)(chars::AbstractArray{<:Character})
+        χ = first(chars)
+        iccG = hom.(conjugacy_classes(χ))
+        return [Character(values(χ), χ.inv_of, iccG) for χ in chars]
+    end
 else
     (hom::InducedActionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
+
+    function (hom::InducedActionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
+        elts = hom.(orb)
+        dict = Dict(e => nothing for e in elts)
+        return Orbit(elts, dict)
+    end
+
+    function (hom::InducedActionHomomorphism)(chars::AbstractArray{<:Character})
+        χ = first(chars)
+        iccG = hom.(conjugacy_classes(χ))
+        return [Character(values(χ), χ.inv_of, iccG) for χ in chars]
+    end
 end
 
 function ExtensionHomomorphism{I}(ac::Action, features) where {I<:Integer}
