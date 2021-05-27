@@ -43,8 +43,8 @@ struct ExtensionHomomorphism{T,A,I,V} <: InducedActionHomomorphism{T}
     reversef::Dict{T,I}
 end
 
-if VERSION < v"1.3.0"
-    hom(::ExtensionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
+@static if VERSION < v"1.3.0"
+    (hom::ExtensionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
 else
     (hom::InducedActionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
 end
