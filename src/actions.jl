@@ -4,8 +4,6 @@ abstract type ByLinearTransformation <: Action end
 
 abstract type InducedActionHomomorphism{T} end
 
-(hom::InducedActionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
-
 function (hom::InducedActionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
     elts = hom.(orb)
     dict = Dict(e => nothing for e in elts)
@@ -43,6 +41,12 @@ struct ExtensionHomomorphism{T,A,I,V} <: InducedActionHomomorphism{T}
     ac::A
     features::V # supports linear indexing
     reversef::Dict{T,I}
+end
+
+if VERSION < v"1.3.0"
+    hom(::ExtensionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
+else
+    (hom::InducedActionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
 end
 
 function ExtensionHomomorphism{I}(ac::Action, features) where {I<:Integer}
