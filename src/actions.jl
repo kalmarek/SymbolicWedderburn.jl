@@ -68,7 +68,8 @@ function ExtensionHomomorphism{I}(ac::Action, features) where {I<:Integer}
     return ExtensionHomomorphism(ac, features, reversef)
 end
 
-ExtensionHomomorphism(ac::Action, features) = ExtensionHomomorphism{Int16}(ac, features)
+# Exceeding typemax(UInt16) here would mean e.g. that you're trying to block-diagonalize SDP constraint of size 65535×65535, which is highly unlikely ;)
+ExtensionHomomorphism(ac::Action, features) = ExtensionHomomorphism{UInt16}(ac, features)
 
 # interface:
 features(hom::ExtensionHomomorphism) = hom.features
