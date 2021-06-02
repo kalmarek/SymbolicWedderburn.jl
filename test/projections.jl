@@ -80,7 +80,7 @@ end
 
             (ord,n) in ((11, 1), (13, 1)) && continue
 
-            @test all(rank(float.(b)) == size(b, 1) for b in basis)
+            @test all(rank(float.(b.constituent)) == size(b, 1) for b in basis)
 
             @test sum(first ∘ size, basis) == degree(G)
             basisC = symmetry_adapted_basis(Complex{T}, G)

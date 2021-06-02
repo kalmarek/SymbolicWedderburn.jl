@@ -168,6 +168,13 @@ function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
     return symmetry_adapted_basis(T, chars_ext)
 end
 
+struct IsotypicalBasisElement{T}
+    constituent::T
+    multiplicity::Int
+    degree::Int
+end
+Base.size(b::IsotypicalBasisElement, args...) = size(b.constituent, args...)
+
 function symmetry_adapted_basis(
     ::Type{T},
     chars::AbstractVector{<:AbstractClassFunction},
@@ -188,5 +195,8 @@ function symmetry_adapted_basis(
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
     constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
-    return isotypical_basis.(constituents)
+    return [
+        IsotypicalBasisElement(isotypical_basis(χ), m, d) for
+        (χ, m, d) in zip(real_chars, multiplicities, degrees) if m ≠ 0
+    ]
 end
