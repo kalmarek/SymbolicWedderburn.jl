@@ -1,11 +1,12 @@
 """
     matrix_projection(χ::AbstractClassFunction)
-Compute matrix projection associated to the abstract class function `χ` and
-permutation action on the set `1:d`.
+Compute matrix projection associated to the abstract class function `χ`.
 
-The dimension `d` of the projection is equal to the degree of the permutations
-in `conjugacy_classes(χ)`. Returned tuple consist of coefficient (weight) and
-the matrix realization of the projection.
+The dimension `d` of the projection is derived from `conjugacy_classes(χ)`.
+E.g. if `conjugacy_classes(χ)` consist of permutations of degree `d` (i.e.
+acting naturally on the set `1:d`) the result will be a matrix of size `(d,d)`.
+
+Returned tuple consist of the matrix realization of the projection and a coefficient (its weight).
 """
 function matrix_projection(χ::Character{T}) where {T}
     U = matrix_projection(values(χ), conjugacy_classes(χ))
@@ -52,19 +53,33 @@ function matrix_projection(
     return result
 end
 
+function matrix_projection(
+    vals::AbstractVector{T},
+    ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
+    dim = size(first(first(ccls)), 1),
+) where T
+
+    return sum(val .* sum(g->inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
+end
+
 """
     action_character(conjugacy_cls)
-Return the character of the representation given by the elements in the conjugacy classes
-`conjugacy_cls`.
+Return the character of the representation given by the elements in the
+conjugacy classes `conjugacy_cls`.
 
-This corresponds to the classical definition of character as a trace of corresponding matrices.
-If the action is given by permutaion, this will be an `Int`-valued Character.
+This corresponds to the classical definition of characters as a traces of the
+representation matrices.
 """
-function action_character(conjugacy_cls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}})
+function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl<:AbstractOrbit{<:AbstractPerm}}
     vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
-    return SymbolicWedderburn.Character(vals, conjugacy_cls)
+    return Character(vals, inv_of, conjugacy_cls)
+end
+
+function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl <: AbstractOrbit{<:AbstractMatrix}}
+    vals = [tr(first(cc)) for cc in conjugacy_cls]
+    return Character(vals, inv_of, conjugacy_cls)
 end
 
 """
@@ -72,6 +87,7 @@ end
 Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
 """
 function affordable_real!(chars::AbstractVector{T}) where {T<:AbstractClassFunction}
+    all(all(isreal, values(χ)) for χ in chars) && return chars
     pmap = PowerMap(conjugacy_classes(first(chars)))
     res = affordable_real!.(chars, Ref(pmap))
     return unique!(res)
@@ -114,7 +130,8 @@ characters of `G`.
 Each block is invariant under the action of `G`, i.e. the action may permute
 vectors from symmetry adapted basis within each block.
 """
-symmetry_adapted_basis(G::AbstractPermutationGroup) = symmetry_adapted_basis(Rational{Int}, G)
+symmetry_adapted_basis(G::AbstractPermutationGroup) =
+    symmetry_adapted_basis(Rational{Int}, G)
 
 symmetry_adapted_basis(::Type{T}, G::AbstractPermutationGroup) where {T} =
     symmetry_adapted_basis(T, characters_dixon(real(T), G))
@@ -146,12 +163,8 @@ symmetry_adapted_basis(G::Group, basis, action) =
 
 function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
     chars = characters_dixon(real(T), G)
-    ehom = ExtensionHomomorphism(basis, action)
-    chars_ext = let chars = chars, ehom = ehom
-        ψ = ehom(first(chars))
-        ext_ccG = conjugacy_classes(ψ)
-        [Character(values(χ), χ.inv_of, ext_ccG) for χ in chars]
-    end
+    ehom = ExtensionHomomorphism(action, basis)
+    chars_ext = ehom(chars)
     return symmetry_adapted_basis(T, chars_ext)
 end
 
@@ -159,7 +172,8 @@ function symmetry_adapted_basis(
     ::Type{T},
     chars::AbstractVector{<:AbstractClassFunction},
 ) where {T}
-    ψ = action_character(conjugacy_classes(first(chars)))
+    χ = first(chars)
+    ψ = action_character(conjugacy_classes(χ), χ.inv_of)
     real_chars = T <: Real ? affordable_real!(deepcopy(chars)) : chars
 
     multiplicities = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in real_chars]
