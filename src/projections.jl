@@ -168,12 +168,12 @@ function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
     return symmetry_adapted_basis(T, chars_ext)
 end
 
-struct IsotypicalBasisElement{T}
+struct SemisimpleSummand{T}
     constituent::T
     multiplicity::Int
     degree::Int
 end
-Base.size(b::IsotypicalBasisElement, args...) = size(b.constituent, args...)
+Base.size(b::SemisimpleSummand, args...) = size(b.constituent, args...)
 
 function symmetry_adapted_basis(
     ::Type{T},
@@ -196,7 +196,7 @@ function symmetry_adapted_basis(
     constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
     return [
-        IsotypicalBasisElement(isotypical_basis(χ), m, d) for
+        SemisimpleSummand(isotypical_basis(χ), m, d) for
         (χ, m, d) in zip(real_chars, multiplicities, degrees) if m ≠ 0
     ]
 end
