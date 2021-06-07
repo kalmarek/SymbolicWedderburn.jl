@@ -169,16 +169,17 @@ function symmetry_adapted_basis(::Type{T}, G::Group, basis, action) where {T}
 end
 
 struct SemisimpleSummand{T}
-    constituent::T
+    basis::T
     multiplicity::Int
 end
 
-Base.Matrix(b::SemisimpleSummand) = Matrix{eltype(b.basis)}(b.basis)
-Base.Matrix{T}(b::SemisimpleSummand) where T = convert(Matrix{T}, b.basis)
+basis(b::SemisimpleSummand) = b.basis
+Base.convert(::Type{M}, b::SemisimpleSummand) where M<:AbstractMatrix = convert(M, basis(b))
 
 multiplicity(b::SemisimpleSummand) = b.multiplicity
+
 function degree(b::SemisimpleSummand)
-    d,r = divrem(size(b.basis, 1), b.multiplicity)
+    d,r = divrem(size(basis(b), 1), multiplicity(b))
     @assert iszero(r)
     return d
 end
@@ -201,7 +202,6 @@ function symmetry_adapted_basis(
     dot(multiplicities, degrees) == degree(ψ) ||
         @warn "chars do not constitute a complete basis for action:
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
-    constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
     return [
         SemisimpleSummand(isotypical_basis(χ), m) for

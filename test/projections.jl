@@ -50,27 +50,27 @@ end
 @testset "Symmetry adapted basis" begin
     G = PermGroup([perm"(1,2,3,4)"])
     basis = symmetry_adapted_basis(Complex{Rational{Int}}, G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     G = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
     basis = symmetry_adapted_basis(ComplexF64, G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     G = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
     basis = symmetry_adapted_basis(ComplexF64, G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     G = PermGroup([perm"(1,2,3,4)"])
     basis = symmetry_adapted_basis(Rational{Int}, G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     G = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
     basis = symmetry_adapted_basis(Float64, G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     G = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
     basis = symmetry_adapted_basis(G)
-    @test sum(first ∘ size, basis) == degree(G)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
     @time for ord = 2:16 # to keep running time reasonable
         @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(SmallPermGroups[ord])
@@ -80,11 +80,14 @@ end
 
             (ord,n) in ((11, 1), (13, 1)) && continue
 
-            @test all(rank(float.(b.constituent)) == size(b, 1) for b in basis)
+            @test all(basis) do b
+                B = convert(Matrix{Float64}, b)
+                rank(B) == size(B, 1)
+            end
 
-            @test sum(first ∘ size, basis) == degree(G)
+            @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
             basisC = symmetry_adapted_basis(Complex{T}, G)
-            @test sum(first ∘ size, basisC) == degree(G)
+            @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basisC) == degree(G)
         end
     end
 
@@ -101,13 +104,9 @@ end
 
             @test dot(SymbolicWedderburn.degree.(basis), SymbolicWedderburn.multiplicity.(basis)) == degree(G)
 
-            # (ord,n) in (,) && continue
-
-            # @test all(rank(float.(b)) == size(b, 1) for b in basis)
-
-            @test sum(first ∘ size, basis) == degree(G)
+            @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
             basisC = symmetry_adapted_basis(Complex{T}, G)
-            @test sum(first ∘ size, basisC) == degree(G)
+            @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basisC) == degree(G)
         end
     end
 end

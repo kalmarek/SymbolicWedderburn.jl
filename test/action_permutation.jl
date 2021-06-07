@@ -40,6 +40,7 @@ my_action(w::Word, g) = SymbolicWedderburn.action(OnLetters(), g, w)
     sa_basis = symmetry_adapted_basis(G, words, OnLetters())
 
     @test sa_basis isa Vector{<:SymbolicWedderburn.SemisimpleSummand{<:Matrix{<:SymbolicWedderburn.Cyclotomic}}}
-    @test [Matrix{Int}(b.constituent) for b in sa_basis] isa Vector{Matrix{Int}}
-    @test sum(first∘size, sa_basis) == length(words)
+    @test [convert(Matrix{Int}, b) for b in sa_basis] isa Vector{Matrix{Int}}
+    @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, sa_basis) == length(words)
 end

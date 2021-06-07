@@ -55,6 +55,6 @@ end
         @test M^2 ≈ one(M)
 
         B = SymbolicWedderburn.symmetry_adapted_basis(G, basis, MyAction());
-        @test sum(first∘size, B) == length(basis)
+        @test sum(first ∘ size ∘ SymbolicWedderburn.basis, B) == length(basis)
     end
 end
