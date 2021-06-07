@@ -171,9 +171,17 @@ end
 struct SemisimpleSummand{T}
     constituent::T
     multiplicity::Int
-    degree::Int
 end
-Base.size(b::SemisimpleSummand, args...) = size(b.constituent, args...)
+
+Base.Matrix(b::SemisimpleSummand) = Matrix{eltype(b.basis)}(b.basis)
+Base.Matrix{T}(b::SemisimpleSummand) where T = convert(Matrix{T}, b.basis)
+
+multiplicity(b::SemisimpleSummand) = b.multiplicity
+function degree(b::SemisimpleSummand)
+    d,r = divrem(size(b.basis, 1), b.multiplicity)
+    @assert iszero(r)
+    return d
+end
 
 function symmetry_adapted_basis(
     ::Type{T},
@@ -196,7 +204,7 @@ function symmetry_adapted_basis(
     constituents = [χ for (χ, m) in zip(real_chars, multiplicities) if m ≠ 0]
 
     return [
-        SemisimpleSummand(isotypical_basis(χ), m, d) for
-        (χ, m, d) in zip(real_chars, multiplicities, degrees) if m ≠ 0
+        SemisimpleSummand(isotypical_basis(χ), m) for
+        (χ, m) in zip(real_chars, multiplicities) if m ≠ 0
     ]
 end

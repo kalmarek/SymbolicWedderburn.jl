@@ -99,6 +99,8 @@ end
 
             basis = symmetry_adapted_basis(T, G)
 
+            @test dot(SymbolicWedderburn.degree.(basis), SymbolicWedderburn.multiplicity.(basis)) == degree(G)
+
             # (ord,n) in (,) && continue
 
             # @test all(rank(float.(b)) == size(b, 1) for b in basis)
