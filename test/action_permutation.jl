@@ -39,7 +39,8 @@ my_action(w::Word, g) = SymbolicWedderburn.action(OnLetters(), g, w)
     G = PermGroup(perm"(1,2,3)",perm"(1,2)") # G acts on words permuting letters
     sa_basis = symmetry_adapted_basis(G, words, OnLetters())
 
-    @test sa_basis isa Vector{<:Matrix{<:SymbolicWedderburn.Cyclotomic}}
-    @test Matrix{Int}.(sa_basis) isa Vector{Matrix{Int}}
-    @test sum(first∘size, sa_basis) == length(words)
+    @test sa_basis isa Vector{<:SymbolicWedderburn.SemisimpleSummand{<:Matrix{<:SymbolicWedderburn.Cyclotomic}}}
+    @test [convert(Matrix{Int}, b) for b in sa_basis] isa Vector{Matrix{Int}}
+    @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, sa_basis) == length(words)
 end
