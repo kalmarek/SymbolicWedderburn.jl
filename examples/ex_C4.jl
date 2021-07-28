@@ -8,38 +8,21 @@ using DynamicPolynomials
 using SumOfSquares
 using SCS
 
+OPTIMIZER = optimizer_with_attributes(
+    SCS.Optimizer,
+    "acceleration_lookback" => 10,
+    "max_iters" => 10_000,
+    "eps" => 1e-6,
+    "linear_solver" => SCS.DirectSolver,
+)
+
 include(joinpath(@__DIR__, "action_polynomials.jl"))
-
-SCS_Indirect, SCS_Direct =
-    let params = (
-            "acceleration_lookback" => 10,
-            "max_iters" => 10_000,
-            "eps" => 1e-6,
-        )
-        indir = optimizer_with_attributes(
-            SCS.Optimizer,
-            params...,
-            "linear_solver" => SCS.IndirectSolver,
-        )
-
-        dir = optimizer_with_attributes(
-            SCS.Optimizer,
-            params...,
-            "linear_solver" => SCS.DirectSolver,
-        )
-        indir, dir
-    end
-
-OPTIMIZER = let
-    SCS_Direct
-end
 
 N = 4
 
 @polyvar x[1:N]
 
-f =
-    sum(x) +
+f = sum(x) +
     sum(x .^ 2) +
     (sum((x .+ 1) .^ 2 .* (x .+ x') .^ 2))^2 * (1 + sum(x .^ 2))
 
@@ -61,8 +44,8 @@ end
     G = PermGroup([perm"(1,2)", Perm([2:N; 1])])
 
     t = @timed let
-        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, exponents.(basis), permuted)
-        SparseMatrixCSC{Float64,Int}.(sa_basis)
+        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis, PermutingVariables())
+        SparseMatrixCSC{Float64,Int}.(SymbolicWedderburn.basis.(ssimple_basis))
     end
 
     sa_basis, symmetry_adaptation_time = t.value, t.time

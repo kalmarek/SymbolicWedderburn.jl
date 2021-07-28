@@ -1,9 +1,6 @@
-using Pkg; Pkg.activate(@__DIR__)
-using Revise
-
 using SymbolicWedderburn
 using DynamicPolynomials
-const MP = DynamicPolynomials.MP
+using SparseArrays
 
 using GroupsCore
 include(joinpath(pkgdir(GroupsCore), "test", "cyclic.jl"))
@@ -35,7 +32,8 @@ end
 
 using Test
 
-let g = gens(G, 1)
+@testset "Decompose in basis" begin
+    g = gens(G, 1)
 
     basis = monomials([x,y], 0:4)
     k = SymbolicWedderburn.action(MyAction(), g, basis[2])
@@ -56,11 +54,15 @@ end
     g = gens(G, 1)
     basis = monomials([x,y], 0:4)
     ehom = SymbolicWedderburn.ExtensionHomomorphism(MyAction(), basis)
-    m = droptol!(SymbolicWedderburn.induce(MyAction(), ehom, g), 1e-30)
+    m = droptol!(SymbolicWedderburn.induce(MyAction(), ehom, g), 1e-15)
     @test eltype(m) == Float64
 
+    @test !(m ≈ one(m))
     @test m^2 ≈ one(m)
 
-    B = SymbolicWedderburn.symmetry_adapted_basis(G, basis, MyAction());
-    @test sum(first∘size, B) == length(basis)
+    ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis, MyAction());
+    degs = SymbolicWedderburn.degree.(ssimple_basis)
+    mlts = SymbolicWedderburn.multiplicity.(ssimple_basis)
+    @test sum(d*m for (d,m) in zip(degs, mlts)) == length(basis)
+    @test sum(first∘size∘SymbolicWedderburn.basis, ssimple_basis) == length(basis)
 end
