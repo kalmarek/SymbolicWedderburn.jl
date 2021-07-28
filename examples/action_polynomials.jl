@@ -1,8 +1,8 @@
 struct PermutingVariables <: SymbolicWedderburn.ByPermutations end
 
-function SymbolicWedderburn.action(::PermutingVariables, g::PermutationGroups.AbstractPerm, m::Monomial)
+function SymbolicWedderburn.action(a::PermutingVariables, g::PermutationGroups.AbstractPerm, m::Monomial)
     v = variables(m)
-    return m(v => map(i -> v[i^g], eachindex(v)))
+    return m(v => SymbolicWedderburn.action(a, g, v))
 end
 
 function SymbolicWedderburn.action(::PermutingVariables, g::PermutationGroups.AbstractPerm, v::AbstractVector)
