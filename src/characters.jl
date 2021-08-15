@@ -14,7 +14,7 @@ It is assumed that two class functions on the same group will return **identical
 """
 abstract type AbstractClassFunction{T} end # <: AbstractVector{T} ??
 
-Base.eltype(::AbstractClassFunction{T}) where {T} = T
+Base.eltype(::Type{<:AbstractClassFunction{T}}) where {T} = T
 
 function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     val = sum(
@@ -134,6 +134,9 @@ end
 function Base.deepcopy_internal(χ::CF, dict::IdDict) where {CF<:ClassFunction}
     return CF(copy(χ.vals), χ.inv_of, conjugacy_classes(χ))
 end
+
+Character{S}(χ::Character{T,Cl}) where {S,T,Cl} =
+    Character{S, Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
 
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
 VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} =
