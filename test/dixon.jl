@@ -243,8 +243,8 @@ end
     G = PermGroup([perm"(2,3)(4,5)"])
     chars = SymbolicWedderburn.characters_dixon(Int, G)
 
-    @test sprint(show, chars[1]) == "SymbolicWedderburn.Character: [1, 1]"
-    @test sprint(show, chars[2]) == "SymbolicWedderburn.Character: [1, -1]"
+    @test sprint(show, chars[1]) == "[1, 1]"
+    @test sprint(show, chars[2]) == "[1, -1]"
 
     @test occursin(
         "()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t 1*E(1)^0",

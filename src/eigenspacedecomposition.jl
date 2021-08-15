@@ -14,7 +14,7 @@ function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Number}
         end
 
         w = inv(A[pos, i])
-        A[pos, :] .*= w
+        A[pos, i:end] .*= w
 
         for j = 1:size(A, 1)
             if j != pos
@@ -47,7 +47,7 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
         w = inv(A[pos, i])
         # A[pos, :] .*= w
 
-        for idx in 1:size(A, 2)
+        for idx in i:size(A, 2)
             A[pos, idx] = if abs(A[pos, idx]) <= sqrt(eps(T))
                 Cyclotomics.zero!(A[pos, idx])
             elseif idx != i
@@ -60,7 +60,7 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
         for j = 1:size(A, 1)
             if j != pos
                 if abs(A[j, i]) < sqrt(eps(T))
-                    A[j, i] = Cyclotomics.zero!.(A[j, i])
+                    A[j, i] = Cyclotomics.zero!(A[j, i])
                 else
                     @. A[j, :] -= A[j, i] * A[pos, :]
                 end

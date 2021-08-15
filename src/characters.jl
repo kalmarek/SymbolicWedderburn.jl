@@ -248,7 +248,6 @@ for C in (:Character, :VirtualCharacter)
             limited = get(io, :limit, false)
             opn, cls = '[', ']'
 
-            print(io, string($C) * ": ")
             if limited && length(v) > 20
                 Base.show_delim_array(io, v, opn, ",", "", false, 1, 9)
                 print(io, "  …  ")
@@ -258,5 +257,8 @@ for C in (:Character, :VirtualCharacter)
                 Base.show_delim_array(io, v, opn, ",", cls, false)
             end
         end
+
+        Base.show(io::IO, ::Type{<:$C{T}}) where T =
+            print(io, $C, "{", T, ", …}")
     end
 end

@@ -57,9 +57,9 @@ function matrix_projection(
     vals::AbstractVector{T},
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
     dim = size(first(first(ccls)), 1),
-) where T
+) where {T}
 
-    return sum(val .* sum(g->inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
+    return sum(val .* sum(g -> inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
 end
 
 """
@@ -70,14 +70,20 @@ conjugacy classes `conjugacy_cls`.
 This corresponds to the classical definition of characters as a traces of the
 representation matrices.
 """
-function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl<:AbstractOrbit{<:AbstractPerm}}
+function action_character(
+    conjugacy_cls::AbstractVector{CCl},
+    inv_of = _inv_of(conjugacy_cls),
+) where {CCl<:AbstractOrbit{<:AbstractPerm}}
     vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Character(vals, inv_of, conjugacy_cls)
 end
 
-function action_character(conjugacy_cls::AbstractVector{CCl}, inv_of=_inv_of(conjugacy_cls)) where {CCl <: AbstractOrbit{<:AbstractMatrix}}
+function action_character(
+    conjugacy_cls::AbstractVector{CCl},
+    inv_of = _inv_of(conjugacy_cls),
+) where {CCl<:AbstractOrbit{<:AbstractMatrix}}
     vals = [tr(first(cc)) for cc in conjugacy_cls]
     return Character(vals, inv_of, conjugacy_cls)
 end
