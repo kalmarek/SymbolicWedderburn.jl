@@ -101,21 +101,18 @@ Return the coefficients of basis vectors in an invariant subspace corresponding 
 (so called _isotypical subspace_) in the action on `ℝⁿ` encoded by the conjugacy classes of `χ`.
 """
 function isotypical_basis(χ::AbstractClassFunction)
-
     u, weight = matrix_projection(χ)
     image, pivots = if iszero(weight)
         u_ = similar(u, 0, size(u, 2))
-        row_echelon_form(u_)
+        image_basis!(u_)
     else
         u .*= weight
-        row_echelon_form(u)
+        image_basis!(u)
     end
-    dim = length(pivots)
-    image_basis = image[1:dim, :]
+    @debug "isotypical subspace corresponding to χ has dimension $(length(pivots))" χ
 
-    @debug "isotypical subspace corresponding to χ has dimension $dim" χ
+    return image[pivots, :]
 
-    return image_basis
 end
 
 """

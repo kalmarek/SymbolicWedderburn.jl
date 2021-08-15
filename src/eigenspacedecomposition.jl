@@ -76,8 +76,16 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
     return A, pivots
 end
 
-function row_echelon_form(A::AbstractMatrix)
-    return row_echelon_form!(deepcopy(A))
+row_echelon_form(A::AbstractMatrix) = row_echelon_form!(deepcopy(A))
+
+image_basis(A::AbstractMatrix) = image_basis!(deepcopy(A))
+
+image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    return fact.Vt, 1:A_rank
 end
 
 function right_nullspace(M::AbstractMatrix{T}) where {T}
