@@ -229,8 +229,11 @@ function symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
         @error "characters do not constitute a complete basis for action:
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
 
-    return [
-        SemisimpleSummand(isotypical_basis(χ), m) for
-        (χ, m) in zip(real_chars, multiplicities) if m ≠ 0
-    ]
+    args = filter(!iszero∘last, collect(zip(chars, multiplicities)))
+
+    res = map(args) do (χ, m)
+        Threads.@spawn SemisimpleSummand(isotypical_basis(χ), m)
+    end
+
+    return fetch.(res)
 end

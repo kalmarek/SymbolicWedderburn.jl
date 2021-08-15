@@ -50,9 +50,12 @@ else
     (hom::InducedActionHomomorphism)(g::GroupElement) = induce(action(hom), hom, g)
 
     function (hom::InducedActionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
-        elts = hom.(orb)
-        dict = Dict(e => nothing for e in elts)
-        return Orbit(elts, dict)
+        S = typeof(hom(one(first(orb))))
+        elts = Vector{S}(undef, length(orb))
+        Threads.@threads for i in 1:length(orb)
+            elts[i] = hom(orb.elts[i])
+        end
+        return Orbit(elts)
     end
 
     function (hom::InducedActionHomomorphism)(chars::AbstractArray{<:Character})
