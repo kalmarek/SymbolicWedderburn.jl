@@ -63,7 +63,7 @@ to be orthogonal. If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to
 orthogonalize vectors within each block.
 """
 symmetry_adapted_basis(G::AbstractPermutationGroup, S::Type = Rational{Int}) =
-    symmetry_adapted_basis(characters_dixon(S, G))
+    _symmetry_adapted_basis(characters_dixon(S, G))
 
 symmetry_adapted_basis(T::Type, G::AbstractPermutationGroup, S::Type = Rational{Int}) =
     symmetry_adapted_basis(T, characters_dixon(S, G))
@@ -110,13 +110,18 @@ function symmetry_adapted_basis(
     return symmetry_adapted_basis(T, chars_ext)
 end
 
-function symmetry_adapted_basis(
-    ::Type{T},
-    chars::AbstractVector{<:AbstractClassFunction},
-) where {T}
-    chars = T <: Real ? affordable_real!(deepcopy.(chars)) : chars
-    return symmetry_adapted_basis(Character{T}.(chars))
-end
+symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction{T}}) where T =
+    symmetry_adapted_basis(T, chars)
+
+symmetry_adapted_basis(::Type{T}, chars::AbstractVector{<:AbstractClassFunction}) where T =
+    _symmetry_adapted_basis(Character{T}.(chars))
+
+symmetry_adapted_basis(T::Type{<:Real}, chars::AbstractVector{<:AbstractClassFunction}) =
+    _symmetry_adapted_basis(Character{T}.(affordable_real!(deepcopy.(chars))))
+
+symmetry_adapted_basis(::Type{T}, chars::AbstractVector{<:AbstractClassFunction{T}}) where T =
+    _symmetry_adapted_basis(chars)
+
 
 _multiplicities(ψ, chars) = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in chars]
 _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:AbstractFloat =
@@ -124,7 +129,7 @@ _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:
 _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:Complex =
     [round(Int, real(dot(ψ, χ) / dot(χ, χ))) for χ in chars]
 
-function symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
+function _symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
     ψ = let χ = first(chars)
         action_character(conjugacy_classes(χ), χ.inv_of)
     end
