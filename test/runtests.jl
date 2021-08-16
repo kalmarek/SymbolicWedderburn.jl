@@ -17,6 +17,7 @@ include("ccmatrix.jl")
 include("dixon.jl")
 include("characters.jl")
 include("projections.jl")
+include("sa_basis.jl")
 include("action_permutation.jl")
 include("action_linear.jl")
 
