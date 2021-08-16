@@ -22,9 +22,12 @@ function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
         (i, cc) in enumerate(conjugacy_classes(χ))
     )
     orderG = sum(length, conjugacy_classes(χ))
-    val = div(val, orderG)
+    val = _div(val, orderG)
     return val
 end
+
+_div(val, orderG) = div(val, orderG)
+_div(val::ComplexF64, orderG) = val/orderG
 
 Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
     conjugacy_classes(χ) === conjugacy_classes(ψ) && values(χ) == values(ψ)

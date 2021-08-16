@@ -118,12 +118,18 @@ function symmetry_adapted_basis(
     return symmetry_adapted_basis(Character{T}.(chars))
 end
 
+_multiplicities(ψ, chars) = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in chars]
+_multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:AbstractFloat =
+    [round(Int, dot(ψ, χ) / dot(χ, χ)) for χ in chars]
+_multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:Complex =
+    [round(Int, real(dot(ψ, χ) / dot(χ, χ))) for χ in chars]
+
 function symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
     ψ = let χ = first(chars)
         action_character(conjugacy_classes(χ), χ.inv_of)
     end
 
-    multiplicities = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in chars]
+    multiplicities = _multiplicities(ψ, chars)
     degrees = degree.(chars)
 
     @debug "Decomposition into character spaces:

@@ -1,5 +1,5 @@
 # Version over exact field:
-function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Number}
+function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Union{FiniteFields.GF, Cyclotomic{<:Rational}, Rational}}
     pivots = Int[]
     pos = 0
     for i = 1:size(A, 2)
@@ -85,6 +85,12 @@ image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
 function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
     fact = svd!(A)
     A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    return fact.Vt, 1:A_rank
+end
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
     return fact.Vt, 1:A_rank
 end
 
