@@ -16,7 +16,7 @@ SymbolicWedderburn.coeff_type(m::MyAction) = Float64
 function SymbolicWedderburn.action(a::MyAction, g::CyclicGroupElement, m::Monomial)
     isone(g) && return m
     x, y = variables(m)
-    return m(x => (x+y)/sqrt(2), y => (x-y)/sqrt(2))
+    return m(x => (x+y)/sqrt(2), y => (x-y)/sqrt(2)) # action must be orthogonal
 end
 
 function SymbolicWedderburn.decompose(k::AbstractPolynomial, hom::SymbolicWedderburn.InducedActionHomomorphism)
