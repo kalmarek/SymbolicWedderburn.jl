@@ -8,23 +8,15 @@ acting naturally on the set `1:d`) the result will be a matrix of size `(d,d)`.
 
 Returned tuple consist of the matrix realization of the projection and a coefficient (its weight).
 """
-function matrix_projection(χ::Character{T}) where {T}
-    U = matrix_projection(values(χ), conjugacy_classes(χ))
-    deg = degree(χ)
-    ordG = sum(length, conjugacy_classes(χ))
-
-    return U, T(deg) / ordG
-end
-
-function matrix_projection(χ::AbstractClassFunction)
+function matrix_projection(χ::AbstractClassFunction{T}) where T
     deg = degree(χ)
     if iszero(deg) # short circuting the trivial case
-        return zeros(eltype(χ), 0, degree(first(first(conjugacy_classes(χ))))), deg
+        return zeros(eltype(χ), 0, 0), zero(deg)
     end
     ordG = sum(length, conjugacy_classes(χ))
     U = matrix_projection(values(χ), conjugacy_classes(χ))
 
-    return U, deg / ordG
+    return U, T(deg) / ordG
 end
 
 """
