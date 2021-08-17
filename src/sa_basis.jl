@@ -117,7 +117,7 @@ symmetry_adapted_basis(::Type{T}, chars::AbstractVector{<:AbstractClassFunction}
     _symmetry_adapted_basis(Character{T}.(chars))
 
 symmetry_adapted_basis(T::Type{<:Real}, chars::AbstractVector{<:AbstractClassFunction}) =
-    _symmetry_adapted_basis(Character{T}.(affordable_real!(deepcopy.(chars))))
+    _symmetry_adapted_basis(Character{T}.(affordable_real(chars)))
 
 symmetry_adapted_basis(::Type{T}, chars::AbstractVector{<:AbstractClassFunction{T}}) where T =
     _symmetry_adapted_basis(chars)

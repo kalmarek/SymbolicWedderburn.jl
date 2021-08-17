@@ -63,11 +63,11 @@ function affordable_real!(
 )
     ι = frobenius_schur_indicator(χ, pmap)
     if ι <= 0 # i.e. χ is complex or quaternionic
-        for i in eachindex(χ.vals)
-            χ.vals[i] += conj(χ.vals[i])
-        end
+        χ.vals .+= values(conj(χ))
+        return χ
+    else
+        return χ
     end
-    return χ
 end
 
 """
@@ -135,7 +135,7 @@ function VirtualCharacter(
     return χ
 end
 
-function Base.deepcopy_internal(χ::CF, dict::IdDict) where {CF<:ClassFunction}
+function Base.deepcopy_internal(χ::CF, ::IdDict) where {CF<:ClassFunction}
     return CF(copy(χ.vals), χ.inv_of, conjugacy_classes(χ))
 end
 

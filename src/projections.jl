@@ -81,12 +81,14 @@ function action_character(
 end
 
 """
-    affordable_real!(chars::AbstractVector{<:AbstractClassFunction})
+    affordable_real(chars::AbstractVector{<:AbstractClassFunction})
 Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
 """
-function affordable_real!(chars::AbstractVector{T}) where {T<:AbstractClassFunction}
-    all(all(isreal, values(χ)) for χ in chars) && return chars
+function affordable_real(chars::AbstractVector{<:AbstractClassFunction})
     pmap = PowerMap(conjugacy_classes(first(chars)))
-    res = affordable_real!.(chars, Ref(pmap))
-    return unique!(res)
+    return unique!(map(chars) do χ
+        χ = deepcopy(χ)
+        affordable_real!(χ, pmap)
+    end
+    )
 end

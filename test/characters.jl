@@ -31,10 +31,11 @@
     @test 2ψ != χ
     @test hash((2ψ/2).vals) == hash(χ.vals)
 
-    @test SymbolicWedderburn.affordable_real!(deepcopy(χ)) isa SymbolicWedderburn.Character
-
     @test PermutationGroups.degree(χ) == 2
+
     @test size(SymbolicWedderburn.isotypical_basis(χ), 1) == 4
+
+    @test SymbolicWedderburn.affordable_real!(deepcopy(χ)) isa SymbolicWedderburn.Character
 
     @test ι(SymbolicWedderburn.affordable_real!(deepcopy(χ))) == 2*ι(χ)
 end

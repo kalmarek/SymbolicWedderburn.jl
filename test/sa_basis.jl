@@ -2,7 +2,7 @@
     G = SmallPermGroups[10][2] # C₂⊕C₅
 
     chars = SymbolicWedderburn.characters_dixon(G)
-    charsR = SymbolicWedderburn.affordable_real!(deepcopy.(chars))
+    charsR = SymbolicWedderburn.affordable_real(chars)
 
     @test all(isone ∘ degree, chars)
     @test all(χ -> isone(dot(χ, χ)), chars)
@@ -70,7 +70,7 @@ end
                         Rational{Int}
                     end
 
-                    chars = SymbolicWedderburn.affordable_real!(
+                    chars = SymbolicWedderburn.affordable_real(
                         SymbolicWedderburn.characters_dixon(S, G)
                     )
 
