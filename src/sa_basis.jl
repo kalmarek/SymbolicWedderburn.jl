@@ -123,7 +123,7 @@ symmetry_adapted_basis(::Type{T}, chars::AbstractVector{<:AbstractClassFunction{
     _symmetry_adapted_basis(chars)
 
 
-_multiplicities(ψ, chars) = Int[Int(dot(ψ, χ)) / Int(dot(χ, χ)) for χ in chars]
+_multiplicities(ψ, chars) = Int[div(Int(dot(ψ, χ)), Int(dot(χ, χ))) for χ in chars]
 _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:AbstractFloat =
     [round(Int, dot(ψ, χ) / dot(χ, χ)) for χ in chars]
 _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:Complex =

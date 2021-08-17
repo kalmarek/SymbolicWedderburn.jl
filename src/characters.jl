@@ -27,6 +27,7 @@ function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
 end
 
 _div(val, orderG) = div(val, orderG)
+_div(val::AbstractFloat, orderG) = val/orderG
 _div(val::ComplexF64, orderG) = val/orderG
 
 Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
