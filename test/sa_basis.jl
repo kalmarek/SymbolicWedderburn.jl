@@ -1,27 +1,46 @@
+@testset "affordable real degrees/dot" begin
+    G = SmallPermGroups[10][2] # C₂⊕C₅
+
+    chars = SymbolicWedderburn.characters_dixon(G)
+    charsR = SymbolicWedderburn.affordable_real!(deepcopy.(chars))
+
+    @test all(isone ∘ degree, chars)
+    @test all(χ -> isone(dot(χ, χ)), chars)
+    chars_fl = SymbolicWedderburn.Character{ComplexF64}.(chars)
+    @test all(isone ∘ degree, chars_fl)
+    @test all(χ -> isapprox(dot(χ, χ), 1), chars_fl)
+
+    @test degree.(charsR) == [dot(χ, χ) for χ in charsR] == [1,1,2,2,2,2]
+    charsR_fl = SymbolicWedderburn.Character{Float64}.(charsR)
+    @test all(degree.(charsR_fl) .≈ [dot(χ, χ) for χ in charsR_fl] .≈ [1,1,2,2,2,2])
+end
+
 @testset "Symmetry adapted basis" begin
-    G = PermGroup([perm"(1,2,3,4)"])
-    basis = symmetry_adapted_basis(G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
+    C₄ = PermGroup([perm"(1,2,3,4)"])
+    A₄ = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
+    S₄ = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
 
-    G = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
-    basis = symmetry_adapted_basis(ComplexF64, G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
 
-    G = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
-    basis = symmetry_adapted_basis(ComplexF64, G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
+    basis = symmetry_adapted_basis(C₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(C₄)
+    basis = symmetry_adapted_basis(A₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(A₄)
+    basis = symmetry_adapted_basis(S₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(S₄)
 
-    G = PermGroup([perm"(1,2,3,4)"])
-    basis = symmetry_adapted_basis(Float64, G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
+    basis = symmetry_adapted_basis(ComplexF64, C₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(C₄)
+    basis = symmetry_adapted_basis(ComplexF64, A₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(A₄)
+    basis = symmetry_adapted_basis(ComplexF64, S₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(S₄)
 
-    G = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
-    basis = symmetry_adapted_basis(Float64, G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
-
-    G = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
-    basis = symmetry_adapted_basis(G)
-    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(G)
+    basis = symmetry_adapted_basis(Float64, C₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(C₄)
+    basis = symmetry_adapted_basis(Float64, A₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(A₄)
+    basis = symmetry_adapted_basis(Float64, S₄)
+    @test sum(first ∘ size ∘ SymbolicWedderburn.basis, basis) == degree(S₄)
 end
 
 
