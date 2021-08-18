@@ -129,6 +129,14 @@ _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:
 _multiplicities(ψ, chars::AbstractVector{<:AbstractClassFunction{T}}) where T<:Complex =
     [round(Int, real(dot(ψ, χ) / dot(χ, χ))) for χ in chars]
 
+macro spawn_compat(expr)
+    @static if VERSION < v"1.3.0"
+        return :(@async $(esc(expr)))
+    else
+        return :(Threads.@spawn $(esc(expr)))
+    end
+end
+
 function _symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
     ψ = let χ = first(chars)
         action_character(conjugacy_classes(χ), χ.inv_of)
@@ -145,11 +153,8 @@ function _symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
         @error "characters do not constitute a complete basis for action:
         $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
 
-    args = filter(!iszero ∘ last, collect(zip(chars, multiplicities)))
-
-    res = map(args) do (χ, m)
-        Threads.@spawn SemisimpleSummand(isotypical_basis(χ), m)
-    end
-
+    res = [@spawn_compat(SemisimpleSummand(isotypical_basis(χ), m)) for (χ, m)
+        in zip(chars, multiplicities) if m ≠ 0]
+        
     return fetch.(res)
 end
