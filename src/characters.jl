@@ -36,6 +36,8 @@ Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
 Base.hash(χ::AbstractClassFunction, h::UInt) =
     hash(conjugacy_classes(χ), hash(values(χ), hash(AbstractClassFunction, h)))
 
+Base.parent(χ::AbstractClassFunction) = parent(first(first(conjugacy_classes(χ))))
+
 ####################################
 # Characters
 
@@ -190,8 +192,7 @@ conjugacy_classes(χ::ClassFunction) = χ.cc
 Base.conj(χ::Cf) where {Cf<:ClassFunction} =
     Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
 
-PermutationGroups.degree(χ::Character) = Int(χ.vals[1])
-    # Int(χ(one(first(first(conjugacy_classes(χ))))))
+PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
@@ -209,8 +210,7 @@ end
 
 function normalize!(χ::Character)
 
-    ccG = conjugacy_classes(χ)
-    id = one(first(first(ccG)))
+    id = one(parent(χ))
 
     k = χ(id)
     if !isone(k)
