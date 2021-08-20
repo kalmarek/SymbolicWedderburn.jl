@@ -51,7 +51,7 @@ the invariant basis are returned in (orthogonal) blocks corresponding to irreduc
 characters of `G`.
 
 Arguments:
-* `S` controlls the types of `Cyclotomic`s used in the computation of
+* `S` controls the types of `Cyclotomic`s used in the computation of
 character table. Exact type are preferred. For larger groups `G` `Rational{BigInt}`
 might be necessary.
 * `T` controls the type of coefficients of the returned basis.
