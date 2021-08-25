@@ -193,6 +193,9 @@ Base.conj(χ::Cf) where {Cf<:ClassFunction} =
     Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
 
 PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))
+PermutationGroups.degree(
+    χ::Character{T,CCl},
+) where {T,CCl<:AbstractOrbit{<:AbstractMatrix}} = Int(χ[1])
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
