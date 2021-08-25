@@ -101,19 +101,17 @@ end
 function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
     fact = svd!(A)
     A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
-    return fact.Vt, 1:A_rank
+    return fact.U, 1:A_rank
 end
 
 function right_nullspace(M::AbstractMatrix{T}) where {T}
-    A, l = row_echelon_form(M)
-    c, d = size(A)
-    (length(l) == d) && return zeros(T, d)
-    W = zeros(T, d, d - length(l))
-    i = 0
-    for el in setdiff(1:d, l)
-        i += 1
+    A, pivots = row_echelon_form(M)
+    ncolsA = size(A, 2)
+    length(pivots) == ncolsA && return zeros(T, ncolsA, 0)
+    W = zeros(T, ncolsA, ncolsA - length(pivots))
+    for (i, el) in enumerate(setdiff(1:ncolsA, pivots))
         W[el, i] += 1
-        for (j, k) in enumerate(l)
+        for (j, k) in enumerate(pivots)
             if j < el
                 W[k, i] -= A[j, el]
             end
@@ -126,6 +124,23 @@ function left_nullspace(M::AbstractMatrix)
     return transpose(right_nullspace(transpose(M)))
 end
 
+# function left_nullspace(M::AbstractMatrix{T}) where {T}
+#     At, pivots = row_echelon_form(transpose(M))
+#     A = transpose(A)
+#     nrows = size(A, 1)
+#     length(pivots) == ncolsA && return zeros(T, 0,0)
+#     W = zeros(T, nrowsA - length(pivots), nrowsA)
+#     for (i, el) in enumerate(setdiff(1:rowsA, pivots))
+#         W[i, el] += 1
+#         for (j, k) in enumerate(pivots)
+#             if j < el
+#                 W[i,k] -= A[el, j]
+#             end
+#         end
+#     end
+#     return W
+# end
+
 function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
     @assert ==(size(M)...)
     eigen = Dict{T,typeof(M)}()
@@ -134,12 +149,8 @@ function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
         cumdim >= size(M, 1) && break
         #do left eigenspaces!
         basis = first(row_echelon_form!(left_nullspace(M - i * I)))
-        nullity = size(basis, 1)
-        if (nullity == 1) && all(iszero, basis)
-            nullity -= 1 # left_nullspace returns trivial kernel if kernel is empty
-        end
-        if nullity > 0
-            cumdim += nullity
+        if size(basis, 1) > 0 # nullity
+            cumdim += size(basis, 1)
             eigen[i] = basis
         end
     end
@@ -231,7 +242,7 @@ function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where {T}
     nptrs = [1]
     for (i, e) in enumerate(esd)
         if size(e, 1) > 1
-            esd2, ptrs = eigen_decomposition!(e * M[:, _find_l(e)])
+            esd2, ptrs = eigen_decomposition!(e * @view M[:, _find_l(e)])
             nbasis = vcat(nbasis, esd2 * e)
             append!(nptrs, ptrs .+ (pop!(nptrs) - 1))
         else
