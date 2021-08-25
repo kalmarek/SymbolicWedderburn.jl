@@ -5,6 +5,7 @@ using Primes
 
 using Cyclotomics
 using GroupsCore
+using StarAlgebras
 
 import PermutationGroups:
     AbstractOrbit, AbstractPerm, AbstractPermutationGroup, Orbit, Perm, degree
@@ -23,6 +24,7 @@ include("dixon.jl")
 
 include("actions.jl")
 include("projections.jl")
+include("primitive_idempotents.jl")
 include("sa_basis.jl")
 
 end # module

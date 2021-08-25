@@ -24,7 +24,7 @@ struct SemisimpleSummand{T}
     multiplicity::Int
 end
 
-basis(b::SemisimpleSummand) = b.basis
+StarAlgebras.basis(b::SemisimpleSummand) = b.basis
 Base.convert(::Type{M}, b::SemisimpleSummand) where {M<:AbstractMatrix} =
     convert(M, basis(b))
 
