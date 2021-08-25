@@ -61,10 +61,11 @@ function _multiplicities(
 
     e = Int(exponent(cclasses))
     ie = inv(F(e))
-    ω = FiniteFields.rootofunity(F, e)
-    ωs = Matrix{typeof(ω)}(undef, e, e)
+
+    ω⁻¹ = inv(FiniteFields.rootofunity(F, e))
+    ωs = Matrix{typeof(ω⁻¹)}(undef, e, e)
     Threads.@threads for k in 0:e-1
-        ω⁻ᵏ = ω^-k
+        ω⁻ᵏ = ω⁻¹^k
         for l in 0:e-1
             ωs[l+1, k+1] = ω⁻ᵏ^l
         end
@@ -72,6 +73,7 @@ function _multiplicities(
 
     multiplicities = zeros(Int, length(chars), length(cclasses), e)
     powermap = PowerMap(cclasses)
+
     for (i, χ) in enumerate(chars)
         Threads.@threads for j = 1:length(cclasses)
             for k = 0:e-1
@@ -102,7 +104,7 @@ function complex_characters(
     complex_chars = Vector{Character{C,CCl}}(undef, length(chars))
 
     Es = [E(e, k) for k in 0:e-1]
-    for i = 1:length(complex_chars)
+    Threads.@threads for i = 1:length(complex_chars)
         complex_chars[i] = Character{C,CCl}(
             [
                 Cyclotomics.reduced_embedding(
