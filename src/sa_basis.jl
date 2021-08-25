@@ -16,7 +16,7 @@ function isotypical_basis(χ::AbstractClassFunction)
     end
     @debug "isotypical subspace corresponding to χ has dimension $(length(pivots))" χ
 
-    return image[pivots, :]
+    return image[1:length(pivots), :]
 end
 
 struct SemisimpleSummand{T}
