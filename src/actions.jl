@@ -2,7 +2,7 @@ abstract type Action end
 abstract type ByPermutations <: Action end
 abstract type ByLinearTransformation <: Action end
 
-abstract type InducedActionHomomorphism{T} end
+abstract type InducedActionHomomorphism{A, T} end
 
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     throw(
@@ -25,11 +25,13 @@ implements:
 * action(hom::InducedActionHomomorphism, g::GroupElement, feature) → return action of `g` on `feature`
 =#
 
-struct ExtensionHomomorphism{T,A,I,V} <: InducedActionHomomorphism{T}
+struct ExtensionHomomorphism{A,T,I,V} <: InducedActionHomomorphism{A, T}
     ac::A
     features::V # supports linear indexing
     reversef::Dict{T,I}
 end
+
+_inttype(::ExtensionHomomorphism{A,T,I}) where {A,T,I} = I
 
 @static if VERSION < v"1.3.0"
     # cannot add methods to an abstract type in pre Julia v1.3
@@ -52,7 +54,7 @@ else
     function (hom::InducedActionHomomorphism)(orb::O) where {T,O<:AbstractOrbit{T,Nothing}}
         S = typeof(hom(one(first(orb))))
         elts = Vector{S}(undef, length(orb))
-        Threads.@threads for i in 1:length(orb)
+        for i in 1:length(orb)
             elts[i] = hom(orb.elts[i])
         end
         return Orbit(elts)
@@ -80,10 +82,11 @@ action(hom::ExtensionHomomorphism) = hom.ac
 
 # user convenience functions:
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
-Base.getindex(ehom::ExtensionHomomorphism{T}, f::T) where {T} = ehom.reversef[f]
+Base.getindex(ehom::ExtensionHomomorphism{A,T}, f::T) where {A,T} = ehom.reversef[f]
 
 function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
-    return Perm(vec([hom[action(action(hom), g, f)] for f in features(hom)]))
+    I = _inttype(hom)
+    return Perm(vec(I[hom[action(action(hom), g, f)] for f in features(hom)]))
 end
 
 using SparseArrays
@@ -106,6 +109,25 @@ function induce(ac::ByLinearTransformation, hom::InducedActionHomomorphism, g::G
 end
 
 # ala permutation action
-function decompose(m::T, hom::ExtensionHomomorphism{T}) where {T}
-    return [hom[m]], [one(coeff_type(hom.ac))]
+function decompose(m::T, hom::InducedActionHomomorphism{A, T}) where {A, T}
+    return [hom[m]], [one(coeff_type(action(hom)))]
+end
+
+struct CachedExtensionHomomorphism{A, T, G, H, E<:InducedActionHomomorphism{A, T}} <: InducedActionHomomorphism{A,T}
+    ehom::E
+    cache::Dict{G, H}
+end
+
+for f in (:_inttype, :features, :action)
+    @eval $f(h::CachedExtensionHomomorphism) = $f(h.ehom)
+end
+
+CachedExtensionHomomorphism{G, H}(hom::InducedActionHomomorphism) where {G,H} =
+    CachedExtensionHomomorphism(hom, Dict{G, H}())
+
+function induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
+    if !haskey(hom.cache, g)
+        hom.cache[g] = induce(ac, hom.ehom, g)
+    end
+    return hom.cache[g]
 end
