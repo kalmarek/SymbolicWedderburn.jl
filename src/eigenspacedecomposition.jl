@@ -3,22 +3,33 @@ function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Union{FiniteFields.GF
     pivots = Int[]
     pos = 0
     for i = 1:size(A, 2)
-        j = findfirst(x -> !iszero(x), @view A[pos+1:end, i])
+        j = findnext(x -> !iszero(x), @view(A[:, i]), pos+1)
         j === nothing && continue
-        j += pos
         pos += 1
         push!(pivots, i)
 
+        # swap the rows so that
         if (pos != j)
-            A[[pos, j], :] .= A[[j, pos], :]
+            for k in 1:size(A, 2)
+                A[pos, k], A[j, k] = A[j, k], A[pos, k]
+            end
         end
+        # A[pos, :] is the row with leading nz in i-th column
 
         w = inv(A[pos, i])
-        A[pos, i:end] .*= w
+        # all columns to the left of i are zeroed (below pivots) so we start at i
+        for colidx in i:size(A, 2)
+            A[pos, colidx] *= w
+        end
+        # A[pos, i] is 1 now
 
-        for j = 1:size(A, 1)
-            if j != pos
-                @. A[j, :] -= A[j, i] * A[pos, :]
+        # zero the whole i-th column above and below pivot:
+        for rowidx = 1:size(A, 1)
+            rowidx == pos && continue # don't zero the active row
+            v = A[rowidx, i]
+            iszero(v) && continue
+            for k in i:size(A, 2) # to the left of pivot everything is zero
+                A[rowidx, k] -= v * A[pos, k]
             end
         end
     end
@@ -30,39 +41,38 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
     pos = 0
     for i = 1:size(A, 2)
 
-        j = findfirst(x -> abs(x) > sqrt(eps(T)), @view A[pos+1:end, i])
-        if j === nothing
-            # A[pos+1:end, :] .= Cyclotomics.zero!.(@view A[pos+1:end, :])
-            continue
-        end
-        j += pos
+        j = findnext(x -> abs(x) > sqrt(eps(T)), @view(A[:, i]), pos+1)
+        j === nothing && continue
         pos += 1
         push!(pivots, i)
 
         if (pos != j)
-            A[[pos, j], :] .= A[[j, pos], :]
+            for k in 1:size(A, 2)
+                A[pos, k], A[j, k] = A[j, k], A[pos, k]
+            end
         end
 
         @assert abs(A[pos, i]) >= sqrt(eps(T))
         w = inv(A[pos, i])
-        # A[pos, :] .*= w
 
-        for idx in i:size(A, 2)
-            A[pos, idx] = if abs(A[pos, idx]) <= sqrt(eps(T))
-                Cyclotomics.zero!(A[pos, idx])
-            elseif idx != i
-                A[pos, idx] * w
+        for colidx in i:size(A, 2)
+            if abs(A[pos, colidx]) <= sqrt(eps(T))
+                Cyclotomics.zero!(A[pos, colidx])
+            elseif colidx == i
+                Cyclotomics.one!(A[pos, colidx])
             else
-                Cyclotomics.one!(A[pos, idx])
+                A[pos, colidx] *= w
             end
         end
 
-        for j = 1:size(A, 1)
-            if j != pos
-                if abs(A[j, i]) < sqrt(eps(T))
-                    A[j, i] = Cyclotomics.zero!(A[j, i])
-                else
-                    @. A[j, :] -= A[j, i] * A[pos, :]
+        for rowidx = 1:size(A, 1)
+            rowidx == pos && continue
+            v = A[rowidx, i]
+            if abs(v) < sqrt(eps(T))
+                Cyclotomics.zero!(v)
+            else
+                for k in i:size(A, 2)
+                    A[rowidx, k] -= v * A[pos, k]
                 end
             end
         end
