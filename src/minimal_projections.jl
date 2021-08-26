@@ -128,28 +128,10 @@ function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
     idems,
 )
-    # res = fetch.([Threads.@spawn rank_one_projection(χ, idems) for χ in chars])
-    res = [rank_one_projection(χ, idems) for χ in chars]
-    #res are sparse storage
+    res = fetch.([Threads.@spawn rank_one_projection(χ, idems) for χ in chars])
+    # res = [rank_one_projection(χ, idems) for χ in chars]
+    # res are sparse storage
 
     RG = parent(first(idems))
     return [µ*AlgebraElement(χ, RG) for (µ,χ) in zip(res, chars)] # dense storage
-end
-
-function matrix_projection(
-    hom::InducedActionHomomorphism{<:ByPermutations},
-    α::AlgebraElement,
-    dim = length(features(hom)),
-)
-    result = zeros(eltype(α), dim, dim)
-    b = basis(parent(α))
-
-    @inbounds for (j, a) in StarAlgebras._nzpairs(coeffs(α))
-        g = hom(b[j])
-        for i in 1:dim
-            result[i, i^g] += a
-        end
-    end
-
-    return result
 end

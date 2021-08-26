@@ -1,38 +1,24 @@
 """
-    matrix_projection(χ::AbstractClassFunction)
-Compute matrix projection associated to the abstract class function `χ`.
+    matrix_projection_irr(χ::Character)
+Compute matrix projection associated to the irreducible character `χ`.
 
 The dimension `d` of the projection is derived from `conjugacy_classes(χ)`.
 E.g. if `conjugacy_classes(χ)` consist of permutations of degree `d` (i.e.
 acting naturally on the set `1:d`) the result will be a matrix of size `(d,d)`.
-
-Returned tuple consist of the matrix realization of the projection and a coefficient (its weight).
 """
-function matrix_projection(χ::AbstractClassFunction{T}) where T
-    deg = degree(χ)
-    if iszero(deg) # short circuting the trivial case
-        return zeros(eltype(χ), 0, 0), zero(deg)
-    end
-    ordG = sum(length, conjugacy_classes(χ))
-    U = matrix_projection(values(χ), conjugacy_classes(χ))
-
-    return U, T(deg) / ordG
+function matrix_projection_irr(χ::Character{T}) where T
+    @assert isirreducible(χ)
+    mproj = matrix_projection_irr(collect(values(χ)), conjugacy_classes(χ))
+    mproj .*= degree(χ) // sum(length, conjugacy_classes(χ)) # χ(1)/order(G)
+    return mproj
 end
 
-"""
-    matrix_projection(vals, ccls)
-Return matrix projection defined by an abstract class function with values `vals`
-attained on (the corresponding) conjugacy classes `ccls`.
-
-The dimension of the projection is equal to the degree of the permutations in `ccls`.
-"""
-function matrix_projection(
-    vals::AbstractVector{T},
+function matrix_projection_irr(
+    vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}},
-    dim = degree(first(first(ccls))),
-) where {T}
-
-    result = zeros(T, dim, dim)
+)
+    dim = degree(first(first(ccls)))
+    result = zeros(eltype(vals), dim, dim)
 
     for (val, cc) in zip(vals, ccls)
         for g in cc
@@ -45,50 +31,91 @@ function matrix_projection(
     return result
 end
 
-function matrix_projection(
-    vals::AbstractVector{T},
+function matrix_projection_irr(
+    vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
     dim = size(first(first(ccls)), 1),
-) where {T}
-
+)
     return sum(val .* sum(g -> inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
 end
 
-"""
-    action_character(conjugacy_cls)
-Return the character of the representation given by the elements in the
-conjugacy classes `conjugacy_cls`.
+## versions with InducedActionHomomorphisms
 
-This corresponds to the classical definition of characters as a traces of the
-representation matrices.
-"""
-function action_character(
-    conjugacy_cls::AbstractVector{CCl},
-    inv_of = _inv_of(conjugacy_cls),
-) where {CCl<:AbstractOrbit{<:AbstractPerm}}
-    vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
-    # in general:
-    # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
-    return Character(vals, inv_of, conjugacy_cls)
+function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character)
+    @assert isirreducible(χ)
+    mproj = matrix_projection_irr(hom, collect(values(χ)), conjugacy_classes(χ))
+    mproj .*= degree(χ) // sum(length, conjugacy_classes(χ)) # χ(1)/order(G)
+    return mproj
 end
 
-function action_character(
-    conjugacy_cls::AbstractVector{CCl},
-    inv_of = _inv_of(conjugacy_cls),
-) where {CCl<:AbstractOrbit{<:AbstractMatrix}}
-    vals = [tr(first(cc)) for cc in conjugacy_cls]
-    return Character(vals, inv_of, conjugacy_cls)
-end
-
-"""
-    affordable_real(chars::AbstractVector{<:AbstractClassFunction})
-Return _real_ characters formed from `chars` by replacing `χ` with `2re(χ)` when necessary.
-"""
-function affordable_real(chars::AbstractVector{<:AbstractClassFunction})
-    pmap = PowerMap(conjugacy_classes(first(chars)))
-    return unique!(map(chars) do χ
-        χ = deepcopy(χ)
-        affordable_real!(χ, pmap)
-    end
+function matrix_projection_irr(
+    hom::InducedActionHomomorphism{<:ByPermutations},
+    class_values,
+    conjugacy_cls,
     )
+    dim = degree(g)
+    result = zeros(eltype(class_values), dim, dim)
+    for (val, ccl) in zip(class_values, conjugacy_cls)
+        for g in ccl
+            h = hom(g)
+            for i in 1:dim
+                result[i, i^g] += val
+            end
+        end
+    end
+    return result
+end
+
+function matrix_projection(χ::Character)
+    tbl = table(χ)
+    return sum(
+        c * matrix_projection_irr(ψ)
+        for (c, ψ) in zip(constituents(χ), irreducible_characters(tbl)) if !iszero(c)
+    )
+end
+
+function matrix_projection_irr(
+    hom::InducedActionHomomorphism{<:ByLinearTransformation},
+    class_values,
+    conjugacy_cls,
+)
+    return sum(
+        val .* sum(g -> hom(inv(Matrix(g))), cc)
+        for (val, cc) in zip(class_values, conjugacy_cls)
+    )
+end
+
+function matrix_projection(
+    hom::InducedActionHomomorphism{<:ByPermutations},
+    α::AlgebraElement,
+    dim = length(features(hom)),
+)
+    result = zeros(eltype(α), dim, dim)
+    b = basis(parent(α))
+
+    @inbounds for (j, a) in StarAlgebras._nzpairs(coeffs(α))
+        g = hom(b[j])
+        for i in 1:dim
+            result[i, i^g] += a
+        end
+    end
+
+    return result
+end
+
+function matrix_projection(
+    α::AlgebraElement,
+    dim = length(basis(parent(α)))
+)
+    result = zeros(eltype(α), dim, dim)
+    b = basis(parent(α))
+
+    @inbounds for (j, a) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+        g = b[j]
+        for i in 1:dim
+            result[i, i^g] += a
+        end
+    end
+
+    return result
 end
