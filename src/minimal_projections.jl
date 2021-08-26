@@ -100,10 +100,10 @@ function rank_one_projection(χ::AbstractClassFunction, idems, iters=3)
     RG = parent(first(idems))
     T = eltype(first(idems))
 
-    degree(χ) == 1 && return one(RG, T)
+    degree(χ) == 1 && return one(RG, T), true
 
     for µ in idems
-        isone(χ(µ)) && µ^2 == µ && return µ
+        isone(χ(µ)) && µ^2 == µ && return µ, true
     end
 
     for n in 2:iters
@@ -111,7 +111,7 @@ function rank_one_projection(χ::AbstractClassFunction, idems, iters=3)
             µ = *(elts...)
             if isone(χ(µ))
                 if µ^2 == µ
-                    return µ
+                    return µ, true
                 end
             end
         end
@@ -120,7 +120,7 @@ function rank_one_projection(χ::AbstractClassFunction, idems, iters=3)
         @warn "Could not find minimal projection for $χ."
     end
 
-    return one(RG, T)
+    return one(RG, T), false
 end
 
 # here idems is an iterator over AlgebraElements with may be idempotents
@@ -130,8 +130,8 @@ function minimal_projection_system(
 )
     res = fetch.([Threads.@spawn rank_one_projection(χ, idems) for χ in chars])
     # res = [rank_one_projection(χ, idems) for χ in chars]
-    # res are sparse storage
 
+    r1p, simple = first.(res), last.(res) # rp1 are sparse storage
     RG = parent(first(idems))
-    return [µ*AlgebraElement(χ, RG) for (µ,χ) in zip(res, chars)] # dense storage
+    return [µ*AlgebraElement(χ, RG) for (µ,χ) in zip(r1p, chars)], simple # dense storage
 end
