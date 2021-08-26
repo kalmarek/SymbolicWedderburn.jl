@@ -18,8 +18,8 @@ include("eigenspacedecomposition.jl")
 include("cmmatrix.jl")
 
 include("powermap.jl")
+include("character_tables.jl")
 include("characters.jl")
-include("characters_arith.jl")
 include("dixon.jl")
 
 include("actions.jl")
