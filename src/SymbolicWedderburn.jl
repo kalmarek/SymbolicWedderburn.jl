@@ -24,7 +24,7 @@ include("dixon.jl")
 
 include("actions.jl")
 include("projections.jl")
-include("primitive_idempotents.jl")
+include("minimal_projections.jl")
 include("sa_basis.jl")
 
 end # module
