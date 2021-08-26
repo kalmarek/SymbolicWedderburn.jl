@@ -32,28 +32,6 @@ function common_esd(Ns, F::Type{<:FiniteFields.GF})
     return esd
 end
 
-characters_dixon(G::GroupsCore.Group) =
-    characters_dixon(Rational{Int}, G)
-characters_dixon(::Type{R}, G::GroupsCore.Group) where {R<:Real} =
-    characters_dixon(R, conjugacy_classes(G))
-
-function characters_dixon(::Type{R}, cclasses::AbstractVector) where {R}
-    p = dixon_prime(cclasses)
-    chars_𝔽p = characters_dixon(FiniteFields.GF{p}, cclasses)
-    return complex_characters(R, chars_𝔽p)
-end
-
-function characters_dixon(F::Type{<:FiniteFields.GF}, cclasses::AbstractVector)
-    Ns = [CMMatrix(cclasses, i) for i = 1:length(cclasses)]
-    esd = common_esd(Ns, F)
-    @assert isdiag(esd) "Class Matrices failed to diagonalize! $esd"
-    inv_ccls = _inv_of(cclasses)
-    return [
-        normalize!(Character(vec(eigensubspace), inv_ccls, cclasses)) for
-        eigensubspace in esd
-    ]
-end
-
 function _multiplicities(
     chars::AbstractVector{<:Character{F}},
     cclasses = conjugacy_classes(first(chars)),
@@ -72,49 +50,19 @@ function _multiplicities(
     end
 
     multiplicities = zeros(Int, length(chars), length(cclasses), e)
-    powermap = PowerMap(cclasses)
+    pmap = powermap(table(first(chars)))
+    # pmap is a lazy object, computed on demand; to ensure its thread-safety
+    # we precompute all its values here so in the loops below it is accessed read-only
+    collect(pmap)
 
     for (i, χ) in enumerate(chars)
         Threads.@threads for j = 1:length(cclasses)
             for k = 0:e-1
-                val = Int(ie * sum(χ[powermap[j, l]] * ωs[l+1, k+1] for l = 0:e-1))
+                val = Int(ie * sum(χ[pmap[j, l]] * ωs[l+1, k+1] for l = 0:e-1))
                 multiplicities[i, j, k+1] = val
             end
         end
     end
 
     return multiplicities
-end
-
-function complex_characters(
-    ::Type{R},
-    chars::AbstractVector{<:Character{F,CCl}},
-) where {R,F<:FiniteFields.GF,CCl}
-
-    cclasses = conjugacy_classes(first(chars))
-    lccl = length(cclasses)
-    mult_c = _multiplicities(chars, cclasses)
-    e = size(mult_c, 3) # the exponent
-
-    inv_of_cls = first(chars).inv_of
-
-    C = Cyclotomics.Cyclotomic{R,Cyclotomics.SparseVector{R,Int}}
-    # C = typeof(Cyclotomics.E(5))
-
-    complex_chars = Vector{Character{C,CCl}}(undef, length(chars))
-
-    Es = [E(e, k) for k in 0:e-1]
-    Threads.@threads for i = 1:length(complex_chars)
-        complex_chars[i] = Character{C,CCl}(
-            [
-                Cyclotomics.reduced_embedding(
-                    sum(mult_c[i, j, k+1] * Es[k+1] for k = 0:e-1),
-                ) for j = 1:lccl
-            ],
-            inv_of_cls,
-            cclasses,
-        )
-    end
-
-    return complex_chars
 end

@@ -20,6 +20,13 @@ conjugacy_classes(chtbl::CharacterTable) = chtbl.conjugacy_classes
 nconjugacy_classes(chtbl::CharacterTable) = size(chtbl.values, 2)
 nirreps(chtbl::CharacterTable) = size(chtbl.values, 1)
 
+## irreps
+irreducible_characters(chtbl::CharacterTable) =
+    [Character(chtbl, i) for i in 1:size(chtbl, 1)]
+irreducible_characters(R::Type{<:Rational}, G::Group) =
+    irreducible_characters(CharacterTable(R, G))
+irreducible_characters(G::Group) = irreducible_characters(Rational{Int}, G)
+
 ## construcing tables
 
 function CharacterTable(
