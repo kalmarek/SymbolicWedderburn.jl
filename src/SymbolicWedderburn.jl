@@ -1,6 +1,7 @@
 module SymbolicWedderburn
 
 using LinearAlgebra
+using SparseArrays
 using Primes
 
 using Cyclotomics
