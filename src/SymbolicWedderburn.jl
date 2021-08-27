@@ -18,12 +18,12 @@ include("gf.jl")
 include("eigenspacedecomposition.jl")
 include("cmmatrix.jl")
 
+include("actions.jl")
 include("powermap.jl")
 include("character_tables.jl")
 include("characters.jl")
 include("dixon.jl")
 
-include("actions.jl")
 include("projections.jl")
 include("minimal_projections.jl")
 include("sa_basis.jl")
