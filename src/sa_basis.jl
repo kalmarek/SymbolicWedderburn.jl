@@ -5,32 +5,34 @@ Compute a basis of the image of the projection corresponding to a class function
 Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
 (so called _isotypical subspace_) in the action on `ℝⁿ` encoded by the conjugacy classes of `χ`.
 """
-function isotypical_basis(χ::AbstractClassFunction)
-    u, weight = matrix_projection(χ)
-    image, pivots = if iszero(weight)
-        u_ = similar(u, 0, size(u, 2))
-        image_basis!(u_)
-    else
-        u .*= weight
-        image_basis!(u)
-    end
+function isotypical_basis(χ::Character)
+    @assert isirreducible(χ)
+    image, pivots = image_basis!(matrix_projection(χ))
     @debug "isotypical subspace corresponding to χ has dimension $(length(pivots))" χ
+    return image[1:length(pivots), :]
+end
 
+function simple_basis(α::AlgebraElement)
+    image, pivots = image_basis!(matrix_projection(α))
+    @debug "isotypical subspace corresponding to α has dimension $(length(pivots))"
     return image[1:length(pivots), :]
 end
 
 struct SemisimpleSummand{T}
     basis::T
     multiplicity::Int
+    simple::Bool
 end
 
 StarAlgebras.basis(b::SemisimpleSummand) = b.basis
+issimple(b::SemisimpleSummand) = b.simple
 Base.convert(::Type{M}, b::SemisimpleSummand) where {M<:AbstractMatrix} =
     convert(M, basis(b))
 
 multiplicity(b::SemisimpleSummand) = b.multiplicity
 
 function degree(b::SemisimpleSummand)
+    issimple(b) && return size(basis(b))
     d, r = divrem(size(basis(b), 1), multiplicity(b))
     @assert iszero(r)
     return d
@@ -137,24 +139,36 @@ macro spawn_compat(expr)
     end
 end
 
-function _symmetry_adapted_basis(chars::AbstractVector{<:AbstractClassFunction})
-    ψ = let χ = first(chars)
-        action_character(conjugacy_classes(χ), χ.inv_of)
+function symmetry_adapted_basis2(T::Type, G::Group, S::Type{<:Rational} = Rational{Int}, simple=true)
+    tbl = CharacterTable(S, G)
+    ψ = action_character(conjugacy_classes(tbl), tbl)
+
+    irr_chars = irreducible_characters(tbl)
+    let multiplicities = constituents(ψ), degrees = degree.(irr_chars)
+
+        @debug "Decomposition into character spaces:
+        degrees:        $(join([lpad(d, 6) for d in degrees], ""))
+        multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+
+        dot(multiplicities, degrees) == degree(ψ) ||
+            @error "Something went wrong: characters do not constitute a complete basis for action:
+            $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
     end
 
-    multiplicities = _multiplicities(ψ, chars)
-    degrees = degree.(chars)
+    RG = let G = parent(tbl)
+        b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
+        StarAlgebra(G, b, (length(b), length(b)))
+    end
 
-    @debug "Decomposition into character spaces:
-    degrees:        $(join([lpad(d, 6) for d in degrees], ""))
-    multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+    existing_chars = [i for (i, m) in enumerate(constituents(ψ)) if m ≠ 0]
+    multiplicities = constituents(ψ)[existing_chars]
 
-    dot(multiplicities, degrees) == degree(ψ) ||
-        @error "characters do not constitute a complete basis for action:
-        $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
+    mps, simple = minimal_projection_system(irr_chars[existing_chars], small_idempotents(RG))
 
-    res = [@spawn_compat(SemisimpleSummand(isotypical_basis(χ), m)) for (χ, m)
-        in zip(chars, multiplicities) if m ≠ 0]
-        
+    res = map(zip(mps, multiplicities, simple)) do (µ, m, s)
+        µT = AlgebraElement{T}(µ)
+        @spawn_compat SemisimpleSummand(simple_basis(µT), m, s)
+    end
+
     return fetch.(res)
 end
