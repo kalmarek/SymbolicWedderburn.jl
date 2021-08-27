@@ -23,6 +23,8 @@ nirreps(chtbl::CharacterTable) = size(chtbl.values, 1)
 ## irreps
 irreducible_characters(chtbl::CharacterTable) =
     [Character(chtbl, i) for i in 1:size(chtbl, 1)]
+irreducible_characters(T::Type, chtbl::CharacterTable) =
+    [Character{T}(chtbl, i) for i in 1:size(chtbl, 1)]
 irreducible_characters(R::Type{<:Rational}, G::Group) =
     irreducible_characters(CharacterTable(R, G))
 irreducible_characters(G::Group) = irreducible_characters(Rational{Int}, G)

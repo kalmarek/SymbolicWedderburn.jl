@@ -5,7 +5,7 @@ Abstract type representing functions constant on conjugacy classes of a group.
 The following functionality is required for an `AbstractClassFunction`:
  * `parent(χ)`: the underlying group
  * `conjugacy_classes(χ)`: iterator over conjugacy classes of `χ`.
- * `values(χ)`: an iterator over values
+ * `values(χ)`: a _typed_ iterator over values
  * `getindex(χ, i::Integer)`: the value on `i`-th conjugacy class.
  Note: Indexing with negative integers should return values on the class which
  contains inverses of the `i`-th class.
@@ -75,15 +75,31 @@ vector of coefficients of `χ` in the basis of `irreducible_characters(table(χ)
 It is assumed that equal class functions on the same group will have **identical**
 (ie. `===`) character tables.
 """
-struct Character{T,Gr,S,O} <: AbstractClassFunction{T}
-    table::CharacterTable{Gr,T,O}
+struct Character{T, S, ChT<:CharacterTable} <: AbstractClassFunction{T}
+    table::ChT
     constituents::Vector{S}
 end
 
-function Character(chtbl::CharacterTable, i::Integer)
+function Character(
+    chtbl::CharacterTable{Gr, T},
+    constituents::AbstractVector{S}
+) where {Gr, T, S}
+    R = Base._return_type(*, Tuple{S,T})
+    return Character{R, S, typeof(chtbl)}(chtbl, constituents)
+end
+
+Character(chtbl::CharacterTable, i::Integer) = Character{eltype(chtbl)}(chtbl, i)
+
+function Character{T}(chtbl::CharacterTable, i::Integer) where T
     v = zeros(Int, nconjugacy_classes(chtbl))
     v[i] = 1
-    return Character(chtbl, v)
+    return Character{T, Int, typeof(chtbl)}(chtbl, v)
+end
+
+function Character{T}(χ::Character) where T
+    S = eltype(constituents(χ))
+    ChT = typeof(table(χ))
+    return Character{T, S, ChT}(table(χ), constituents(χ))
 end
 
 ## Accessors
@@ -95,11 +111,13 @@ Base.parent(χ::Character) = parent(table(χ))
 conjugacy_classes(χ::Character) = conjugacy_classes(table(χ))
 Base.values(χ::Character) = (χ[i] for i in 1:nconjugacy_classes(table(χ)))
 
-Base.@propagate_inbounds function Base.getindex(χ::Character, i::Integer)
+Base.@propagate_inbounds function Base.getindex(χ::Character{T}, i::Integer) where T
     i = i < 0 ? table(χ).inv_of[abs(i)] : i
     @boundscheck 1 ≤ i ≤ nconjugacy_classes(table(χ))
-    return sum(c * table(χ)[idx, i] for (idx, c) in enumerate(constituents(χ))
+    return T(
+        sum(c * table(χ)[idx, i] for (idx, c) in enumerate(constituents(χ))
         if !iszero(c))
+    )
 end
 
 # TODO: move to AbstractClassFunction when we drop julia-1.0
@@ -120,10 +138,6 @@ end
 Base.:(==)(χ::Character, ψ::Character) =
     table(χ) === table(ψ) && constituents(χ) == constituents(ψ)
 Base.hash(χ::Character, h::UInt) = hash(table(χ), hash(constituents(χ), h))
-
-Base.eltype(::Type{<:Character{T,Gr,S}}) where {T,Gr,S} =
-    Base._return_type(*, Tuple{S,T})
-Base.eltype(χ::Character) = eltype(typeof(χ))
 
 Base.deepcopy_internal(χ::Character, ::IdDict) =
     Character(table(χ), copy(constituents(χ)))
