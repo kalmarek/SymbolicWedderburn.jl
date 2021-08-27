@@ -222,19 +222,20 @@ Base.isreal(χ::Character) = frobenius_schur_indicator(χ) > 0
 
 function Base.show(io::IO, ::MIME"text/plain", χ::Character)
     println(io, "Character over ", eltype(χ))
-    for (i, c) in enumerate(constituents(χ))
-        iszero(c) && continue
-        sgn = (c < 0 || i == 1) ? "" : '+'
-        print(io, sgn, c, '·', 'χ', FiniteFields.subscriptify(i), ' ')
-    end
+    _print_char(io, χ)
 end
 
-function Base.show(io::IO, χ::Character)
+Base.show(io::IO, χ::Character) = _print_char(io, χ)
+
+function _print_char(io::IO, χ::Character)
+    first = true
     for (i, c) in enumerate(constituents(χ))
         iszero(c) && continue
-        print(io, (c < 0 || i == 1) ? "" : '+')
+        first || print(io, " ")
+        print(io, ((c < 0 || first) ? "" : '+'))
         !isone(c) && print(io, c, '·')
         print(io, 'χ', FiniteFields.subscriptify(i))
+        first = false
     end
 end
 
