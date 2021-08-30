@@ -164,7 +164,14 @@ PermutationGroups.degree(
     χ::Character{T,CCl},
 ) where {T,CCl <: AbstractOrbit{<:AbstractMatrix}} = Int(χ[1])
 
-Base.conj(χ::Character) = Character(table(χ), constituents(χ)[table(χ)._inv_of])
+function Base.conj(χ::Character{T, S}) where {T, S}
+    vals = collect(values(χ))
+    all(isreal, vals) && return Character{T}(χ)
+    tbl = table(χ)
+    ψ = ClassFunction(vals[tbl.inv_of], conjugacy_classes(tbl), tbl.inv_of)
+    constituents = S[dot(ψ, χ) for χ in irreducible_characters(tbl)]
+    return Character{T, eltype(constituents), typeof(tbl)}(tbl, constituents)
+end
 
 isvirtual(χ::Character) =
     any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
