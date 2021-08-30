@@ -20,19 +20,22 @@ function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
     return image[1:length(pivots), :]
 end
 
-StarAlgebras.basis(b::SemisimpleSummand) = b.basis
-issimple(b::SemisimpleSummand) = b.simple
-Base.convert(::Type{M}, b::SemisimpleSummand) where {M<:AbstractMatrix} =
-    convert(M, basis(b))
-
-multiplicity(b::SemisimpleSummand) = b.multiplicity
-
-function degree(b::SemisimpleSummand)
-    issimple(b) && return size(basis(b))
-    d, r = divrem(size(basis(b), 1), multiplicity(b))
-    @assert iszero(r)
-    return d
+struct DirectSummand{T, M<:AbstractMatrix{T}} <: AbstractMatrix{T}
+    basis::M
+    multiplicity::Int
+    degree::Int
+    simple::Bool
 end
+
+StarAlgebras.basis(ds::DirectSummand) = ds.basis
+issimple(ds::DirectSummand) = ds.simple
+degree(ds::DirectSummand) = ds.degree
+multiplicity(ds::DirectSummand) = ds.multiplicity
+
+Base.size(ds::DirectSummand) = size(ds.basis)
+Base.@propagate_inbounds Base.getindex(ds::DirectSummand, i...) =
+    basis(ds)[i...]
+
 
 function extended_characters(::Type{T}, G::Group, basis, action) where {T}
     chars = characters_dixon(T, G)
