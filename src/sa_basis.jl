@@ -1,27 +1,23 @@
-"""
-    isotypical_basis(χ::AbstractClassFunction)
-Compute a basis of the image of the projection corresponding to a class function `χ`.
-
-Return the coefficients of basis vectors in an invariant subspace corresponding to `χ`
-(so called _isotypical subspace_) in the action on `ℝⁿ` encoded by the conjugacy classes of `χ`.
-"""
-function isotypical_basis(χ::Character)
-    @assert isirreducible(χ)
-    image, pivots = image_basis!(matrix_projection(χ))
-    @debug "isotypical subspace corresponding to χ has dimension $(length(pivots))" χ
+function image_basis(χ::Character)
+    mpr = isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
+    image, pivots = image_basis!(mpr)
     return image[1:length(pivots), :]
 end
 
-function simple_basis(α::AlgebraElement)
+function image_basis(hom::InducedActionHomomorphism, χ::Character)
+    mpr = isirreducible(χ) ? matrix_projection_irr(hom, χ) : matrix_projection(hom, χ)
+    image, pivots = image_basis!(mpr)
+    return image[1:length(pivots), :]
+end
+
+function image_basis(α::AlgebraElement)
     image, pivots = image_basis!(matrix_projection(α))
-    @debug "isotypical subspace corresponding to α has dimension $(length(pivots))"
     return image[1:length(pivots), :]
 end
 
-struct SemisimpleSummand{T}
-    basis::T
-    multiplicity::Int
-    simple::Bool
+function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
+    image, pivots = image_basis!(matrix_projection(hom, α))
+    return image[1:length(pivots), :]
 end
 
 StarAlgebras.basis(b::SemisimpleSummand) = b.basis
