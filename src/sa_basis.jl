@@ -36,11 +36,32 @@ Base.size(ds::DirectSummand) = size(ds.basis)
 Base.@propagate_inbounds Base.getindex(ds::DirectSummand, i...) =
     basis(ds)[i...]
 
+function affordable_real(
+    irreducible_characters,
+    multiplicities=fill(1, length(irreducible_characters)),
+)
+    irr_real = similar(irreducible_characters, 0)
+    mls_real = similar(multiplicities, 0)
+    for (i, χ) in pairs(irreducible_characters)
+        ι = frobenius_schur_indicator(χ)
+        if abs(ι) == 1 # real or quaternionic
+            @debug "real/quaternionic:" χ
+            push!(irr_real, χ)
+            push!(mls_real, multiplicities[i])
+        else # complex one...
+            cχ = conj(χ)
+            k = findfirst(==(cχ), irreducible_characters)
+            @assert !isnothing(k)
+            @debug "complex" χ conj(χ)=irreducible_characters[k]
+            if k > i # ... we haven't already observed a conjugate of
+                @assert multiplicities[i] == multiplicities[k]
+                push!(irr_real, χ + cχ)
+                push!(mls_real, multiplicities[i])
+            end
+        end
+    end
 
-function extended_characters(::Type{T}, G::Group, basis, action) where {T}
-    chars = characters_dixon(T, G)
-    ehom = ExtensionHomomorphism(action, basis)
-    return ehom(chars) # result: Cyclotomic{T} valued Characters
+    return irr_real, mls_real
 end
 
 """
