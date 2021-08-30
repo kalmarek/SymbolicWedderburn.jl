@@ -1,10 +1,14 @@
 """
-    matrix_projection_irr(χ::Character)
+    matrix_projection_irr([hom::InducedActionHomomorphism, ]χ::Character)
 Compute matrix projection associated to the irreducible character `χ`.
 
-The dimension `d` of the projection is derived from `conjugacy_classes(χ)`.
-E.g. if `conjugacy_classes(χ)` consist of permutations of degree `d` (i.e.
-acting naturally on the set `1:d`) the result will be a matrix of size `(d,d)`.
+If the homomorphism is not passed, the dimension `d` of the projection is
+derived from `conjugacy_classes(χ)`. E.g. if `conjugacy_classes(χ)` consist
+of permutations of degree `d` (i.e. acting naturally on the set `1:d`) the
+result will be a matrix of size `(d,d)`.
+
+If the homomorphism is passed, the dimension will be derived in similar
+manner from the elements of the image of the homomorphism.
 """
 function matrix_projection_irr(χ::Character)
     @assert isirreducible(χ)
@@ -52,25 +56,17 @@ function matrix_projection_irr(
     class_values,
     conjugacy_cls,
     )
-    dim = degree(g)
+    dim = degree(induce(hom, first(first(conjugacy_cls))))
     result = zeros(eltype(class_values), dim, dim)
     for (val, ccl) in zip(class_values, conjugacy_cls)
         for g in ccl
-            h = hom(g)
+            h = induce(hom, g)
             for i in 1:dim
-                result[i, i^g] += val
+                result[i, i^h] += val
             end
         end
     end
     return result
-end
-
-function matrix_projection(χ::Character{T}) where T
-    tbl = table(χ)
-    return sum(
-        c .* matrix_projection_irr(ψ)
-        for (c, ψ) in zip(constituents(χ), irreducible_characters(T, tbl)) if !iszero(c)
-    )
 end
 
 function matrix_projection_irr(
@@ -78,9 +74,19 @@ function matrix_projection_irr(
     class_values,
     conjugacy_cls,
 )
+    # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
+    # is given by a sparse matrix `inv(g)` will fail.
     return sum(
         val .* sum(g -> hom(inv(Matrix(g))), cc)
         for (val, cc) in zip(class_values, conjugacy_cls)
+    )
+end
+
+function matrix_projection(χ::Character{T}) where T
+    tbl = table(χ)
+    return sum(
+        c .* matrix_projection_irr(ψ)
+        for (c, ψ) in zip(constituents(χ), irreducible_characters(tbl)) if !iszero(c)
     )
 end
 
@@ -92,8 +98,8 @@ function matrix_projection(
     result = zeros(eltype(α), dim, dim)
     b = basis(parent(α))
 
-    @inbounds for (j, a) in StarAlgebras._nzpairs(coeffs(α))
-        g = hom(b[j])
+    @inbounds for (j, a) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+        g = induce(hom, b[j])
         for i in 1:dim
             result[i, i^g] += a
         end

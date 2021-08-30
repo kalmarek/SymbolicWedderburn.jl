@@ -260,8 +260,8 @@ end
 function _action_class_fun(
     hom::InducedActionHomomorphism{<:ByPermutations},
     conjugacy_cls
-) where {CCl <: AbstractOrbit{<:AbstractPerm}}
-    vals = Int[PermutationGroups.nfixedpoints(hom(first(cc))) for cc in conjugacy_cls]
+)
+    vals = Int[PermutationGroups.nfixedpoints(induce(hom, first(cc))) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return ClassFunction(vals, conjugacy_cls)
@@ -271,7 +271,7 @@ function _action_class_fun(
     hom::InducedActionHomomorphism{<:ByLinearTransformation},
     conjugacy_cls,
 )
-    vals = [tr(hom(first(cc))) for cc in conjugacy_cls]
+    vals = [tr(induce(hom, first(cc))) for cc in conjugacy_cls]
     return ClassFunction(vals, conjugacy_cls)
 end
 
