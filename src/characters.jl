@@ -14,7 +14,7 @@ It is assumed that two class functions on the same group will return **identical
 """
 abstract type AbstractClassFunction{T} end # <: AbstractVector{T} ??
 
-Base.eltype(::AbstractClassFunction{T}) where {T} = T
+Base.eltype(::Type{<:AbstractClassFunction{T}}) where {T} = T
 
 function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     val = sum(
@@ -22,15 +22,21 @@ function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
         (i, cc) in enumerate(conjugacy_classes(χ))
     )
     orderG = sum(length, conjugacy_classes(χ))
-    val = div(val, orderG)
+    val = _div(val, orderG)
     return val
 end
+
+_div(val, orderG) = div(val, orderG)
+_div(val::AbstractFloat, orderG) = val/orderG
+_div(val::ComplexF64, orderG) = val/orderG
 
 Base.:(==)(χ::AbstractClassFunction, ψ::AbstractClassFunction) =
     conjugacy_classes(χ) === conjugacy_classes(ψ) && values(χ) == values(ψ)
 
 Base.hash(χ::AbstractClassFunction, h::UInt) =
     hash(conjugacy_classes(χ), hash(values(χ), hash(AbstractClassFunction, h)))
+
+Base.parent(χ::AbstractClassFunction) = parent(first(first(conjugacy_classes(χ))))
 
 ####################################
 # Characters
@@ -59,11 +65,11 @@ function affordable_real!(
 )
     ι = frobenius_schur_indicator(χ, pmap)
     if ι <= 0 # i.e. χ is complex or quaternionic
-        for i in eachindex(χ.vals)
-            χ.vals[i] += conj(χ.vals[i])
-        end
+        χ.vals .+= values(conj(χ))
+        return χ
+    else
+        return χ
     end
-    return χ
 end
 
 """
@@ -131,9 +137,12 @@ function VirtualCharacter(
     return χ
 end
 
-function Base.deepcopy_internal(χ::CF, dict::IdDict) where {CF<:ClassFunction}
+function Base.deepcopy_internal(χ::CF, ::IdDict) where {CF<:ClassFunction}
     return CF(copy(χ.vals), χ.inv_of, conjugacy_classes(χ))
 end
+
+Character{S}(χ::Character{T,Cl}) where {S,T,Cl} =
+    Character{S, Cl}(values(χ), χ.inv_of, conjugacy_classes(χ))
 
 VirtualCharacter(χ::Character{T,Cl}) where {T,Cl} = VirtualCharacter{T,Cl}(χ)
 VirtualCharacter{T}(χ::Character{S,Cl}) where {T,S,Cl} =
@@ -183,8 +192,10 @@ conjugacy_classes(χ::ClassFunction) = χ.cc
 Base.conj(χ::Cf) where {Cf<:ClassFunction} =
     Cf(values(χ)[χ.inv_of], χ.inv_of, conjugacy_classes(χ))
 
-PermutationGroups.degree(χ::Character) = Int(χ.vals[1])
-    # Int(χ(one(first(first(conjugacy_classes(χ))))))
+PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))
+PermutationGroups.degree(
+    χ::Character{T,CCl},
+) where {T,CCl<:AbstractOrbit{<:AbstractMatrix}} = Int(χ[1])
 
 function _inv_of(cc::AbstractVector{<:AbstractOrbit})
     inv_of = zeros(Int, size(cc))
@@ -202,8 +213,7 @@ end
 
 function normalize!(χ::Character)
 
-    ccG = conjugacy_classes(χ)
-    id = one(first(first(ccG)))
+    id = one(parent(χ))
 
     k = χ(id)
     if !isone(k)
@@ -245,7 +255,6 @@ for C in (:Character, :VirtualCharacter)
             limited = get(io, :limit, false)
             opn, cls = '[', ']'
 
-            print(io, string($C) * ": ")
             if limited && length(v) > 20
                 Base.show_delim_array(io, v, opn, ",", "", false, 1, 9)
                 print(io, "  …  ")
@@ -255,5 +264,8 @@ for C in (:Character, :VirtualCharacter)
                 Base.show_delim_array(io, v, opn, ",", cls, false)
             end
         end
+
+        Base.show(io::IO, ::Type{<:$C{T}}) where T =
+            print(io, $C, "{", T, ", …}")
     end
 end

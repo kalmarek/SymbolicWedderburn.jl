@@ -1,24 +1,35 @@
 # Version over exact field:
-function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Number}
+function row_echelon_form!(A::AbstractMatrix{T}) where {T<:Union{FiniteFields.GF, Cyclotomic{<:Rational}, Rational}}
     pivots = Int[]
     pos = 0
     for i = 1:size(A, 2)
-        j = findfirst(x -> !iszero(x), @view A[pos+1:end, i])
+        j = findnext(x -> !iszero(x), @view(A[:, i]), pos+1)
         j === nothing && continue
-        j += pos
         pos += 1
         push!(pivots, i)
 
+        # swap the rows so that
         if (pos != j)
-            A[[pos, j], :] .= A[[j, pos], :]
+            for k in 1:size(A, 2)
+                A[pos, k], A[j, k] = A[j, k], A[pos, k]
+            end
         end
+        # A[pos, :] is the row with leading nz in i-th column
 
         w = inv(A[pos, i])
-        A[pos, :] .*= w
+        # all columns to the left of i are zeroed (below pivots) so we start at i
+        for colidx in i:size(A, 2)
+            A[pos, colidx] *= w
+        end
+        # A[pos, i] is 1 now
 
-        for j = 1:size(A, 1)
-            if j != pos
-                @. A[j, :] -= A[j, i] * A[pos, :]
+        # zero the whole i-th column above and below pivot:
+        for rowidx = 1:size(A, 1)
+            rowidx == pos && continue # don't zero the active row
+            v = A[rowidx, i]
+            iszero(v) && continue
+            for k in i:size(A, 2) # to the left of pivot everything is zero
+                A[rowidx, k] -= v * A[pos, k]
             end
         end
     end
@@ -30,39 +41,38 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
     pos = 0
     for i = 1:size(A, 2)
 
-        j = findfirst(x -> abs(x) > sqrt(eps(T)), @view A[pos+1:end, i])
-        if j === nothing
-            # A[pos+1:end, :] .= Cyclotomics.zero!.(@view A[pos+1:end, :])
-            continue
-        end
-        j += pos
+        j = findnext(x -> abs(x) > sqrt(eps(T)), @view(A[:, i]), pos+1)
+        j === nothing && continue
         pos += 1
         push!(pivots, i)
 
         if (pos != j)
-            A[[pos, j], :] .= A[[j, pos], :]
+            for k in 1:size(A, 2)
+                A[pos, k], A[j, k] = A[j, k], A[pos, k]
+            end
         end
 
         @assert abs(A[pos, i]) >= sqrt(eps(T))
         w = inv(A[pos, i])
-        # A[pos, :] .*= w
 
-        for idx in 1:size(A, 2)
-            A[pos, idx] = if abs(A[pos, idx]) <= sqrt(eps(T))
-                Cyclotomics.zero!(A[pos, idx])
-            elseif idx != i
-                A[pos, idx] * w
+        for colidx in i:size(A, 2)
+            if abs(A[pos, colidx]) <= sqrt(eps(T))
+                Cyclotomics.zero!(A[pos, colidx])
+            elseif colidx == i
+                Cyclotomics.one!(A[pos, colidx])
             else
-                Cyclotomics.one!(A[pos, idx])
+                A[pos, colidx] *= w
             end
         end
 
-        for j = 1:size(A, 1)
-            if j != pos
-                if abs(A[j, i]) < sqrt(eps(T))
-                    A[j, i] = Cyclotomics.zero!.(A[j, i])
-                else
-                    @. A[j, :] -= A[j, i] * A[pos, :]
+        for rowidx = 1:size(A, 1)
+            rowidx == pos && continue
+            v = A[rowidx, i]
+            if abs(v) < sqrt(eps(T))
+                Cyclotomics.zero!(v)
+            else
+                for k in i:size(A, 2)
+                    A[rowidx, k] -= v * A[pos, k]
                 end
             end
         end
@@ -76,20 +86,32 @@ function row_echelon_form!(A::AbstractMatrix{C}) where {T<:AbstractFloat, C<:Cyc
     return A, pivots
 end
 
-function row_echelon_form(A::AbstractMatrix)
-    return row_echelon_form!(deepcopy(A))
+row_echelon_form(A::AbstractMatrix) = row_echelon_form!(deepcopy(A))
+
+image_basis(A::AbstractMatrix) = image_basis!(deepcopy(A))
+
+image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    return fact.Vt, 1:A_rank
+end
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
+    return fact.U, 1:A_rank
 end
 
 function right_nullspace(M::AbstractMatrix{T}) where {T}
-    A, l = row_echelon_form(M)
-    c, d = size(A)
-    (length(l) == d) && return zeros(T, d)
-    W = zeros(T, d, d - length(l))
-    i = 0
-    for el in setdiff(1:d, l)
-        i += 1
+    A, pivots = row_echelon_form(M)
+    ncolsA = size(A, 2)
+    length(pivots) == ncolsA && return zeros(T, ncolsA, 0)
+    W = zeros(T, ncolsA, ncolsA - length(pivots))
+    for (i, el) in enumerate(setdiff(1:ncolsA, pivots))
         W[el, i] += 1
-        for (j, k) in enumerate(l)
+        for (j, k) in enumerate(pivots)
             if j < el
                 W[k, i] -= A[j, el]
             end
@@ -102,6 +124,23 @@ function left_nullspace(M::AbstractMatrix)
     return transpose(right_nullspace(transpose(M)))
 end
 
+# function left_nullspace(M::AbstractMatrix{T}) where {T}
+#     At, pivots = row_echelon_form(transpose(M))
+#     A = transpose(A)
+#     nrows = size(A, 1)
+#     length(pivots) == ncolsA && return zeros(T, 0,0)
+#     W = zeros(T, nrowsA - length(pivots), nrowsA)
+#     for (i, el) in enumerate(setdiff(1:rowsA, pivots))
+#         W[i, el] += 1
+#         for (j, k) in enumerate(pivots)
+#             if j < el
+#                 W[i,k] -= A[el, j]
+#             end
+#         end
+#     end
+#     return W
+# end
+
 function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
     @assert ==(size(M)...)
     eigen = Dict{T,typeof(M)}()
@@ -110,12 +149,8 @@ function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
         cumdim >= size(M, 1) && break
         #do left eigenspaces!
         basis = first(row_echelon_form!(left_nullspace(M - i * I)))
-        nullity = size(basis, 1)
-        if (nullity == 1) && all(iszero, basis)
-            nullity -= 1 # left_nullspace returns trivial kernel if kernel is empty
-        end
-        if nullity > 0
-            cumdim += nullity
+        if size(basis, 1) > 0 # nullity
+            cumdim += size(basis, 1)
             eigen[i] = basis
         end
     end
@@ -207,7 +242,7 @@ function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where {T}
     nptrs = [1]
     for (i, e) in enumerate(esd)
         if size(e, 1) > 1
-            esd2, ptrs = eigen_decomposition!(e * M[:, _find_l(e)])
+            esd2, ptrs = eigen_decomposition!(e * @view M[:, _find_l(e)])
             nbasis = vcat(nbasis, esd2 * e)
             append!(nptrs, ptrs .+ (pop!(nptrs) - 1))
         else

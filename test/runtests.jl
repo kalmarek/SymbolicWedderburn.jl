@@ -17,10 +17,11 @@ include("ccmatrix.jl")
 include("dixon.jl")
 include("characters.jl")
 include("projections.jl")
+include("sa_basis.jl")
 include("action_permutation.jl")
 include("action_linear.jl")
 
-if VERSION >= v"1.6.0"
+if VERSION >= v"1.6.0" && !haskey(ENV, "CI")
     @testset "Examples" begin
         using Pkg
         Pkg.activate(joinpath(@__DIR__, "..", "examples"))

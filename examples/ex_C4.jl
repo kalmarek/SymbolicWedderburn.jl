@@ -28,23 +28,24 @@ f = sum(x) +
 
 basis = monomials(x, 0:(DynamicPolynomials.maxdegree(f)÷2))
 
-@time let f = f, basis = basis, m = SOSModel(OPTIMIZER)
+ts, obj, st = let f = f, basis = basis, m = SOSModel(OPTIMIZER)
     @variable m t
     @objective m Max t
     @variable m sos SOSPoly(basis)
     @constraint m f - t == sos
     optimize!(m)
     @info (m,) termination_status(m) objective_value(m) solve_time(m)
+    termination_status(m), objective_value(m), solve_time(m)
 end
 
-@time let f = f,
+ts_sa, obj_sa, st_sa = let f = f,
     basis = basis,
     m = SOSModel(OPTIMIZER),
     # G = PermGroup(Perm([2:N; 1])),
     G = PermGroup([perm"(1,2)", Perm([2:N; 1])])
 
     t = @timed let
-        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(G, basis, PermutingVariables())
+        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(Float64, G, basis, PermutingVariables())
         SparseMatrixCSC{Float64,Int}.(SymbolicWedderburn.basis.(ssimple_basis))
     end
 
@@ -59,5 +60,10 @@ end
 
         optimize!(m)
         @info (m,) termination_status(m) objective_value(m) solve_time(m) symmetry_adaptation_time
+        termination_status(m), objective_value(m), solve_time(m)
     end
 end
+
+@assert ts == ts_sa == SumOfSquares.MOI.OPTIMAL
+@assert isapprox(obj, obj_sa, atol=1e-4)
+@assert st_sa < st

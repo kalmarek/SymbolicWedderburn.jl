@@ -61,14 +61,25 @@ function _multiplicities(
 
     e = Int(exponent(cclasses))
     ie = inv(F(e))
-    ω = FiniteFields.rootofunity(F, e)
+
+    ω⁻¹ = inv(FiniteFields.rootofunity(F, e))
+    ωs = Matrix{typeof(ω⁻¹)}(undef, e, e)
+    Threads.@threads for k in 0:e-1
+        ω⁻ᵏ = ω⁻¹^k
+        for l in 0:e-1
+            ωs[l+1, k+1] = ω⁻ᵏ^l
+        end
+    end
 
     multiplicities = zeros(Int, length(chars), length(cclasses), e)
     powermap = PowerMap(cclasses)
+
     for (i, χ) in enumerate(chars)
-        for j = 1:length(cclasses), k = 0:e-1
-            multiplicities[i, j, k+1] =
-                Int(ie * sum(χ[powermap[j, l]] * ω^-(k * l) for l = 0:e-1))
+        Threads.@threads for j = 1:length(cclasses)
+            for k = 0:e-1
+                val = Int(ie * sum(χ[powermap[j, l]] * ωs[l+1, k+1] for l = 0:e-1))
+                multiplicities[i, j, k+1] = val
+            end
         end
     end
 
@@ -92,11 +103,12 @@ function complex_characters(
 
     complex_chars = Vector{Character{C,CCl}}(undef, length(chars))
 
-    for i = 1:length(complex_chars)
+    Es = [E(e, k) for k in 0:e-1]
+    Threads.@threads for i = 1:length(complex_chars)
         complex_chars[i] = Character{C,CCl}(
             [
                 Cyclotomics.reduced_embedding(
-                    sum(mult_c[i, j, k+1] * E(e, k) for k = 0:e-1),
+                    sum(mult_c[i, j, k+1] * Es[k+1] for k = 0:e-1),
                 ) for j = 1:lccl
             ],
             inv_of_cls,
