@@ -7,7 +7,8 @@ abstract type InducedActionHomomorphism{A,T} end
 implements:
 * features(action_hom)
 * action(hom::InducedActionHomomorphism) → Action
-* action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature` =#
+* action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature`
+=#
 
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     throw(
@@ -78,7 +79,7 @@ features(hom::ExtensionHomomorphism) = hom.features
 action(hom::ExtensionHomomorphism) = hom.ac
 
 function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
-    I = _inttype(hom)
+    I = _int_type(hom)
     return Perm(vec(I[hom[action(action(hom), g, f)] for f in features(hom)]))
 end
 
@@ -89,6 +90,20 @@ end
 
 for f in (:_int_type, :features, :action)
     @eval $f(h::CachedExtensionHomomorphism) = $f(h.ehom)
+end
+
+function CachedExtensionHomomorphism(G::Group, action::Action, basis; precompute=false)
+    hom = ExtensionHomomorphism(action, basis)
+    S = typeof(induce(hom, one(G)))
+    chom = CachedExtensionHomomorphism{eltype(G), S}(hom)
+    if precompute
+        # to make sure that the future access to chom is read-only, i.e. thread-safe
+        # one may choose to precompute the images
+        for g in G
+            induce(chom, g)
+        end
+    end
+    return chom
 end
 
 CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
