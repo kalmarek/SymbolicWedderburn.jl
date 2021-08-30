@@ -62,7 +62,10 @@ function CharacterTable(R::Type{<:Rational}, G::Group)
     Es = [E(e, k) for k in 0:e - 1]
     Threads.@threads for j in 1:size(tblFp, 2) # conjugacy_classes
         for i in 1:size(tblFp, 1) # characters
-            values[i, j] = sum(mult_c[i, j, k + 1] * Es[k + 1] for k in 0:e - 1)
+            # reduced_embedding may prevent overflow sometimes
+            values[i, j] = Cyclotomics.reduced_embedding(
+                sum(mult_c[i, j, k + 1] * Es[k + 1] for k in 0:e - 1)
+            )
         end
     end
 
