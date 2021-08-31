@@ -25,9 +25,16 @@ irreducible_characters(chtbl::CharacterTable) =
     [Character(chtbl, i) for i in 1:size(chtbl, 1)]
 irreducible_characters(T::Type, chtbl::CharacterTable) =
     [Character{T}(chtbl, i) for i in 1:size(chtbl, 1)]
-irreducible_characters(R::Type{<:Rational}, G::Group) =
-    irreducible_characters(CharacterTable(R, G))
-irreducible_characters(G::Group) = irreducible_characters(Rational{Int}, G)
+irreducible_characters(G::Group, cclasses = conjugacy_classes(G)) =
+    irreducible_characters(Rational{Int}, G, cclasses)
+
+function irreducible_characters(
+    R::Type{<:Rational},
+    G::Group,
+    cclasses=conjugacy_classes(G)
+)
+    return irreducible_characters(CharacterTable(R, G, cclasses))
+end
 
 ## construcing tables
 
@@ -46,11 +53,16 @@ function CharacterTable(
     return tbl
 end
 
-function CharacterTable(R::Type{<:Rational}, G::Group)
-    cclasses = conjugacy_classes(G)
+function CharacterTable(R::Type{<:Rational}, G::Group, cclasses=conjugacy_classes(G))
     Fp = FiniteFields.GF{dixon_prime(cclasses)}
     tblFp = CharacterTable(Fp, G, cclasses)
+    return complex_character_table(R, tblFp)
+end
 
+function complex_character_table(
+    R::Type{<:Rational},
+    tblFp::CharacterTable{<:Group, <:FiniteFields.GF},
+)
     charsFp = irreducible_characters(tblFp)
     mult_c = _multiplicities(charsFp)
 
@@ -70,7 +82,7 @@ function CharacterTable(R::Type{<:Rational}, G::Group)
     end
 
     return CharacterTable(
-        G,
+        parent(tblFp),
         conjugacy_classes(tblFp),
         tblFp.inv_of,
         powermap(tblFp),
