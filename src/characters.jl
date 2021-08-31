@@ -184,20 +184,19 @@ end
 
 """
     affordable_real!(χ::Character)
-Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real representation, modifying `χ` in place.
+Return either `χ` or `2re(χ)` depending whether `χ` is afforded by a real
+representation, modifying `χ` in place.
 """
 function affordable_real!(χ::Character)
-    ι = frobenius_schur_indicator(χ)
+    ι = frobenius_schur(χ)
     if ι <= 0 # i.e. χ is complex or quaternionic
-        χ.constituents += constituents(conj(χ))
-        return χ
-    else
-        return χ
+        χ.constituents .+= constituents(conj(χ))
     end
+    return χ
 end
 
 """
-    frobenius_schur_indicator(χ::AbstractClassFunction[, pmap::PowerMap])
+    frobenius_schur(χ::AbstractClassFunction[, pmap::PowerMap])
 Return Frobenius-Schur indicator of `χ`, i.e. `Σχ(g²)` where sum is taken over
 the whole group.
 
@@ -205,15 +204,16 @@ If χ is an irreducible `Character`, Frobenius-Schur indicator takes values in
 `{1, 0, -1}` which correspond to the following situations:
  1. `χ` is real-valued and is afforded by an irreducible real representation,
  2. `χ` is a complex character which is not afforded by a real representation, and
- 3. `χ` is quaternionic character, i.e. it is real valued, but is not afforded a real representation.
+ 3. `χ` is quaternionic character, i.e. it is real valued, but is not afforded by a
+ real representation.
 
 In cases 2. and 3. `2re(χ) = χ + conj(χ)` corresponds to an irreducible character
 afforded by a real representation.
 """
-function frobenius_schur_indicator(χ::Character)
+function frobenius_schur(χ::Character)
     @assert isirreducible(χ)
 
-    pmap = powermap(χ)
+    pmap = powermap(table(χ))
     ι = sum(
         length(c) * χ[pmap[i, 2]] for (i, c) in enumerate(conjugacy_classes(χ))
     )
@@ -225,7 +225,7 @@ function frobenius_schur_indicator(χ::Character)
     return d
 end
 
-Base.isreal(χ::Character) = frobenius_schur_indicator(χ) > 0
+Base.isreal(χ::Character) = frobenius_schur(χ) > 0
 
 function Base.show(io::IO, ::MIME"text/plain", χ::Character)
     println(io, "Character over ", eltype(χ))

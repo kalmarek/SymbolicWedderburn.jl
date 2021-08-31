@@ -43,7 +43,7 @@ function affordable_real(
     irr_real = similar(irreducible_characters, 0)
     mls_real = similar(multiplicities, 0)
     for (i, χ) in pairs(irreducible_characters)
-        ι = frobenius_schur_indicator(χ)
+        ι = frobenius_schur(χ)
         if abs(ι) == 1 # real or quaternionic
             @debug "real/quaternionic:" χ
             push!(irr_real, χ)
