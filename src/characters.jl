@@ -27,7 +27,7 @@ end
 
 _div(val, orderG) = div(val, orderG)
 _div(val::AbstractFloat, orderG) = val / orderG
-_div(val::ComplexF64, orderG) = val / orderG
+_div(val::Complex{<:AbstractFloat}, orderG) = val / orderG
 
 ## Arbitrary ClassFunctions without decomposition into irreps
 struct ClassFunction{T,CCl} <: AbstractClassFunction{T}
