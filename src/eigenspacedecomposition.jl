@@ -101,7 +101,7 @@ end
 function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
     fact = svd!(A)
     A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
-    return fact.U, 1:A_rank
+    return fact.Vt, 1:A_rank
 end
 
 function right_nullspace(M::AbstractMatrix{T}) where {T}
@@ -124,22 +124,6 @@ function left_nullspace(M::AbstractMatrix)
     return transpose(right_nullspace(transpose(M)))
 end
 
-# function left_nullspace(M::AbstractMatrix{T}) where {T}
-#     At, pivots = row_echelon_form(transpose(M))
-#     A = transpose(A)
-#     nrows = size(A, 1)
-#     length(pivots) == ncolsA && return zeros(T, 0,0)
-#     W = zeros(T, nrowsA - length(pivots), nrowsA)
-#     for (i, el) in enumerate(setdiff(1:rowsA, pivots))
-#         W[i, el] += 1
-#         for (j, k) in enumerate(pivots)
-#             if j < el
-#                 W[i,k] -= A[el, j]
-#             end
-#         end
-#     end
-#     return W
-# end
 
 function left_eigen(M::AbstractMatrix{T}) where {T<:FiniteFields.GF}
     @assert ==(size(M)...)
