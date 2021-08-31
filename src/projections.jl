@@ -39,6 +39,8 @@ function matrix_projection_irr(
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
 )
+    # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
+    # is given by a sparse matrix `inv(g)` will fail.
     return sum(val .* sum(g -> inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
 end
 
@@ -74,10 +76,8 @@ function matrix_projection_irr(
     class_values,
     conjugacy_cls,
 )
-    # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
-    # is given by a sparse matrix `inv(g)` will fail.
     return sum(
-        val .* sum(g -> hom(inv(Matrix(g))), cc)
+        val .* sum(g -> induce(hom, inv(g)), cc)
         for (val, cc) in zip(class_values, conjugacy_cls)
     )
 end
