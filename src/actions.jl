@@ -115,3 +115,10 @@ function induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
     end
     return hom.cache[g]
 end
+#disambiguation:
+function induce(ac::ByLinearTransformation, hom::CachedExtensionHomomorphism, g::GroupElement)
+    if !haskey(hom.cache, g)
+        hom.cache[g] = induce(ac, hom.ehom, g)
+    end
+    return hom.cache[g]
+end
