@@ -1,41 +1,42 @@
 @testset "Frobenius-Schur & projections" begin
     G = SmallPermGroups[8][4]
-    ccG = conjugacy_classes(G)
+    irr = SymbolicWedderburn.irreducible_characters(G)
 
     # quaternionic character
-    χ = SymbolicWedderburn.Character(Float64[2, 0, 0, -2, 0], ccG)
+    χ = irr[1]
+    @test collect(values(χ)) == [2, 0, 0, -2, 0]
 
-    ι = SymbolicWedderburn.frobenius_schur_indicator
+    ι = SymbolicWedderburn.frobenius_schur
 
     @test ι(χ) == -1
 
     @test deepcopy(χ) == χ
     @test deepcopy(χ) !== χ
 
-    ψ = SymbolicWedderburn.Character(copy(values(χ)), conjugacy_classes(χ))
+    ψ = deepcopy(χ)
 
     @test ψ == χ
     @test ψ !== χ
     @test ψ == deepcopy(χ)
 
-    @test ψ.cc === χ.cc
     @test conjugacy_classes(ψ) === conjugacy_classes(χ)
+    @test SymbolicWedderburn.table(ψ) === SymbolicWedderburn.table(χ)
 
-    @test values(ψ) == values(χ)
-    @test values(ψ) !== values(χ)
+    @test collect(values(ψ)) == collect(values(χ))
+    @test SymbolicWedderburn.constituents(ψ) == SymbolicWedderburn.constituents(χ)
+    @test SymbolicWedderburn.constituents(ψ) !== SymbolicWedderburn.constituents(χ)
 
     @test hash(ψ) == hash(χ)
 
     @test 2ψ == 2χ
     @test 2ψ/2 == χ
     @test 2ψ != χ
-    @test hash((2ψ/2).vals) == hash(χ.vals)
 
     @test PermutationGroups.degree(χ) == 2
 
-    @test size(SymbolicWedderburn.isotypical_basis(χ), 1) == 4
+    @test size(SymbolicWedderburn.image_basis(χ), 1) == 4
 
-    @test SymbolicWedderburn.affordable_real!(deepcopy(χ)) isa SymbolicWedderburn.Character
-
-    @test ι(SymbolicWedderburn.affordable_real!(deepcopy(χ))) == 2*ι(χ)
+    @test_throws AssertionError ι(2χ)
+    a = 2χ
+    @test sum(length(cc)*a(first(cc)^2) for cc in conjugacy_classes(a))//order(G) == 2ι(χ)
 end

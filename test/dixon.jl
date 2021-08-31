@@ -16,10 +16,11 @@ function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
         end
     end
 
-    @test SymbolicWedderburn.characters_dixon(F, ccG) isa
+    tbl = SymbolicWedderburn.CharacterTable(F, G, ccG)
+    @test SymbolicWedderburn.irreducible_characters(tbl) isa
           Vector{<:SymbolicWedderburn.Character}
 
-    chars = SymbolicWedderburn.characters_dixon(F, ccG)
+    chars = SymbolicWedderburn.irreducible_characters(tbl)
 
     # checking the degrees
     @test sum(Int.(degree.(chars)) .^ 2) == order(G)
@@ -31,7 +32,8 @@ end
 function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
     F = SymbolicWedderburn.FiniteFields.GF{p}
     ccG = conjugacy_classes(G)
-    chars_Fp = SymbolicWedderburn.characters_dixon(F, ccG)
+    tbl = SymbolicWedderburn.CharacterTable(F, G, ccG)
+    chars_Fp = SymbolicWedderburn.irreducible_characters(tbl)
 
     degrees = degree.(chars_Fp)
 
@@ -40,12 +42,13 @@ function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
         @test all(Int.(m[i, :, :]) .<= degrees[i])
     end
 
-    @test SymbolicWedderburn.complex_characters(Int, chars_Fp) isa
-          Vector{<:SymbolicWedderburn.Character}
-    @test length(SymbolicWedderburn.complex_characters(Int, chars_Fp[1:1])) == 1
+    @test SymbolicWedderburn.complex_character_table(Rational{Int}, tbl) isa
+          SymbolicWedderburn.CharacterTable{<:Group, <:Cyclotomic{Rational{Int}}}
 
-    chars_CC = SymbolicWedderburn.complex_characters(Int, chars_Fp)
-    id = one(first(first(ccG)))
+    tblCC = SymbolicWedderburn.complex_character_table(Rational{Int}, tbl)
+    chars_CC = SymbolicWedderburn.irreducible_characters(tblCC)
+
+    id = one(G)
     @test [ψ(id) for ψ in chars_CC] == degrees
 
     # orthogonality of characters over ℂ
@@ -114,11 +117,12 @@ end
             p = SymbolicWedderburn.dixon_prime(ccG)
             F = SymbolicWedderburn.FiniteFields.GF{p}
 
-            chars = SymbolicWedderburn.characters_dixon(F, ccG)
+            tbl = SymbolicWedderburn.CharacterTable(F, G)
+            chars = SymbolicWedderburn.irreducible_characters(tbl)
 
             @test sort(degree.(chars)) == [1, 1, 1, 3]
 
-            @test Set(Int.(χ.vals) for χ in chars) ==
+            @test Set(Int.(values(χ)) for χ in chars) ==
                   Set([[3, 0, 0, 6], [1, 4, 2, 1], [1, 2, 4, 1], [1, 1, 1, 1]])
 
         end
@@ -151,10 +155,10 @@ end
             # generic tests
             generictest_dixon_C(G)
 
-            chars_C = SymbolicWedderburn.characters_dixon(Int, G)
+            chars_C = SymbolicWedderburn.irreducible_characters(G, ccG)
             E = SymbolicWedderburn.Cyclotomics.E
 
-            @test [χ.vals for χ in chars_C] == [
+            @test [collect(values(χ)) for χ in chars_C] == [
                 E(3, 0) .* [3, 0, 0, -1],
                 E(3, 0) .* [1, E(3, 2), E(3, 1), 1],
                 E(3, 0) .* [1, E(3, 1), E(3, 2), 1],
@@ -176,10 +180,10 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
+            chars = SymbolicWedderburn.irreducible_characters(G, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 2, 3, 3]
-            @test [χ.vals for χ in chars] == [
+            @test [collect(values(χ)) for χ in chars] == [
                 [2, 0, 2, -1, 0],
                 [3, 1, -1, 0, -1],
                 [1, 1, 1, 1, 1],
@@ -203,10 +207,10 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
+            chars = SymbolicWedderburn.irreducible_characters(G, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 1, 1, 4]
-            @test [χ.vals for χ in chars] == [
+            @test [collect(values(χ)) for χ in chars] == [
                 E(4, 0) .* [4, 0, 0, 0, -1],
                 E(4, 0) .* [1, 1, 1, 1, 1],
                 E(4, 0) .* [1, 1, -1, -1, 1],
@@ -218,19 +222,16 @@ end
 
     @testset "Different base rings for characters_dixon" begin
         G = PermGroup(perm"(1,2,3,4)")
-        @test eltype(first(SymbolicWedderburn.characters_dixon(Float64, G))) <:
-              Cyclotomic{Float64}
-        @test eltype(first(SymbolicWedderburn.characters_dixon(Int, G))) <:
-              Cyclotomic{Int}
-        @test eltype(
-            first(SymbolicWedderburn.characters_dixon(Rational{Int}, G)),
-        ) <: Cyclotomic{Rational{Int}}
+        @test eltype(SymbolicWedderburn.irreducible_characters(Rational{Int}, G)) <:
+            SymbolicWedderburn.Character{<:Cyclotomic{Rational{Int}}}
+        @test eltype(SymbolicWedderburn.irreducible_characters(Rational{BigInt}, G)) <:
+            SymbolicWedderburn.Character{<:Cyclotomic{Rational{BigInt}}}
     end
 
     @time @testset "SmallPermGroups" begin
         for (ord, groups) in SmallPermGroups
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
-                @test SymbolicWedderburn.characters_dixon(G) isa
+                @test SymbolicWedderburn.irreducible_characters(G) isa
                       Vector{<:SymbolicWedderburn.Character}
                 generictest_dixon_Fp(G)
                 generictest_dixon_C(G)
@@ -241,17 +242,14 @@ end
 
 @testset "Characters io" begin
     G = PermGroup([perm"(2,3)(4,5)"])
-    chars = SymbolicWedderburn.characters_dixon(Int, G)
+    chars = SymbolicWedderburn.irreducible_characters(G)
 
-    @test sprint(show, chars[1]) == "[1, 1]"
-    @test sprint(show, chars[2]) == "[1, -1]"
+    @test sprint(show, chars[1]) == "χ₁"
+    @test sprint(show, chars[2]) == "χ₂"
+    @test sprint(show, chars[1]+2chars[2]) == "χ₁ +2·χ₂"
+    @test sprint(show, 2chars[1]-chars[2]) == "2·χ₁ -1·χ₂"
+    @test sprint(show, -2chars[1]+3chars[2]) == "-2·χ₁ +3·χ₂"
 
-    @test occursin(
-        "()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t 1*E(1)^0",
-        sprint(show, MIME"text/plain"(), chars[1]),
-    )
-    @test occursin(
-        "()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t-1*E(1)^0",
-        sprint(show, MIME"text/plain"(), chars[2])
-    )
+    @test sprint(show, MIME"text/plain"(), chars[1]) ==
+        "Character over Cyclotomic{Rational{Int64}, SparseArrays.SparseVector{Rational{Int64}, Int64}}\nχ₁"
 end
