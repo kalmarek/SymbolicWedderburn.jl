@@ -14,6 +14,14 @@ import PermutationGroups
 
 export conjugacy_classes, symmetry_adapted_basis
 
+macro spawn_compat(expr)
+    @static if VERSION < v"1.3.0"
+        return :(@async $(esc(expr)))
+    else
+        return :(Threads.@spawn $(esc(expr)))
+    end
+end
+
 include("gf.jl")
 include("eigenspacedecomposition.jl")
 include("cmmatrix.jl")
