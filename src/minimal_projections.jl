@@ -80,7 +80,7 @@ function small_idempotents(
     RG::StarAlgebra{<:Group},
     subgroups = CyclicSubgroups(parent(RG), min_order = 2),
 )
-    return [algebra_elt_from_support(H, RG) // length(H) for H in subgroups]
+    return (algebra_elt_from_support(H, RG) // length(H) for H in subgroups)
 end
 
 @static if VERSION < v"1.3.0"
@@ -95,12 +95,10 @@ else
     end
 end
 
-# here idems is an iterator over AlgebraElements with may be idempotents
-function rank_one_projection(χ::AbstractClassFunction, idems, iters=3)
-    RG = parent(first(idems))
-    T = eltype(first(idems))
+function rank_one_projection(χ::Character, RG::StarAlgebra{<:Group}, iters=3)
+    idems = small_idempotents(RG) # idems are AlgebraElements over Rational{Int}
 
-    degree(χ) == 1 && return one(RG, T), true
+    degree(χ) == 1 && return one(RG, Rational{Int}), true
 
     for µ in idems
         isone(χ(µ)) && µ^2 == µ && return µ, true
@@ -109,29 +107,24 @@ function rank_one_projection(χ::AbstractClassFunction, idems, iters=3)
     for n in 2:iters
         for elts in Iterators.product(ntuple(i -> idems, n)...)
             µ = *(elts...)
-            if isone(χ(µ))
-                if µ^2 == µ
-                    return µ, true
-                end
-            end
+            isone(χ(µ)) && µ^2 == µ && return µ, true
         end
     end
-    if χ isa Character && isirreducible(χ)
-        @warn "Could not find minimal projection for $χ."
-    end
-
-    return one(RG, T), false
+    @debug "Could not find minimal projection for $χ"
+    return one(RG, Rational{Int}), false
 end
 
-# here idems is an iterator over AlgebraElements with may be idempotents
 function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
-    idems,
+    RG::StarAlgebra{<:Group}
 )
-    res = fetch.([Threads.@spawn rank_one_projection(χ, idems) for χ in chars])
-    # res = [rank_one_projection(χ, idems) for χ in chars]
+    # res = fetch.([Threads.@spawn rank_one_projection(χ, RG, idems) for χ in chars])
+    res = [rank_one_projection(χ, RG) for χ in chars]
 
     r1p, simple = first.(res), last.(res) # rp1 are sparse storage
-    RG = parent(first(idems))
-    return [µ*AlgebraElement(χ, RG) for (µ,χ) in zip(r1p, chars)], simple # dense storage
+
+    mps = [isone(µ) ? AlgebraElement(χ, RG) : µ*AlgebraElement(χ, RG)
+        for (µ,χ) in zip(r1p, chars)] # dense storage
+
+    return mps, simple
 end
