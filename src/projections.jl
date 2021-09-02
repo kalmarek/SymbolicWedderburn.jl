@@ -46,11 +46,11 @@ end
 
 ## versions with InducedActionHomomorphisms
 
-function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character)
+function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character{T}) where T
     @assert isirreducible(χ)
     mproj = matrix_projection_irr(hom, collect(values(χ)), conjugacy_classes(χ))
     mproj .*= degree(χ) // sum(length, conjugacy_classes(χ)) # χ(1)/order(G)
-    return mproj
+    return eltype(mproj) == T ? mproj : T.(mproj)
 end
 
 function matrix_projection_irr(
@@ -94,7 +94,7 @@ end
 function matrix_projection(
     hom::InducedActionHomomorphism{<:ByPermutations},
     α::AlgebraElement,
-    dim = length(features(hom)),
+    dim::Integer = length(features(hom)),
 )
     result = zeros(eltype(α), dim, dim)
     b = basis(parent(α))
@@ -110,8 +110,24 @@ function matrix_projection(
 end
 
 function matrix_projection(
+    hom::InducedActionHomomorphism{<:ByLinearTransformation},
+    α::AlgebraElement,
+    dim::Integer = length(features(hom)),
+)
+
+    result = zeros(Base._return_type(*, Tuple{eltype(α), coeff_type(action(hom))}), dim, dim)
+    b = basis(parent(α))
+
+    for (j, a) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+        result += a*induce(hom, inv(b[j]))
+    end
+
+    return result
+end
+
+function matrix_projection(
     α::AlgebraElement{<:StarAlgebra{<:PermutationGroups.AbstractPermutationGroup}},
-    dim = degree(parent(parent(α)))
+    dim::Integer = degree(parent(parent(α)))
 )
     result = zeros(eltype(α), dim, dim)
     b = basis(parent(α))
