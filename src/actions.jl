@@ -22,7 +22,7 @@ decompose(x::Any, hom::InducedActionHomomorphism) = throw(
     "No fallback is provided for $(typeof(x)). You need to implement `decompose(::$(typeof(x)), ::$(typeof(hom)))`.",
 )
 
-_coeff_type(ac::ByLinearTransformation) = throw(
+coeff_type(ac::ByLinearTransformation) = throw(
     "No fallback is provided for $(typeof(ac)). You need to implement `_coeff_type(::$(typeof(ac)))`.",
 )
 
@@ -36,7 +36,7 @@ function induce(ac::ByLinearTransformation, hom::InducedActionHomomorphism, g::G
 
     I = Int[]
     J = Int[]
-    V = _coeff_type(ac)[]
+    V = coeff_type(ac)[]
 
     for (i, f) in enumerate(features(hom))
         k = action(action(hom), g, f)
@@ -50,7 +50,7 @@ end
 
 # ala permutation action
 function decompose(m::T, hom::InducedActionHomomorphism{A,T}) where {A,T}
-    return [hom[m]], [one(_coeff_type(action(hom)))]
+    return [hom[m]], [one(coeff_type(action(hom)))]
 end
 
 
@@ -88,7 +88,7 @@ struct CachedExtensionHomomorphism{A,T,G,H,E <: InducedActionHomomorphism{A,T}} 
     cache::Dict{G,H}
 end
 
-for f in (:_int_type, :features, :action)
+for f in (:action, :features, :_int_type)
     @eval $f(h::CachedExtensionHomomorphism) = $f(h.ehom)
 end
 

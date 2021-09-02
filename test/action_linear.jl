@@ -7,7 +7,7 @@ x,y = @polyvar x y
 struct By90Rotation <: SymbolicWedderburn.ByLinearTransformation end
 # (x, y) → (x+y, x-y)/sqrt(2)
 
-SymbolicWedderburn._coeff_type(::By90Rotation) = Float64
+SymbolicWedderburn.coeff_type(::By90Rotation) = Float64
 function SymbolicWedderburn.action(::By90Rotation, g::CyclicGroupElement, m::Monomial)
     isone(g) && return m
     x, y = variables(m)
