@@ -96,7 +96,8 @@ image_basis(A::AbstractMatrix) = image_basis!(deepcopy(A))
 image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
 
 function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
-    fact = svd!(A)
+    A, p = row_echelon_form!(A)
+    fact = svd!(Matrix(@view A[1:length(p), :]))
     A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
     return fact.Vt, 1:A_rank
 end
