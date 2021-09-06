@@ -26,8 +26,9 @@ import .Characters.FiniteFields
 
 include("actions.jl")
 include("action_characters.jl")
-include("projections.jl")
+include("matrix_projections.jl")
 include("minimal_projections.jl")
+include("direct_summands.jl")
 include("sa_basis.jl")
 
 end # module

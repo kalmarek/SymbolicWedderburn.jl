@@ -141,3 +141,43 @@ function matrix_projection(
 
     return result
 end
+
+image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
+    A, p = row_echelon_form!(A)
+    fact = svd!(Matrix(@view A[1:length(p), :]))
+    A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    return fact.Vt, 1:A_rank
+end
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
+    return fact.Vt, 1:A_rank
+end
+
+image_basis(A::AbstractMatrix) =
+    ((m, p) = image_basis!(deepcopy(A)); m[1:length(p), :])
+
+function image_basis(χ::Character)
+    mpr = isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
+    image, pivots = image_basis!(mpr)
+    return image[1:length(pivots), :]
+end
+
+function image_basis(hom::InducedActionHomomorphism, χ::Character)
+    mpr = isirreducible(χ) ? matrix_projection_irr(hom, χ) : matrix_projection(hom, χ)
+    image, pivots = image_basis!(mpr)
+    return image[1:length(pivots), :]
+end
+
+function image_basis(α::AlgebraElement)
+    image, pivots = image_basis!(matrix_projection(α))
+    return image[1:length(pivots), :]
+end
+
+function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
+    image, pivots = image_basis!(matrix_projection(hom, α))
+    return image[1:length(pivots), :]
+end
