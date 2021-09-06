@@ -51,7 +51,7 @@ function affordable_real(
         else # complex one...
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
-            @assert !isnothing(k)
+            @assert k !== nothing
             @debug "complex" χ conj(χ)=irreducible_characters[k]
             if k > i # ... we haven't already observed a conjugate of
                 @assert multiplicities[i] == multiplicities[k]
@@ -225,7 +225,7 @@ function _symmetry_adapted_basis(
     res = map(zip(irr, multiplicities)) do (µ, m)
         @spawn_compat begin
             µT = eltype(µ) == T ? µ : Character{T}(µ)
-            image = isnothing(hom) ? image_basis(µT) : image_basis(hom, µT)
+            image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             simple = size(image, 1) == m
             deg = degree(µ)
             if deg == 1
@@ -249,7 +249,7 @@ function _symmetry_adapted_basis(
     res = map(zip(mps, multiplicities, degrees, simples)) do (µ, m, deg, simple)
         @spawn_compat begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
-            image = isnothing(hom) ? image_basis(µT) : image_basis(hom, µT)
+            image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             if simple
                 @assert size(image, 1) == m "The dimension of the projection doesn't match with simple summand multiplicity"
             end
