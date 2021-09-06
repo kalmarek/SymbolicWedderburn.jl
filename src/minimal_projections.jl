@@ -95,9 +95,10 @@ else
     end
 end
 
-function rank_one_projection(χ::Character, RG::StarAlgebra{<:Group}, iters=3)
-    idems = small_idempotents(RG) # idems are AlgebraElements over Rational{Int}
-
+function rank_one_projection(χ::Character, RG::StarAlgebra{<:Group};
+    idems = small_idempotents(RG), # idems are AlgebraElements over Rational{Int}
+    iters=3
+)
     degree(χ) == 1 && return one(RG, Rational{Int}), true
 
     for µ in idems
@@ -118,8 +119,7 @@ function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
     RG::StarAlgebra{<:Group}
 )
-    # res = fetch.([Threads.@spawn rank_one_projection(χ, RG, idems) for χ in chars])
-    res = [rank_one_projection(χ, RG) for χ in chars]
+    res = fetch.([@spawn_compat rank_one_projection(χ, RG) for χ in chars])
 
     r1p, simple = first.(res), last.(res) # rp1 are sparse storage
 
