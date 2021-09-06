@@ -24,6 +24,6 @@ include("cmmatrix.jl")
 
 include("powermap.jl")
 include("character_tables.jl")
-include("characters.jl")
+include("class_functions.jl")
 include("dixon.jl")
 end
