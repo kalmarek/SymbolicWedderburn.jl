@@ -70,8 +70,11 @@ end
 Compute a basis for the linear space `ℝⁿ` (where `n = degree(G)`) which is
 invariant under the symmetry of `G`.
 
-The coefficients of the invariant basis are returned in (orthogonal) blocks
-corresponding to irreducible characters of `G`.
+The basis is returned as a vector of `DirectSummand{T}`s (blocks) corresponding
+to the irreducible characters of `G`. The blocks are orthogonal to **each other**,
+however vectors within a single block may *not* be orthogonal.
+If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to orthogonalize
+vectors within each `DirectSummand`.
 
 Arguments:
 * `S` controls the types of `Cyclotomic`s used in the computation of
@@ -79,15 +82,14 @@ character table. Exact type are preferred. For larger groups `G` `Rational{BigIn
 might be necessary.
 * `T` controls the type of coefficients of the returned basis.
 * `semisimple`: if set to `false` (the default) an effort to find minimal
-projection system is made, so that the blocks give isomorphism to simple
-summands. Otherwise semisimple decomposition is computed.
+projection system is made, so that the blocks give projection to a single simple
+summand within each (isotypical) block. Otherwise an isomorphism to the
+semisimple decomposition is computed.
 
 !!! Note:
 Each returned block (a `DirectSummand`) is invariant under the action of `G`,
 which means that the action may still e.g. permute (row) vectors , but only
-*within* each block. The blocks are guaranteed to be orthogonal.
-If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to orthogonalize
-vectors within each block.
+*within* each block.
 """
 function symmetry_adapted_basis(
     G::AbstractPermutationGroup,
