@@ -1,9 +1,9 @@
-function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
-    F = SymbolicWedderburn.FiniteFields.GF{p}
-    ccG = conjugacy_classes(G)
-    Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-    @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
-    esd = SymbolicWedderburn.common_esd(Ns, F)
+function generictest_dixon_Fp(G, p = Characters.dixon_prime(G))
+    F = Characters.FiniteFields.GF{p}
+    ccG = Characters.conjugacy_classes(G)
+    Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+    @test isdiag(Characters.common_esd(Ns, F))
+    esd = Characters.common_esd(Ns, F)
 
     let W = esd.basis
         @test inv(W) isa Matrix{F}
@@ -16,11 +16,11 @@ function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
         end
     end
 
-    tbl = SymbolicWedderburn.CharacterTable(F, G, ccG)
-    @test SymbolicWedderburn.irreducible_characters(tbl) isa
-          Vector{<:SymbolicWedderburn.Character}
+    tbl = Characters.CharacterTable(F, G, ccG)
+    @test Characters.irreducible_characters(tbl) isa
+          Vector{<:Characters.Character}
 
-    chars = SymbolicWedderburn.irreducible_characters(tbl)
+    chars = Characters.irreducible_characters(tbl)
 
     # checking the degrees
     @test sum(Int.(degree.(chars)) .^ 2) == order(G)
@@ -29,24 +29,24 @@ function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
     @test [dot(χ, ψ) for χ in chars, ψ in chars] == I
 end
 
-function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
-    F = SymbolicWedderburn.FiniteFields.GF{p}
-    ccG = conjugacy_classes(G)
-    tbl = SymbolicWedderburn.CharacterTable(F, G, ccG)
-    chars_Fp = SymbolicWedderburn.irreducible_characters(tbl)
+function generictest_dixon_C(G, p = Characters.dixon_prime(G))
+    F = Characters.FiniteFields.GF{p}
+    ccG = Characters.conjugacy_classes(G)
+    tbl = Characters.CharacterTable(F, G, ccG)
+    chars_Fp = Characters.irreducible_characters(tbl)
 
     degrees = degree.(chars_Fp)
 
-    m = SymbolicWedderburn._multiplicities(chars_Fp)
+    m = Characters._multiplicities(chars_Fp)
     for i = 1:size(m, 1)
         @test all(Int.(m[i, :, :]) .<= degrees[i])
     end
 
-    @test SymbolicWedderburn.complex_character_table(Rational{Int}, tbl) isa
-          SymbolicWedderburn.CharacterTable{<:Group, <:Cyclotomic{Rational{Int}}}
+    @test Characters.complex_character_table(Rational{Int}, tbl) isa
+          Characters.CharacterTable{<:Group, <:Cyclotomic{Rational{Int}}}
 
-    tblCC = SymbolicWedderburn.complex_character_table(Rational{Int}, tbl)
-    chars_CC = SymbolicWedderburn.irreducible_characters(tblCC)
+    tblCC = Characters.complex_character_table(Rational{Int}, tbl)
+    chars_CC = Characters.irreducible_characters(tblCC)
 
     id = one(G)
     @test [ψ(id) for ψ in chars_CC] == degrees
@@ -59,13 +59,13 @@ end
 
 @testset "Dixon Algorithm" begin
     @testset "DixonPrimes" begin
-        @test SymbolicWedderburn.dixon_prime(20, 20) == 41
+        @test Characters.dixon_prime(20, 20) == 41
 
         @testset "random" begin
             for n in rand(2:1000, 10)
-                F = SymbolicWedderburn.Primes.factor(n)
+                F = Characters.Primes.factor(n)
                 e = lcm(collect(keys(F)))
-                p = SymbolicWedderburn.dixon_prime(n, e)
+                p = Characters.dixon_prime(n, e)
                 @test mod(p, e) == 1
                 @test p > 2 * floor(sqrt(n))
             end
@@ -73,11 +73,11 @@ end
 
         @testset "DixonPrimeGroups" begin
             G = PermutationGroups.SymmetricGroup(4)
-            ccG = conjugacy_classes(G)
+            ccG = Characters.conjugacy_classes(G)
             @test exponent(G) == 12
             @test exponent(ccG) == 12
-            @test SymbolicWedderburn.dixon_prime(G) ==
-                  SymbolicWedderburn.dixon_prime(ccG)
+            @test Characters.dixon_prime(G) ==
+                  Characters.dixon_prime(ccG)
         end
     end
 
@@ -94,31 +94,31 @@ end
             end
 
             let ccG = ccG, p = 29
-                F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-                @test_throws AssertionError SymbolicWedderburn.common_esd(Ns, F)
+                F = Characters.FiniteFields.GF{p}
+                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                @test_throws AssertionError Characters.common_esd(Ns, F)
             end
 
             let ccG = ccG, p = 31
-                F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-                esd = SymbolicWedderburn.EigenSpaceDecomposition(F.(Ns[1]))
-                esd = SymbolicWedderburn.refine(esd, F.(Ns[2]))
-                esd = SymbolicWedderburn.refine(esd, F.(Ns[3]))
+                F = Characters.FiniteFields.GF{p}
+                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                esd = Characters.EigenSpaceDecomposition(F.(Ns[1]))
+                esd = Characters.refine(esd, F.(Ns[2]))
+                esd = Characters.refine(esd, F.(Ns[3]))
                 @test isdiag(esd)
 
-                @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
+                @test isdiag(Characters.common_esd(Ns, F))
             end
 
             # generic tests
             generictest_dixon_Fp(G)
 
             # tests specific to G
-            p = SymbolicWedderburn.dixon_prime(ccG)
-            F = SymbolicWedderburn.FiniteFields.GF{p}
+            p = Characters.dixon_prime(ccG)
+            F = Characters.FiniteFields.GF{p}
 
-            tbl = SymbolicWedderburn.CharacterTable(F, G)
-            chars = SymbolicWedderburn.irreducible_characters(tbl)
+            tbl = Characters.CharacterTable(F, G)
+            chars = Characters.irreducible_characters(tbl)
 
             @test sort(degree.(chars)) == [1, 1, 1, 3]
 
@@ -141,7 +141,7 @@ end
             end
 
             @testset "PowerMap" begin
-                pmG = SymbolicWedderburn.PowerMap(ccG)
+                pmG = Characters.PowerMap(ccG)
                 @test size(pmG) == (4, 6)
                 @test pmG[:, 0] == ones(Int, 4)
                 @test pmG[:, 1] == 1:4
@@ -155,8 +155,8 @@ end
             # generic tests
             generictest_dixon_C(G)
 
-            chars_C = SymbolicWedderburn.irreducible_characters(G, ccG)
-            E = SymbolicWedderburn.Cyclotomics.E
+            chars_C = Characters.irreducible_characters(G, ccG)
+            E = Characters.Cyclotomics.E
 
             @test [collect(values(χ)) for χ in chars_C] == [
                 E(3, 0) .* [3, 0, 0, -1],
@@ -180,7 +180,7 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.irreducible_characters(G, ccG)
+            chars = Characters.irreducible_characters(G, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 2, 3, 3]
             @test [collect(values(χ)) for χ in chars] == [
@@ -207,7 +207,7 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.irreducible_characters(G, ccG)
+            chars = Characters.irreducible_characters(G, ccG)
 
             @test sort(degree.(chars)) == [1, 1, 1, 1, 4]
             @test [collect(values(χ)) for χ in chars] == [
@@ -222,17 +222,17 @@ end
 
     @testset "Different base rings for characters_dixon" begin
         G = PermGroup(perm"(1,2,3,4)")
-        @test eltype(SymbolicWedderburn.irreducible_characters(Rational{Int}, G)) <:
-            SymbolicWedderburn.Character{<:Cyclotomic{Rational{Int}}}
-        @test eltype(SymbolicWedderburn.irreducible_characters(Rational{BigInt}, G)) <:
-            SymbolicWedderburn.Character{<:Cyclotomic{Rational{BigInt}}}
+        @test eltype(Characters.irreducible_characters(Rational{Int}, G)) <:
+            Characters.Character{<:Cyclotomic{Rational{Int}}}
+        @test eltype(Characters.irreducible_characters(Rational{BigInt}, G)) <:
+            Characters.Character{<:Cyclotomic{Rational{BigInt}}}
     end
 
     @time @testset "SmallPermGroups" begin
         for (ord, groups) in SmallPermGroups
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
-                @test SymbolicWedderburn.irreducible_characters(G) isa
-                      Vector{<:SymbolicWedderburn.Character}
+                @test Characters.irreducible_characters(G) isa
+                      Vector{<:Characters.Character}
                 generictest_dixon_Fp(G)
                 generictest_dixon_C(G)
             end

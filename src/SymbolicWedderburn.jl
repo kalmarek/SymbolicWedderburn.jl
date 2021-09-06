@@ -6,13 +6,10 @@ using Primes
 
 using Cyclotomics
 using GroupsCore
+using PermutationGroups
 using StarAlgebras
 
-import PermutationGroups:
-    AbstractOrbit, AbstractPerm, AbstractPermutationGroup, Orbit, Perm, degree
-import PermutationGroups
-
-export conjugacy_classes, symmetry_adapted_basis
+export symmetry_adapted_basis
 
 macro spawn_compat(expr)
     @static if VERSION < v"1.3.0"
@@ -22,16 +19,13 @@ macro spawn_compat(expr)
     end
 end
 
-include("gf.jl")
-include("eigenspacedecomposition.jl")
-include("cmmatrix.jl")
+include("Characters/Characters.jl")
+using .Characters
+import .Characters: row_echelon_form!
+import .Characters.FiniteFields
 
 include("actions.jl")
-include("powermap.jl")
-include("character_tables.jl")
-include("characters.jl")
-include("dixon.jl")
-
+include("action_characters.jl")
 include("projections.jl")
 include("minimal_projections.jl")
 include("sa_basis.jl")

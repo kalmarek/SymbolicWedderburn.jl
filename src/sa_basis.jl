@@ -1,3 +1,21 @@
+image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
+    A, p = row_echelon_form!(A)
+    fact = svd!(Matrix(@view A[1:length(p), :]))
+    A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    return fact.Vt, 1:A_rank
+end
+
+function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
+    fact = svd!(A)
+    A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
+    return fact.Vt, 1:A_rank
+end
+
+image_basis(A::AbstractMatrix) =
+    ((m, p) = image_basis!(deepcopy(A)); m[1:length(p), :])
+
 function image_basis(χ::Character)
     mpr = isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
     image, pivots = image_basis!(mpr)
@@ -29,7 +47,7 @@ end
 
 StarAlgebras.basis(ds::DirectSummand) = ds.basis
 issimple(ds::DirectSummand) = ds.simple
-degree(ds::DirectSummand) = ds.degree
+PermutationGroups.degree(ds::DirectSummand) = ds.degree
 multiplicity(ds::DirectSummand) = ds.multiplicity
 
 Base.size(ds::DirectSummand) = size(ds.basis)
@@ -43,7 +61,7 @@ function affordable_real(
     irr_real = similar(irreducible_characters, 0)
     mls_real = similar(multiplicities, 0)
     for (i, χ) in pairs(irreducible_characters)
-        ι = frobenius_schur(χ)
+        ι = Characters.frobenius_schur(χ)
         if abs(ι) == 1 # real or quaternionic
             @debug "real/quaternionic:" χ
             push!(irr_real, χ)
@@ -92,7 +110,7 @@ which means that the action may still e.g. permute (row) vectors , but only
 *within* each block.
 """
 function symmetry_adapted_basis(
-    G::AbstractPermutationGroup,
+    G::PermutationGroups.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
 )
@@ -102,7 +120,7 @@ end
 
 symmetry_adapted_basis(
     T::Type,
-    G::AbstractPermutationGroup,
+    G::PermutationGroups.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
 ) = symmetry_adapted_basis(T, CharacterTable(S, G), semisimple = semisimple)

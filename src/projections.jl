@@ -19,7 +19,7 @@ end
 
 function matrix_projection_irr(
     vals,
-    ccls::AbstractVector{<:AbstractOrbit{<:AbstractPerm}},
+    ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
 )
     dim = degree(first(first(ccls)))
     result = zeros(eltype(vals), dim, dim)
