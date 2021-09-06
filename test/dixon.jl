@@ -239,17 +239,3 @@ end
         end
     end
 end
-
-@testset "Characters io" begin
-    G = PermGroup([perm"(2,3)(4,5)"])
-    chars = SymbolicWedderburn.irreducible_characters(G)
-
-    @test sprint(show, chars[1]) == "χ₁"
-    @test sprint(show, chars[2]) == "χ₂"
-    @test sprint(show, chars[1]+2chars[2]) == "χ₁ +2·χ₂"
-    @test sprint(show, 2chars[1]-chars[2]) == "2·χ₁ -1·χ₂"
-    @test sprint(show, -2chars[1]+3chars[2]) == "-2·χ₁ +3·χ₂"
-
-    @test sprint(show, MIME"text/plain"(), chars[1]) ==
-        "Character over Cyclotomic{Rational{Int64}, SparseArrays.SparseVector{Rational{Int64}, Int64}}\nχ₁"
-end
