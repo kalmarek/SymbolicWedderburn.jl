@@ -12,7 +12,7 @@ include(joinpath(@__DIR__, "action_polynomials.jl"))
 OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 0,
-    "max_iters" => 20_000,
+    "max_iters" => 10_000,
     "eps" => 2e-6,
     "linear_solver" => SCS.DirectSolver,
 )
@@ -35,17 +35,21 @@ end
 
 ts_sa, st_sa = let f = motzkin,
     basis = basis,
-    m = SOSModel(OPTIMIZER),
     G = PermGroup(perm"(1,2)")
 
-    t = @timed let
-        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(Float64, G, exponents.(basis), PermutingVariables())
-        SparseMatrixCSC{Float64,Int}.(SymbolicWedderburn.basis.(ssimple_basis))
+    sa_basis, symmetry_adaptation_time, = @timed let
+        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(
+            Float64,
+            G,
+            PermutingVariables(),
+            exponents.(basis),
+            semisimple=true
+        )
+        sp = sparse.(ssimple_basis)
+        droptol!.(sp, 1e-12)
     end
 
-    sa_basis, symmetry_adaptation_time = t.value, t.time
-
-    let m = m, basis = basis, R = sa_basis
+    let m = SOSModel(OPTIMIZER), basis = basis, R = sa_basis
         @variable m t >= 0
         # @objective m Max t
 
