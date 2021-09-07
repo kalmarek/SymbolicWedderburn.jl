@@ -111,7 +111,8 @@ function symmetry_adapted_basis(
     semisimple=false,
 )
     tbl = CharacterTable(S, G)
-    return symmetry_adapted_basis(eltype(tbl), tbl, action, basis, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
+    return symmetry_adapted_basis(eltype(tbl), tbl, ehom, semisimple=semisimple)
 end
 
 function symmetry_adapted_basis(
@@ -123,17 +124,16 @@ function symmetry_adapted_basis(
     semisimple=false,
 )
     tbl = CharacterTable(S, G)
-    return symmetry_adapted_basis(T, tbl, action, basis, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
+    return symmetry_adapted_basis(T, tbl, ehom, semisimple=semisimple)
 end
 
 function symmetry_adapted_basis(
     T::Type,
     tbl::CharacterTable,
-    action::Action,
-    basis;
+    ehom::InducedActionHomomorphism;
     semisimple=false,
 )
-    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
     ψ = action_character(ehom, tbl)
 
     irr, multips = _constituents_decomposition(ψ, tbl)
