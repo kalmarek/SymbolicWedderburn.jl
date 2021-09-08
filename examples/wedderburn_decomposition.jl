@@ -7,20 +7,18 @@ using GroupsCore
 function orbit_constraint!(
     M_orb::Matrix{<:AbstractFloat},
     M::Matrix{<:Integer},
-    orb
+    orb::AbstractVector{<:Integer},
+    normalizing_constant = 1/length(orb)
 )
+    # sum(M.==idx for idx in orb)
     M_orb .= zero(eltype(M_orb))
-    k = 1/length(orb)
     for i in eachindex(M)
         if M[i] ∈ orb
-            M_orb[i] += k
+            M_orb[i] += normalizing_constant
         end
     end
     return M_orb
 end
-
-# sum(M.==idx for idx in orb)
-
 
 function orbit_decomposition(
     Γ::Group,
@@ -47,9 +45,10 @@ function orbit_decomposition(
     return orbits
 end
 
-struct WedderburnDecomposition{B, I, DS}
+
+struct WedderburnDecomposition{B, O, DS}
     basis::B
-    orbits::Vector{Vector{I}}
+    orbits::O
     Uπs::Vector{DS}
     hom::SymbolicWedderburn.InducedActionHomomorphism
 end
@@ -86,7 +85,8 @@ orbits(wbdec::WedderburnDecomposition) = wbdec.orbits
 SymbolicWedderburn.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 projections(wbdec::WedderburnDecomposition) = wbdec.Uπs
 
-_tmps(wbdec::WedderburnDecomposition) = [similar(U, reverse(size(U))) for U in wbdec.Uπs]
+_tmps(wbdec::WedderburnDecomposition) =
+    [zeros(eltype(U), reverse(size(U))) for U in wbdec.Uπs]
 
 _fillfactor(M::AbstractMatrix) = count(!iszero, M)/length(M)
 _fillfactor(M::AbstractSparseMatrix) = nnz(M)/length(M)
@@ -108,8 +108,16 @@ function diagonalize!(
     M::AbstractMatrix,
     wbdec::WedderburnDecomposition,
     tmps=_tmps(wbdec))
+    return diagonalize!(Mπs, M, projections(wbdec), tmps)
+end
 
-    for (π, Uπ) in pairs(projections(wbdec))
+function diagonalize!(
+    Mπs,
+    M::AbstractMatrix,
+    Uπs,
+    tmps
+)
+    for (π, Uπ) in enumerate(Uπs)
         bUπ = SymbolicWedderburn.basis(Uπ) # Base.Matrix to allow BLAS paths below
         LinearAlgebra.mul!(tmps[π], M, bUπ')
         LinearAlgebra.mul!(Mπs[π], bUπ, tmps[π])
@@ -118,4 +126,3 @@ function diagonalize!(
     end
     return Mπs
 end
-

@@ -53,7 +53,7 @@ semisimple_dec = let f = f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])])
             ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(
                 Rational{Int},
                 G,
-                PermutingVariables(),
+                VariablePermutation(),
                 basis,
                 semisimple=true
             )
@@ -90,7 +90,7 @@ end
 
 # This is faster, but not quite the speedup we'd like to see.
 # Let us try now to use the decomposition into simple summands
-include(joinpath(@__DIR__, "utils.jl"))
+include(joinpath(@__DIR__, "wedderburn_decomposition.jl"))
 
 wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Float64
 
@@ -100,7 +100,7 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
         wedderburn = WedderburnDecomposition(
             T,
             G,
-            PermutingVariables(),
+            VariablePermutation(),
             monomials(x, 0:DynamicPolynomials.maxdegree(f)),
             basis_half
         )

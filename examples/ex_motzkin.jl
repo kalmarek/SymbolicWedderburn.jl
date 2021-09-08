@@ -41,7 +41,7 @@ ts_sa, st_sa = let f = motzkin,
         ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(
             Float64,
             G,
-            PermutingVariables(),
+            VariablePermutation(),
             exponents.(basis),
             semisimple=true
         )

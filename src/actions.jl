@@ -92,6 +92,8 @@ for f in (:action, :features, :_int_type)
     @eval $f(h::CachedExtensionHomomorphism) = $f(h.ehom)
 end
 
+Base.getindex(h::CachedExtensionHomomorphism, x::Any) = h.ehom[x]
+
 function CachedExtensionHomomorphism(G::Group, action::Action, basis; precompute=false)
     hom = ExtensionHomomorphism(action, basis)
     S = typeof(induce(hom, one(G)))
