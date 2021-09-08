@@ -19,6 +19,7 @@ export conjugacy_classes,
 
 include("gf.jl")
 
+include("echelon_form.jl")
 include("eigenspacedecomposition.jl")
 include("cmmatrix.jl")
 
