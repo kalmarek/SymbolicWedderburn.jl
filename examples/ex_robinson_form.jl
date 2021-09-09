@@ -11,6 +11,7 @@ using LinearAlgebra
 using SparseArrays
 
 using SymbolicWedderburn
+using SymbolicWedderburn.StarAlgebras
 using DynamicPolynomials
 using SumOfSquares
 using SCS
@@ -134,7 +135,7 @@ end
 # Now given that f must be constant on orbits of monomials under the action of G
 # let's exploit that to reduce the number of cnstraints (one for each orbit).
 # Here we keep the single large psd constraint of size N×N.
-include(joinpath(@__DIR__, "wedderburn_decomposition.jl"))
+include(joinpath(@__DIR__, "util.jl"))
 
 orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
     basis_monoms = monomials([x,y], 0:DynamicPolynomials.maxdegree(f))
@@ -154,12 +155,13 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
         M_orb = similar(M, T)
 
         C = DynamicPolynomials.coefficients(f - t, basis_monoms)
-        # @show C
 
         for iv in invariant_vs
             c = dot(C, iv)
-            # C is constant over the orbit
-            # @assert all(dot(C, @view orb[:, i]) == c for i in size(orb, 2))
+
+            # invariant_constraint! is defined locally in util.jl
+            # it essentially amounts to averaging constraint matrices defined by M
+            # with weights provided by iv and storing the result in (dense) matrix M_orb
             M_orb = invariant_constraint!(M_orb, M, iv)
 
             #=
@@ -213,18 +215,22 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
         JuMP.@objective m Max t
         psds = [
             JuMP.@variable(m, [1:d, 1:d] in PSDCone())
-            for d in size.(projections(wedderburn), 1)
+            for d in size.(direct_summands(wedderburn), 1)
         ]
 
         # preallocating
         Mπs = zeros.(T, size.(psds))
         M_orb = similar(M, T)
-        tmps = _tmps(wedderburn)
+        tmps = zeros.(T, reverse.(size.(direct_summands(wedderburn))))
 
         C = DynamicPolynomials.coefficients(f - t, SymbolicWedderburn.basis(wedderburn))
 
         for iv in invariant_vectors(wedderburn)
             c = dot(C, iv)
+
+            # invariant_constraint! is defined locally in util.jl
+            # it essentially amounts to averaging constraint matrices defined by M
+            # with weights provided by iv and storing the result in (dense) matrix M_orb
             M_orb = invariant_constraint!(M_orb, M, iv)
 
             #=
@@ -239,7 +245,7 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
             end
             =#
 
-            Mπs = diagonalize!(Mπs, M_orb, wedderburn, tmps)
+            Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
 
             JuMP.@constraint m sum(
                 dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)

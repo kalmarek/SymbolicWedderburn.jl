@@ -21,9 +21,9 @@ OPTIMIZER = optimizer_with_attributes(
 
 motzkin = x^4 * y^2 + y^4 * x^2 - 3 * x^2 * y^2 + 1
 g = (x^2 + y^2 + 1)
-basis = monomials([x, y], 0:7)
+monomial_basis = monomials([x, y], 0:7)
 
-ts, st = let f = motzkin, basis = basis, m = SOSModel(OPTIMIZER)
+ts, st = let f = motzkin, basis = monomial_basis, m = SOSModel(OPTIMIZER)
     @variable m t >=0
     # @objective m Max t
     @variable m sos SOSPoly(basis)
@@ -34,7 +34,7 @@ ts, st = let f = motzkin, basis = basis, m = SOSModel(OPTIMIZER)
 end
 
 ts_sa, st_sa = let f = motzkin,
-    basis = basis,
+    basis = monomial_basis,
     G = PermGroup(perm"(1,2)")
 
     sa_basis, symmetry_adaptation_time, = @timed let

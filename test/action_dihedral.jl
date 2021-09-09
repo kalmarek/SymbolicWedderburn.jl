@@ -58,7 +58,7 @@ end
         [SymbolicWedderburn.basis(wedderburn)[x * y] for x in bh, y in bh]
     end
 
-    stats = @timed let m = JuMP.Model(OPTIMIZER)
+    m = let m = JuMP.Model(OPTIMIZER)
         JuMP.@variable m t
         JuMP.@objective m Max t
         psds = [
@@ -84,7 +84,7 @@ end
         end
         m
     end
-    m = stats.value
+
     optimize!(m)
 
     @test isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-4)

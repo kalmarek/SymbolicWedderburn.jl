@@ -90,7 +90,7 @@ end
 
 # This is faster, but not quite the speedup we'd like to see.
 # Let us try now to use the decomposition into simple summands
-include(joinpath(@__DIR__, "wedderburn_decomposition.jl"))
+include(joinpath(@__DIR__, "util.jl"))
 
 wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Float64
 
@@ -112,13 +112,13 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
             JuMP.@objective m Max t
             psds = [
                 JuMP.@variable(m, [1:d, 1:d] in PSDCone())
-                for d in size.(projections(wedderburn), 1)
+                for d in size.(direct_summands(wedderburn), 1)
             ]
 
             # preallocating
             Mπs = zeros.(T, size.(psds))
             M_orb = similar(M, T)
-            tmps = _tmps(wedderburn)
+            tmps = zeros.(T, reverse.(size.(direct_summands(wedderburn))))
 
             C = DynamicPolynomials.coefficients(f-t, SymbolicWedderburn.basis(wedderburn))
 
@@ -130,8 +130,11 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
                     @assert all(C[m] == cc for m in findall(!iszero, iv))
                 end
 
+                # invariant_constraint! is defined locally in util.jl
+                # it essentially amounts to averaging constraint matrices defined by M
+                # with weights provided by iv and storing the result in (dense) matrix M_orb
                 M_orb = invariant_constraint!(M_orb, M, iv)
-                Mπs = diagonalize!(Mπs, M_orb, wedderburn, tmps)
+                Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
 
                 JuMP.@constraint m sum(
                     dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
@@ -143,7 +146,7 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
 
     m = stats.value
     optimize!(m)
-    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time=(stats.time)
+    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time=(stats.time) symmetry_adaptation_time
     (
         status=termination_status(m),
         objective=objective_value(m),

@@ -52,17 +52,17 @@ end
 
 @testset "induced Matrix Representation" begin
     g = gens(G, 1)
-    basis = monomials([x,y], 0:4)
-    ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), basis)
+    monomial_basis = monomials([x,y], 0:4)
+    ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), monomial_basis)
     m = droptol!(SymbolicWedderburn.induce(By90Rotation(), ehom, g), 1e-15)
     @test eltype(m) == Float64
 
     @test !(m ≈ one(m))
     @test m^2 ≈ one(m)
 
-    ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(Float64, G, By90Rotation(), basis);
+    ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(Float64, G, By90Rotation(), monomial_basis);
     degs = SymbolicWedderburn.degree.(ssimple_basis)
-    mlts = SymbolicWedderburn.multiplicity.(ssimple_basis)
-    @test sum(d*m for (d,m) in zip(degs, mlts)) == length(basis)
-    @test sum(first∘size∘SymbolicWedderburn.basis, ssimple_basis) == length(basis)
+    mlts = multiplicity.(ssimple_basis)
+    @test sum(d*m for (d,m) in zip(degs, mlts)) == length(monomial_basis)
+    @test sum(first∘size, ssimple_basis) == length(monomial_basis)
 end
