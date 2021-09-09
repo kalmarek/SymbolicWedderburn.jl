@@ -96,46 +96,46 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
 
     basis_half = monomials(x, 0:(DynamicPolynomials.maxdegree(f)÷2))
 
+    wedderburn, symmetry_adaptation_time, = @timed WedderburnDecomposition(
+        T,
+        G,
+        VariablePermutation(),
+        monomials(x, 0:DynamicPolynomials.maxdegree(f)),
+        basis_half
+    )
+
+    M = [SymbolicWedderburn.basis(wedderburn)[x*y] for x in basis_half, y in basis_half]
+
     stats = @timed begin
-        wedderburn = WedderburnDecomposition(
-            T,
-            G,
-            VariablePermutation(),
-            monomials(x, 0:DynamicPolynomials.maxdegree(f)),
-            basis_half
-        )
-
-        M = [SymbolicWedderburn.basis(wedderburn)[x*y] for x in basis_half, y in basis_half]
-
         m = let m = JuMP.Model(OPTIMIZER)
             JuMP.@variable m t
             JuMP.@objective m Max t
-
             psds = [
-                (d = size(Uπ, 1); JuMP.@variable(m, [1:d, 1:d], PSD))
-                for Uπ in projections(wedderburn)
+                JuMP.@variable(m, [1:d, 1:d] in PSDCone())
+                for d in size.(projections(wedderburn), 1)
             ]
+
             # preallocating
-            Mπs = [(d = size(Uπ, 1); zeros(T, d,d)) for Uπ in projections(wedderburn)]
+            Mπs = zeros.(T, size.(psds))
             M_orb = similar(M, T)
             tmps = _tmps(wedderburn)
 
-            C = [DynamicPolynomials.coefficient(f, m) for m in SymbolicWedderburn.basis(wedderburn)]
+            C = DynamicPolynomials.coefficients(f-t, SymbolicWedderburn.basis(wedderburn))
 
-            for orb in orbits(wedderburn)
-                M_orb = orbit_constraint!(M_orb, M, orb)
-                Mπs = diagonalize!(Mπs, M_orb, wedderburn, tmps)
-
+            for iv in invariant_vectors(wedderburn)
+                c = dot(C, iv)
                 # C needs to be invariant under G,
                 # which is eqivalent to being constant on the orbits
-                c = C[first(orb)]
-                @assert all(C[m] == c for m in orb)
+                let cc = C[findfirst(!iszero, iv)]
+                    @assert all(C[m] == cc for m in findall(!iszero, iv))
+                end
 
-                is_constant_term = isone(SymbolicWedderburn.basis(wedderburn)[first(orb)])
+                M_orb = invariant_constraint!(M_orb, M, iv)
+                Mπs = diagonalize!(Mπs, M_orb, wedderburn, tmps)
 
                 JuMP.@constraint m sum(
                     dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
-                ) == (is_constant_term ? c - t : c)
+                ) == c
             end
             m
         end
