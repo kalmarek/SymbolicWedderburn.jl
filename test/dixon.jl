@@ -23,7 +23,7 @@ function generictest_dixon_Fp(G, p = Characters.dixon_prime(G))
     chars = Characters.irreducible_characters(tbl)
 
     # checking the degrees
-    @test sum(Int.(degree.(chars)) .^ 2) == order(G)
+    @test sum(Int.(SymbolicWedderburn.degree.(chars)) .^ 2) == order(G)
 
     # orthogonality of characters over F
     @test [dot(χ, ψ) for χ in chars, ψ in chars] == I
@@ -35,7 +35,7 @@ function generictest_dixon_C(G, p = Characters.dixon_prime(G))
     tbl = Characters.CharacterTable(F, G, ccG)
     chars_Fp = Characters.irreducible_characters(tbl)
 
-    degrees = degree.(chars_Fp)
+    degrees = SymbolicWedderburn.degree.(chars_Fp)
 
     m = Characters._multiplicities(chars_Fp)
     for i = 1:size(m, 1)
@@ -54,7 +54,7 @@ function generictest_dixon_C(G, p = Characters.dixon_prime(G))
     # orthogonality of characters over ℂ
     @test [dot(χ, ψ) for χ in chars_CC, ψ in chars_CC] == I
 
-    @test sum(χ -> degree(χ)^2, chars_CC) == order(G)
+    @test sum(χ -> SymbolicWedderburn.degree(χ)^2, chars_CC) == order(G)
 end
 
 @testset "Dixon Algorithm" begin
@@ -120,7 +120,7 @@ end
             tbl = Characters.CharacterTable(F, G)
             chars = Characters.irreducible_characters(tbl)
 
-            @test sort(degree.(chars)) == [1, 1, 1, 3]
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 3]
 
             @test Set(Int.(values(χ)) for χ in chars) ==
                   Set([[3, 0, 0, 6], [1, 4, 2, 1], [1, 2, 4, 1], [1, 1, 1, 1]])
@@ -182,7 +182,7 @@ end
 
             chars = Characters.irreducible_characters(G, ccG)
 
-            @test sort(degree.(chars)) == [1, 1, 2, 3, 3]
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 2, 3, 3]
             @test [collect(values(χ)) for χ in chars] == [
                 [2, 0, 2, -1, 0],
                 [3, 1, -1, 0, -1],
@@ -209,7 +209,7 @@ end
 
             chars = Characters.irreducible_characters(G, ccG)
 
-            @test sort(degree.(chars)) == [1, 1, 1, 1, 4]
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 1, 4]
             @test [collect(values(χ)) for χ in chars] == [
                 E(4, 0) .* [4, 0, 0, 0, -1],
                 E(4, 0) .* [1, 1, 1, 1, 1],

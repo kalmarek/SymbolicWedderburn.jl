@@ -23,6 +23,7 @@ include("projections.jl")
 include("sa_basis.jl")
 include("action_permutation.jl")
 include("action_linear.jl")
+include("action_dihedral.jl")
 
 if VERSION >= v"1.6.0" && !haskey(ENV, "CI")
     @testset "Examples" begin

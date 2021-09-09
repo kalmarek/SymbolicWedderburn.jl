@@ -26,20 +26,20 @@ end
 @testset "Linear Actions" begin
 
     G = CyclicGroup(2)
-    basis = monomials([x,y], 0:4)
-    ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), basis)
+    monomial_basis = monomials([x,y], 0:4)
+    ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), monomial_basis)
 
     @testset "decomposition in basis" begin
         g = gens(G, 1)
 
-        k = SymbolicWedderburn.action(By90Rotation(), g, basis[2])
+        k = SymbolicWedderburn.action(By90Rotation(), g, monomial_basis[2])
         idcs, vals = SymbolicWedderburn.decompose(k, ehom)
-        @test sum(c*basis[i] for (c,i) in zip(vals, idcs)) == k
+        @test sum(c*monomial_basis[i] for (c,i) in zip(vals, idcs)) == k
 
-        for b in basis
+        for b in monomial_basis
             k = SymbolicWedderburn.action(By90Rotation(), g, b)
             idcs, vals = SymbolicWedderburn.decompose(k, ehom)
-            @test sum(c*basis[i] for (c,i) in zip(vals, idcs)) == k
+            @test sum(c*monomial_basis[i] for (c,i) in zip(vals, idcs)) == k
         end
     end
 
@@ -48,12 +48,12 @@ end
         M = SymbolicWedderburn.induce(By90Rotation(), ehom, g)
 
         @test M isa AbstractMatrix{Float64}
-        @test size(M) == (length(basis), length(basis))
+        @test size(M) == (length(monomial_basis), length(monomial_basis))
 
         @test !(M ≈ one(M))
         @test M^2 ≈ one(M)
 
-        B = SymbolicWedderburn.symmetry_adapted_basis(Float64, G, By90Rotation(), basis);
-        @test sum(first ∘ size ∘ SymbolicWedderburn.basis, B) == length(basis)
+        sa_basis = symmetry_adapted_basis(Float64, G, By90Rotation(), monomial_basis);
+        @test sum(first ∘ size, sa_basis) == length(monomial_basis)
     end
 end

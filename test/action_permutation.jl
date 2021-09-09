@@ -45,45 +45,47 @@ end
     @test SymbolicWedderburn.constituents(ψ) == [40, 22, 18]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
     multips = SymbolicWedderburn.constituents(ψ)
-    @test dot(degree.(irr), multips) == length(basis)
-    simple = isone.(degree.(irr))
+    @test dot(SymbolicWedderburn.degree.(irr), multips) == length(basis)
+    simple = isone.(SymbolicWedderburn.degree.(irr))
     @test simple == [false, true, true]
 
     @testset "semisimple decomposition" begin
         let i = 1
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == degree(χ)*m == 80
+            @test size(b, 1) == SymbolicWedderburn.degree(χ)*m == 80
         end
 
         let i = 2
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == degree(χ)*m == 22
+            @test size(b, 1) == SymbolicWedderburn.degree(χ)*m == 22
         end
 
         let i = 3
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == degree(χ)*m == 18
+            @test size(b, 1) == SymbolicWedderburn.degree(χ)*m == 18
         end
 
-        @test SymbolicWedderburn.symmetry_adapted_basis(G, action, basis, semisimple=true) isa
+        @test symmetry_adapted_basis(G, action, basis, semisimple=true) isa
             Vector{<:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic}}
-        @test SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, G, action, basis, semisimple=true) isa
+        @test symmetry_adapted_basis(Rational{Int}, G, action, basis, semisimple=true) isa
             Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
-        @test SymbolicWedderburn.symmetry_adapted_basis(Float64, G, action, basis, semisimple=true) isa
+        @test symmetry_adapted_basis(Float64, G, action, basis, semisimple=true) isa
             Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
-        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, action, basis, semisimple=true)
+        sa_basis = symmetry_adapted_basis(G, action, basis, semisimple=true)
 
         @test [convert(Matrix{Rational{Int}}, b) for b in sa_basis] isa Vector{Matrix{Rational{Int}}}
         @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
 
         @test length(sa_basis) == 3
-        @test SymbolicWedderburn.multiplicity.(sa_basis) == [40, 22, 18]
+        @test multiplicity.(sa_basis) == [40, 22, 18]
         @test SymbolicWedderburn.degree.(sa_basis) == [2,1,1]
-        @test size.(SymbolicWedderburn.basis.(sa_basis), 1) == multips .* degree.(irr) == [80, 22, 18]
+        @test size.(sa_basis, 1) ==
+            multips .* SymbolicWedderburn.degree.(irr) ==
+            [80, 22, 18]
         @test sum(first ∘ size, sa_basis) == length(words)
     end
 
@@ -133,19 +135,19 @@ end
             @test size(mpr, 1) == m
         end
 
-        @test SymbolicWedderburn.symmetry_adapted_basis(G, action, basis, semisimple=false) isa
+        @test symmetry_adapted_basis(G, action, basis, semisimple=false) isa
             Vector{<:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic}}
-        @test SymbolicWedderburn.symmetry_adapted_basis(Rational{Int}, G, action, basis, semisimple=false) isa
+        @test symmetry_adapted_basis(Rational{Int}, G, action, basis, semisimple=false) isa
             Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
-        @test SymbolicWedderburn.symmetry_adapted_basis(Float64, G, action, basis, semisimple=false) isa
+        @test symmetry_adapted_basis(Float64, G, action, basis, semisimple=false) isa
             Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
-        sa_basis = SymbolicWedderburn.symmetry_adapted_basis(G, action, basis)
+        sa_basis = symmetry_adapted_basis(G, action, basis)
 
         @test length(sa_basis) == 3
-        @test SymbolicWedderburn.multiplicity.(sa_basis) == [40, 22, 18]
+        @test multiplicity.(sa_basis) == [40, 22, 18]
         @test SymbolicWedderburn.degree.(sa_basis) == [2,1,1]
-        @test all(SymbolicWedderburn.issimple, sa_basis)
-        @test size.(SymbolicWedderburn.basis.(sa_basis), 1) == multips == [40, 22, 18]
+        @test all(issimple, sa_basis)
+        @test size.(sa_basis, 1) == multips == [40, 22, 18]
     end
 end
