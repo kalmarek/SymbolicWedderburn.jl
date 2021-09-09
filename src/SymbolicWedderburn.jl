@@ -10,6 +10,12 @@ using PermutationGroups
 using StarAlgebras
 
 export symmetry_adapted_basis, WedderburnDecomposition
+export basis,
+    # degree, # too common name to export
+    direct_summands,
+    invariant_vectors,
+    issimple,
+    multiplicity
 
 macro spawn_compat(expr)
     @static if VERSION < v"1.3.0"
