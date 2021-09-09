@@ -44,14 +44,19 @@ character table. Exact type are preferred. For larger groups `G` `Rational{BigIn
 might be necessary.
 * `T` controls the type of coefficients of the returned basis.
 * `semisimple`: if set to `false` (the default) an effort to find minimal
-projection system is made, so that the blocks give projection to a single simple
-summand within each (isotypical) block. Otherwise an isomorphism to the
+projection system is made, so that each block defines a projection to a single
+simple summand within each (isotypical) block. Otherwise an isomorphism to the
 semisimple decomposition is computed.
 
 !!! Note:
 Each returned block (a `DirectSummand`) is invariant under the action of `G`,
 which means that the action may still e.g. permute (row) vectors , but only
 *within* each block.
+
+When `semisimple=true` the blocks constitute an isomorphism. Otherwise blocks
+may represent only a projection onto the commutant of the appropriate matrix
+algebra (which has in general lower dimension). This happens precisely when
+`issimple` on a block returns `true` and `SymbolicWedderburn.degree(ds) == 1`.
 """
 function symmetry_adapted_basis(
     G::PermutationGroups.AbstractPermutationGroup,
