@@ -9,7 +9,7 @@ using GroupsCore
 using PermutationGroups
 using StarAlgebras
 
-export symmetry_adapted_basis
+export symmetry_adapted_basis, WedderburnDecomposition
 
 macro spawn_compat(expr)
     @static if VERSION < v"1.3.0"
@@ -30,5 +30,6 @@ include("matrix_projections.jl")
 include("minimal_projections.jl")
 include("direct_summands.jl")
 include("sa_basis.jl")
+include("wedderburn_decomposition.jl")
 
 end # module
