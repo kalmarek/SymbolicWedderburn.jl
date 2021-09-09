@@ -47,10 +47,10 @@ Base.IteratorSize(::CyclicSubgroups) = Base.SizeUnknown()
 
 function Base.iterate(citr::CyclicSubgroups)
     g, state = iterate(citr.group) # g is identity here
-    ord = order(Int, g)
-    if citr.min_order ≤ ord ≤ citr.max_order
+    @assert isone(g)
+    if citr.min_order ≤ 1 ≤ citr.max_order
         citr.seen[ord] = Set([g])
-        return Set(g^i for i in 1:ord), state
+        return Set([g]), state
     end
     return iterate(citr, state)
 end
