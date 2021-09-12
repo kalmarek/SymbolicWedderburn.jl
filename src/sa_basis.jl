@@ -217,11 +217,16 @@ function _symmetry_adapted_basis(
         @spawn_compat begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
-            if simple
-                @assert size(image, 1) == m "The dimension of the projection doesn't match with simple summand multiplicity"
-            end
             DirectSummand(image, m, deg, simple)
         end
     end
-    return fetch.(res)
+    direct_summands = fetch.(res)
+
+    for (χ, ds) in zip(irr, direct_summands)
+        if issimple(ds) && (d = size(ds, 1)) != (e = multiplicity(ds)*sum(constituents(χ).>0))
+            throw("The dimension of the projection doesn't match with simple summand multiplicity: $d ≠ $e")
+        end
+    end
+
+    return direct_summands
 end

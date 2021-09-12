@@ -95,20 +95,28 @@ else
     end
 end
 
-function rank_one_projection(χ::Character, RG::StarAlgebra{<:Group};
+function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     idems = small_idempotents(RG), # idems are AlgebraElements over Rational{Int}
     iters=3
 )
-    degree(χ) == 1 && return one(RG, Rational{Int}), true
+
+    k = if isirreducible(χ)
+        1
+    else
+        sum(constituents(χ).>0)
+        # the minimal rank projection for the composite character
+    end
+
+    degree(χ) == k && return one(RG, Rational{Int}), true
 
     for µ in idems
-        isone(χ(µ)) && µ^2 == µ && return µ, true
+        χ(µ) == k && µ^2 == µ && return µ, true
     end
 
     for n in 2:iters
         for elts in Iterators.product(ntuple(i -> idems, n)...)
             µ = *(elts...)
-            isone(χ(µ)) && µ^2 == µ && return µ, true
+            χ(µ) == k && µ^2 == µ && return µ, true
         end
     end
     @debug "Could not find minimal projection for $χ"
@@ -119,7 +127,7 @@ function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
     RG::StarAlgebra{<:Group}
 )
-    res = fetch.([@spawn_compat rank_one_projection(χ, RG) for χ in chars])
+    res = fetch.([@spawn_compat minimal_rank_projection(χ, RG) for χ in chars])
 
     r1p, simple = first.(res), last.(res) # rp1 are sparse storage
 

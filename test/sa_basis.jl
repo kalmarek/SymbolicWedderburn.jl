@@ -34,7 +34,7 @@ end
             StarAlgebra(G, b, (length(b), length(b)))
         end
 
-        µ, s = SymbolicWedderburn.rank_one_projection(irr[1], RG)
+        µ, s = SymbolicWedderburn.minimal_rank_projection(irr[1], RG)
         @test µ isa AlgebraElement
         @test s
 
@@ -129,7 +129,8 @@ end
                     sa_basisR = symmetry_adapted_basis(Float64, G, S, semisimple=false)
                     for b in sa_basisR
                         if issimple(b)
-                            @test multiplicity(b) == size(b, 1)
+                            @test multiplicity(b) == size(b, 1) || 2*multiplicity(b) == size(b, 1)
+                            # the first condiditon doesn't hold for realified characters;
                         else
                             @test multiplicity(b)*SymbolicWedderburn.degree(b) == size(b, 1)
                         end

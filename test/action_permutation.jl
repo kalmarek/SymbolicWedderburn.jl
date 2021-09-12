@@ -96,7 +96,7 @@ end
         end
 
         let χ = irr[1], m = multips[1]
-            (a, fl) = SymbolicWedderburn.rank_one_projection(χ, RG)
+            (a, fl) = SymbolicWedderburn.minimal_rank_projection(χ, RG)
             @test fl == isone(χ(a))
 
             µ = AlgebraElement(χ, RG)*a
@@ -116,7 +116,7 @@ end
         end
 
         let χ = irr[2], m = multips[2]
-            (a, fl) = SymbolicWedderburn.rank_one_projection(χ, RG)
+            (a, fl) = SymbolicWedderburn.minimal_rank_projection(χ, RG)
             @test fl == isone(χ(a))
 
             µ = AlgebraElement(χ, RG)*a
@@ -126,7 +126,7 @@ end
         end
 
         let χ = irr[3], m = multips[3]
-            (a, fl) = SymbolicWedderburn.rank_one_projection(χ, RG)
+            (a, fl) = SymbolicWedderburn.minimal_rank_projection(χ, RG)
             @test fl == isone(χ(a))
 
             µ = AlgebraElement(χ, RG)*a
