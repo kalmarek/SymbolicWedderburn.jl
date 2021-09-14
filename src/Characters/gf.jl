@@ -32,6 +32,7 @@ Base.hash(n::GF{q}, h::UInt) where {q} =
 Base.:+(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) + Int(m), false)
 Base.:-(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) - Int(m), false)
 Base.:*(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) * Int(m), false)
+Base.:*(n::Integer, m::GF{q}) where {q} = GF{q}(n * Int(m), false)
 Base.:/(n::GF{q}, m::GF{q}) where {q} = n * inv(m)
 
 Base.:-(n::GF{q}) where {q} = GF{q}(q - Int(n), false)

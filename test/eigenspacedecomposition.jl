@@ -1,5 +1,5 @@
 function _row_echelon(A; L = [])
-    A, l = SymbolicWedderburn.row_echelon_form(A)
+    A, l = Characters.row_echelon_form(A)
     @test all([x ∈ l for x in L]) && length(L) <= length(l)
     for (i, j) in enumerate(l)
         @test all([iszero(A[k, j]) for k = 1:size(A, 1) if k != i])
@@ -8,14 +8,14 @@ function _row_echelon(A; L = [])
 end
 
 function _nullspace(A)
-    V = SymbolicWedderburn.left_nullspace(A)
-    W = SymbolicWedderburn.right_nullspace(A)
+    V = Characters.left_nullspace(A)
+    W = Characters.right_nullspace(A)
     @test all(iszero.(V*A))
     @test all(iszero.(A*W))
 end
 
 function _left_eigen(A)
-    E = SymbolicWedderburn.left_eigen(A)
+    E = Characters.left_eigen(A)
     for (val, space) in E
         @test space * A == space .* val
     end
@@ -47,7 +47,7 @@ end
                     0 0 0 0 0 1 0 2;
                     0 0 0 0 0 0 0 0])
 
-     @test SymbolicWedderburn.row_echelon_form(A)[1] == N
+     @test Characters.row_echelon_form(A)[1] == N
 
     end
     @testset "random" begin
@@ -90,8 +90,8 @@ end
                     0 0 0 1 1 0 2 1;
                     0 0 0 0 0 1 0 2])
 
-        K = SymbolicWedderburn.left_nullspace(A)
-        @test SymbolicWedderburn.row_echelon_form(K)[1] == N
+        K = Characters.left_nullspace(A)
+        @test Characters.row_echelon_form(K)[1] == N
 
    end
     @testset "random" begin
@@ -120,17 +120,17 @@ end
                      0 0 0 3;
                      4 4 0 0;
                      0 0 4 0])
-        
-        E2 = SymbolicWedderburn.left_eigen(M2)
+
+        E2 = Characters.left_eigen(M2)
         @test size(E2[GF{7}(3)], 1) == 3
 
-        E3 = SymbolicWedderburn.left_eigen(M3)
-        E4 = SymbolicWedderburn.left_eigen(M4)
+        E3 = Characters.left_eigen(M3)
+        E4 = Characters.left_eigen(M4)
         for val in GF{7}.([0, -3, -5, -6])
             @test haskey(E3, val)
             @test haskey(E4, val)
         end
-        
+
         @test E3[GF{7}(0)] == GF{7}.([1 2 0 0])
         @test E3[GF{7}(-3)] == GF{7}.([1 1 1 1])
         @test E3[GF{7}(-5)] == GF{7}.([1 1 2 4])
@@ -155,8 +155,8 @@ end
                      0 0 3 0;
                      0 0 0 4;
                      4 4 0 0])
-        esd = SymbolicWedderburn.EigenSpaceDecomposition(M3)
-        @test SymbolicWedderburn.isdiag(esd)
+        esd = Characters.EigenSpaceDecomposition(M3)
+        @test Characters.isdiag(esd)
 
         #Handbook of Computational Group Theory p.262
         M6 = GF{13}.([0 0 0 0 0 1;
@@ -165,8 +165,8 @@ end
                       0 0 0 0 2 0;
                       0 0 0 2 0 0;
                       2 0 1 0 0 0])
-        esd = SymbolicWedderburn.EigenSpaceDecomposition(M6)
-        
+        esd = Characters.EigenSpaceDecomposition(M6)
+
         @test length(esd) == 4
         @test esd[4] == GF{13}.([1 1 6 0 0 6])
         @test esd[3] == GF{13}.([1 12 1 0 0 12; 0 0 0 1 12 0])
@@ -180,8 +180,8 @@ end
                       3 0 3 0 0 0;
                       0 0 0 0 2 0])
 
-        esd = SymbolicWedderburn.refine(esd, M4)
-        @test SymbolicWedderburn.isdiag(esd)
+        esd = Characters.refine(esd, M4)
+        @test Characters.isdiag(esd)
         @test esd[1] == GF{13}.([1 12 6 0 0 7])
         @test esd[2] == GF{13}.([1 1 1 1 1 1])
         @test esd[3] == GF{13}.([1 1 1 12 12 1])

@@ -4,15 +4,14 @@ using GroupsCore
 include(joinpath(pathof(GroupsCore), "..", "..", "test", "cyclic.jl"))
 
 x,y = @polyvar x y
-struct MyAction <: SymbolicWedderburn.ByLinearTransformation end
-# (x, y) → (x+y, x-y)
+struct By90Rotation <: SymbolicWedderburn.ByLinearTransformation end
+# (x, y) → (x+y, x-y)/sqrt(2)
 
-SymbolicWedderburn.coeff_type(m::MyAction) = Float64
-function SymbolicWedderburn.action(a::MyAction, g::CyclicGroupElement, m::Monomial)
+SymbolicWedderburn.coeff_type(::By90Rotation) = Float64
+function SymbolicWedderburn.action(::By90Rotation, g::CyclicGroupElement, m::Monomial)
     isone(g) && return m
     x, y = variables(m)
-    # we need the action to be orthogonal
-    return m(x => (x+y)/sqrt(2), y => (x-y)/sqrt(2))
+    return m(x => (x+y)/sqrt(2), y => (x-y)/sqrt(2)) # we need the action to be orthogonal
 end
 
 function SymbolicWedderburn.decompose(k::AbstractPolynomial, hom::SymbolicWedderburn.InducedActionHomomorphism)
@@ -27,34 +26,34 @@ end
 @testset "Linear Actions" begin
 
     G = CyclicGroup(2)
-    basis = monomials([x,y], 0:4)
-    ehom = SymbolicWedderburn.ExtensionHomomorphism(MyAction(), basis)
+    monomial_basis = monomials([x,y], 0:4)
+    ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), monomial_basis)
 
     @testset "decomposition in basis" begin
         g = gens(G, 1)
 
-        k = SymbolicWedderburn.action(MyAction(), g, basis[2])
+        k = SymbolicWedderburn.action(By90Rotation(), g, monomial_basis[2])
         idcs, vals = SymbolicWedderburn.decompose(k, ehom)
-        @test sum(c*basis[i] for (c,i) in zip(vals, idcs)) == k
+        @test sum(c*monomial_basis[i] for (c,i) in zip(vals, idcs)) == k
 
-        for b in basis
-            k = SymbolicWedderburn.action(MyAction(), g, b)
+        for b in monomial_basis
+            k = SymbolicWedderburn.action(By90Rotation(), g, b)
             idcs, vals = SymbolicWedderburn.decompose(k, ehom)
-            @test sum(c*basis[i] for (c,i) in zip(vals, idcs)) == k
+            @test sum(c*monomial_basis[i] for (c,i) in zip(vals, idcs)) == k
         end
     end
 
     @testset "induced Matrix Representation" begin
         g = gens(G, 1)
-        M = SymbolicWedderburn.induce(MyAction(), ehom, g)
+        M = SymbolicWedderburn.induce(By90Rotation(), ehom, g)
 
         @test M isa AbstractMatrix{Float64}
-        @test size(M) == (length(basis), length(basis))
+        @test size(M) == (length(monomial_basis), length(monomial_basis))
 
         @test !(M ≈ one(M))
         @test M^2 ≈ one(M)
 
-        B = SymbolicWedderburn.symmetry_adapted_basis(G, basis, MyAction());
-        @test sum(first ∘ size ∘ SymbolicWedderburn.basis, B) == length(basis)
+        sa_basis = symmetry_adapted_basis(Float64, G, By90Rotation(), monomial_basis);
+        @test sum(first ∘ size, sa_basis) == length(monomial_basis)
     end
 end

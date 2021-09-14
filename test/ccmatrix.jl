@@ -1,11 +1,11 @@
 function generic_tests_ccmatrix(C)
     r = length(C)
     for i = 1:r
-        ccm = SymbolicWedderburn.CMMatrix(C, i)
+        ccm = Characters.CMMatrix(C, i)
         l = length(C[i])
         @test all([sum(ccm[:,j]) == l for j = 1:r])
     end
-    ccm1 = SymbolicWedderburn.CMMatrix(C, 1)
+    ccm1 = Characters.CMMatrix(C, 1)
     @test all([isone(ccm1[i,i]) for i = 1:r])
 end
 
@@ -13,30 +13,30 @@ end
     @testset "example: Symmetric group (4)" begin
         G = PermutationGroups.SymmetricGroup(4)
 
-        @test conjugacy_classes(G) isa AbstractVector{<:AbstractOrbit}
+        @test Characters.conjugacy_classes(G) isa AbstractVector{<:AbstractOrbit}
 
-        for cc in conjugacy_classes(G)
+        for cc in Characters.conjugacy_classes(G)
             @test all(permtype(g) == permtype(first(cc)) for g in cc)
         end
 
-        C = conjugacy_classes(G)
+        C = Characters.conjugacy_classes(G)
         generic_tests_ccmatrix(C)
-        @test SymbolicWedderburn.CMMatrix(C, 2)  == [0 1 0 0 0;
+        @test Characters.CMMatrix(C, 2)  == [0 1 0 0 0;
                                                      6 0 3 0 2;
                                                      0 4 0 4 0;
                                                      0 0 3 0 4;
                                                      0 1 0 2 0]
-        @test SymbolicWedderburn.CMMatrix(C, 3)  == [0 0 1 0 0;
+        @test Characters.CMMatrix(C, 3)  == [0 0 1 0 0;
                                                      0 4 0 4 0;
                                                      8 0 4 0 8;
                                                      0 4 0 4 0;
                                                      0 0 3 0 0]
-        @test SymbolicWedderburn.CMMatrix(C, 4)  == [0 0 0 1 0;
+        @test Characters.CMMatrix(C, 4)  == [0 0 0 1 0;
                                                      0 0 3 0 4;
                                                      0 4 0 4 0;
                                                      6 0 3 0 2;
                                                      0 2 0 1 0]
-        @test SymbolicWedderburn.CMMatrix(C, 5)  == [0 0 0 0 1;
+        @test Characters.CMMatrix(C, 5)  == [0 0 0 0 1;
                                                      0 1 0 2 0;
                                                      0 0 3 0 0;
                                                      0 2 0 1 0;
@@ -54,19 +54,19 @@ end
             ]
 
         generic_tests_ccmatrix(C)
-        @test SymbolicWedderburn.CMMatrix(C, 1) == [1 0 0 0
+        @test Characters.CMMatrix(C, 1) == [1 0 0 0
                                                     0 1 0 0
                                                     0 0 1 0
                                                     0 0 0 1]
-        @test SymbolicWedderburn.CMMatrix(C, 2) == [0 1 0 0
+        @test Characters.CMMatrix(C, 2) == [0 1 0 0
                                                     3 2 0 0
                                                     0 0 3 0
                                                     0 0 0 3]
-        @test SymbolicWedderburn.CMMatrix(C, 3) == [0 0 1 0
+        @test Characters.CMMatrix(C, 3) == [0 0 1 0
                                                     0 0 3 0
                                                     0 0 0 4
                                                     4 4 0 0]
-        @test SymbolicWedderburn.CMMatrix(C, 4) == [0 0 0 1
+        @test Characters.CMMatrix(C, 4) == [0 0 0 1
                                                     0 0 0 3
                                                     4 4 0 0
                                                     0 0 4 0]
@@ -87,31 +87,31 @@ end
 
         @assert sum(length, ccG) == order(G)
 
-        @test SymbolicWedderburn.CMMatrix(ccG, 1) ==
+        @test Characters.CMMatrix(ccG, 1) ==
         [ 1  0  0  0  0
           0  1  0  0  0
           0  0  1  0  0
           0  0  0  1  0
           0  0  0  0  1 ]
-        @test SymbolicWedderburn.CMMatrix(ccG, 2) ==
+        @test Characters.CMMatrix(ccG, 2) ==
         [ 0  1  0  0  0
           5  0  0  0  5
           0  0  0  5  0
           0  0  5  0  0
           0  4  0  0  0 ]
-        @test SymbolicWedderburn.CMMatrix(ccG, 3) ==
+        @test Characters.CMMatrix(ccG, 3) ==
         [ 0  0  1  0  0
           0  0  0  5  0
           0  5  0  0  0
           5  0  0  0  5
           0  0  4  0  0 ]
-        @test SymbolicWedderburn.CMMatrix(ccG, 4) ==
+        @test Characters.CMMatrix(ccG, 4) ==
         [ 0  0  0  1  0
           0  0  5  0  0
           5  0  0  0  5
           0  5  0  0  0
           0  0  0  4  0 ]
-        @test SymbolicWedderburn.CMMatrix(ccG, 5) ==
+        @test Characters.CMMatrix(ccG, 5) ==
         [ 0  0  0  0  1
           0  4  0  0  0
           0  0  4  0  0
@@ -119,7 +119,7 @@ end
           4  0  0  0  3 ]
 
         generic_tests_ccmatrix(ccG)
-        generic_tests_ccmatrix(conjugacy_classes(G)) # might be in different order
+        generic_tests_ccmatrix(Characters.conjugacy_classes(G)) # might be in different order
     end
 
     @testset "random subgroups of SymetricGroup(N)" begin
@@ -127,7 +127,7 @@ end
             G = PermutationGroups.SymmetricGroup(i)
             for _ in 1:5
                 PG = PermGroup(rand(G, 2))
-                generic_tests_ccmatrix(SymbolicWedderburn.conjugacy_classes(PG))
+                generic_tests_ccmatrix(Characters.conjugacy_classes(PG))
             end
         end
     end

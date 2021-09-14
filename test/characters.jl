@@ -1,41 +1,58 @@
 @testset "Frobenius-Schur & projections" begin
     G = SmallPermGroups[8][4]
-    ccG = conjugacy_classes(G)
+    irr = Characters.irreducible_characters(G)
 
     # quaternionic character
-    χ = SymbolicWedderburn.Character(Float64[2, 0, 0, -2, 0], ccG)
+    χ = irr[1]
+    @test collect(values(χ)) == [2, 0, 0, -2, 0]
 
-    ι = SymbolicWedderburn.frobenius_schur_indicator
+    ι = Characters.frobenius_schur
 
     @test ι(χ) == -1
 
     @test deepcopy(χ) == χ
     @test deepcopy(χ) !== χ
 
-    ψ = SymbolicWedderburn.Character(copy(values(χ)), conjugacy_classes(χ))
+    ψ = deepcopy(χ)
 
     @test ψ == χ
     @test ψ !== χ
     @test ψ == deepcopy(χ)
 
-    @test ψ.cc === χ.cc
-    @test conjugacy_classes(ψ) === conjugacy_classes(χ)
+    @test Characters.conjugacy_classes(ψ) === Characters.conjugacy_classes(χ)
+    @test Characters.table(ψ) === Characters.table(χ)
 
-    @test values(ψ) == values(χ)
-    @test values(ψ) !== values(χ)
+    @test collect(values(ψ)) == collect(values(χ))
+    @test Characters.constituents(ψ) == Characters.constituents(χ)
+    @test Characters.constituents(ψ) !== Characters.constituents(χ)
 
     @test hash(ψ) == hash(χ)
 
     @test 2ψ == 2χ
     @test 2ψ/2 == χ
     @test 2ψ != χ
-    @test hash((2ψ/2).vals) == hash(χ.vals)
 
     @test PermutationGroups.degree(χ) == 2
 
-    @test size(SymbolicWedderburn.isotypical_basis(χ), 1) == 4
+    # @test size(SymbolicWedderburn.image_basis(χ), 1) == 4
 
-    @test SymbolicWedderburn.affordable_real!(deepcopy(χ)) isa SymbolicWedderburn.Character
+    @test_throws AssertionError ι(2χ)
+    a = 2χ
+    @test sum(length(cc)*a(first(cc)^2) for cc in Characters.conjugacy_classes(a))//order(G) == 2ι(χ)
+end
 
-    @test ι(SymbolicWedderburn.affordable_real!(deepcopy(χ))) == 2*ι(χ)
+@testset "Characters io" begin
+    G = PermGroup([perm"(2,3)(4,5)"])
+    chars = Characters.irreducible_characters(G)
+
+    @test sprint(show, chars[1]) == "χ₁"
+    @test sprint(show, chars[2]) == "χ₂"
+    @test sprint(show, chars[1]+2chars[2]) == "χ₁ +2·χ₂"
+    @test sprint(show, 2chars[1]-chars[2]) == "2·χ₁ -1·χ₂"
+    @test sprint(show, -2chars[1]+3chars[2]) == "-2·χ₁ +3·χ₂"
+
+    if VERSION > v"1.3.0"
+        @test sprint(show, MIME"text/plain"(), chars[1]) ==
+        "Character over Cyclotomic{Rational{Int64}, SparseArrays.SparseVector{Rational{Int64}, Int64}}\nχ₁"
+    end
 end

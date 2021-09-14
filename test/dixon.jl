@@ -1,9 +1,9 @@
-function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
-    F = SymbolicWedderburn.FiniteFields.GF{p}
-    ccG = conjugacy_classes(G)
-    Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-    @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
-    esd = SymbolicWedderburn.common_esd(Ns, F)
+function generictest_dixon_Fp(G, p = Characters.dixon_prime(G))
+    F = Characters.FiniteFields.GF{p}
+    ccG = Characters.conjugacy_classes(G)
+    Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+    @test isdiag(Characters.common_esd(Ns, F))
+    esd = Characters.common_esd(Ns, F)
 
     let W = esd.basis
         @test inv(W) isa Matrix{F}
@@ -16,53 +16,56 @@ function generictest_dixon_Fp(G, p = SymbolicWedderburn.dixon_prime(G))
         end
     end
 
-    @test SymbolicWedderburn.characters_dixon(F, ccG) isa
-          Vector{<:SymbolicWedderburn.Character}
+    tbl = Characters.CharacterTable(F, G, ccG)
+    @test Characters.irreducible_characters(tbl) isa
+          Vector{<:Characters.Character}
 
-    chars = SymbolicWedderburn.characters_dixon(F, ccG)
+    chars = Characters.irreducible_characters(tbl)
 
     # checking the degrees
-    @test sum(Int.(degree.(chars)) .^ 2) == order(G)
+    @test sum(Int.(SymbolicWedderburn.degree.(chars)) .^ 2) == order(G)
 
     # orthogonality of characters over F
     @test [dot(χ, ψ) for χ in chars, ψ in chars] == I
 end
 
-function generictest_dixon_C(G, p = SymbolicWedderburn.dixon_prime(G))
-    F = SymbolicWedderburn.FiniteFields.GF{p}
-    ccG = conjugacy_classes(G)
-    chars_Fp = SymbolicWedderburn.characters_dixon(F, ccG)
+function generictest_dixon_C(G, p = Characters.dixon_prime(G))
+    F = Characters.FiniteFields.GF{p}
+    ccG = Characters.conjugacy_classes(G)
+    tbl = Characters.CharacterTable(F, G, ccG)
+    chars_Fp = Characters.irreducible_characters(tbl)
 
-    degrees = degree.(chars_Fp)
+    degrees = SymbolicWedderburn.degree.(chars_Fp)
 
-    m = SymbolicWedderburn._multiplicities(chars_Fp)
+    m = Characters._multiplicities(chars_Fp)
     for i = 1:size(m, 1)
         @test all(Int.(m[i, :, :]) .<= degrees[i])
     end
 
-    @test SymbolicWedderburn.complex_characters(Int, chars_Fp) isa
-          Vector{<:SymbolicWedderburn.Character}
-    @test length(SymbolicWedderburn.complex_characters(Int, chars_Fp[1:1])) == 1
+    @test Characters.complex_character_table(Rational{Int}, tbl) isa
+          Characters.CharacterTable{<:Group, <:Cyclotomic{Rational{Int}}}
 
-    chars_CC = SymbolicWedderburn.complex_characters(Int, chars_Fp)
-    id = one(first(first(ccG)))
+    tblCC = Characters.complex_character_table(Rational{Int}, tbl)
+    chars_CC = Characters.irreducible_characters(tblCC)
+
+    id = one(G)
     @test [ψ(id) for ψ in chars_CC] == degrees
 
     # orthogonality of characters over ℂ
     @test [dot(χ, ψ) for χ in chars_CC, ψ in chars_CC] == I
 
-    @test sum(χ -> degree(χ)^2, chars_CC) == order(G)
+    @test sum(χ -> SymbolicWedderburn.degree(χ)^2, chars_CC) == order(G)
 end
 
 @testset "Dixon Algorithm" begin
     @testset "DixonPrimes" begin
-        @test SymbolicWedderburn.dixon_prime(20, 20) == 41
+        @test Characters.dixon_prime(20, 20) == 41
 
         @testset "random" begin
             for n in rand(2:1000, 10)
-                F = SymbolicWedderburn.Primes.factor(n)
+                F = Characters.Primes.factor(n)
                 e = lcm(collect(keys(F)))
-                p = SymbolicWedderburn.dixon_prime(n, e)
+                p = Characters.dixon_prime(n, e)
                 @test mod(p, e) == 1
                 @test p > 2 * floor(sqrt(n))
             end
@@ -70,11 +73,11 @@ end
 
         @testset "DixonPrimeGroups" begin
             G = PermutationGroups.SymmetricGroup(4)
-            ccG = conjugacy_classes(G)
+            ccG = Characters.conjugacy_classes(G)
             @test exponent(G) == 12
             @test exponent(ccG) == 12
-            @test SymbolicWedderburn.dixon_prime(G) ==
-                  SymbolicWedderburn.dixon_prime(ccG)
+            @test Characters.dixon_prime(G) ==
+                  Characters.dixon_prime(ccG)
         end
     end
 
@@ -91,34 +94,35 @@ end
             end
 
             let ccG = ccG, p = 29
-                F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-                @test_throws AssertionError SymbolicWedderburn.common_esd(Ns, F)
+                F = Characters.FiniteFields.GF{p}
+                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                @test_throws AssertionError Characters.common_esd(Ns, F)
             end
 
             let ccG = ccG, p = 31
-                F = SymbolicWedderburn.FiniteFields.GF{p}
-                Ns = [SymbolicWedderburn.CMMatrix(ccG, i) for i = 1:length(ccG)]
-                esd = SymbolicWedderburn.EigenSpaceDecomposition(F.(Ns[1]))
-                esd = SymbolicWedderburn.refine(esd, F.(Ns[2]))
-                esd = SymbolicWedderburn.refine(esd, F.(Ns[3]))
+                F = Characters.FiniteFields.GF{p}
+                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                esd = Characters.EigenSpaceDecomposition(F.(Ns[1]))
+                esd = Characters.refine(esd, F.(Ns[2]))
+                esd = Characters.refine(esd, F.(Ns[3]))
                 @test isdiag(esd)
 
-                @test isdiag(SymbolicWedderburn.common_esd(Ns, F))
+                @test isdiag(Characters.common_esd(Ns, F))
             end
 
             # generic tests
             generictest_dixon_Fp(G)
 
             # tests specific to G
-            p = SymbolicWedderburn.dixon_prime(ccG)
-            F = SymbolicWedderburn.FiniteFields.GF{p}
+            p = Characters.dixon_prime(ccG)
+            F = Characters.FiniteFields.GF{p}
 
-            chars = SymbolicWedderburn.characters_dixon(F, ccG)
+            tbl = Characters.CharacterTable(F, G)
+            chars = Characters.irreducible_characters(tbl)
 
-            @test sort(degree.(chars)) == [1, 1, 1, 3]
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 3]
 
-            @test Set(Int.(χ.vals) for χ in chars) ==
+            @test Set(Int.(values(χ)) for χ in chars) ==
                   Set([[3, 0, 0, 6], [1, 4, 2, 1], [1, 2, 4, 1], [1, 1, 1, 1]])
 
         end
@@ -137,7 +141,7 @@ end
             end
 
             @testset "PowerMap" begin
-                pmG = SymbolicWedderburn.PowerMap(ccG)
+                pmG = Characters.PowerMap(ccG)
                 @test size(pmG) == (4, 6)
                 @test pmG[:, 0] == ones(Int, 4)
                 @test pmG[:, 1] == 1:4
@@ -151,10 +155,10 @@ end
             # generic tests
             generictest_dixon_C(G)
 
-            chars_C = SymbolicWedderburn.characters_dixon(Int, G)
-            E = SymbolicWedderburn.Cyclotomics.E
+            chars_C = Characters.irreducible_characters(G, ccG)
+            E = Characters.Cyclotomics.E
 
-            @test [χ.vals for χ in chars_C] == [
+            @test [collect(values(χ)) for χ in chars_C] == [
                 E(3, 0) .* [3, 0, 0, -1],
                 E(3, 0) .* [1, E(3, 2), E(3, 1), 1],
                 E(3, 0) .* [1, E(3, 1), E(3, 2), 1],
@@ -176,10 +180,10 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
+            chars = Characters.irreducible_characters(G, ccG)
 
-            @test sort(degree.(chars)) == [1, 1, 2, 3, 3]
-            @test [χ.vals for χ in chars] == [
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 2, 3, 3]
+            @test [collect(values(χ)) for χ in chars] == [
                 [2, 0, 2, -1, 0],
                 [3, 1, -1, 0, -1],
                 [1, 1, 1, 1, 1],
@@ -203,10 +207,10 @@ end
             generictest_dixon_Fp(G)
             generictest_dixon_C(G)
 
-            chars = SymbolicWedderburn.characters_dixon(Int, ccG)
+            chars = Characters.irreducible_characters(G, ccG)
 
-            @test sort(degree.(chars)) == [1, 1, 1, 1, 4]
-            @test [χ.vals for χ in chars] == [
+            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 1, 4]
+            @test [collect(values(χ)) for χ in chars] == [
                 E(4, 0) .* [4, 0, 0, 0, -1],
                 E(4, 0) .* [1, 1, 1, 1, 1],
                 E(4, 0) .* [1, 1, -1, -1, 1],
@@ -218,40 +222,20 @@ end
 
     @testset "Different base rings for characters_dixon" begin
         G = PermGroup(perm"(1,2,3,4)")
-        @test eltype(first(SymbolicWedderburn.characters_dixon(Float64, G))) <:
-              Cyclotomic{Float64}
-        @test eltype(first(SymbolicWedderburn.characters_dixon(Int, G))) <:
-              Cyclotomic{Int}
-        @test eltype(
-            first(SymbolicWedderburn.characters_dixon(Rational{Int}, G)),
-        ) <: Cyclotomic{Rational{Int}}
+        @test eltype(Characters.irreducible_characters(Rational{Int}, G)) <:
+            Characters.Character{<:Cyclotomic{Rational{Int}}}
+        @test eltype(Characters.irreducible_characters(Rational{BigInt}, G)) <:
+            Characters.Character{<:Cyclotomic{Rational{BigInt}}}
     end
 
     @time @testset "SmallPermGroups" begin
         for (ord, groups) in SmallPermGroups
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
-                @test SymbolicWedderburn.characters_dixon(G) isa
-                      Vector{<:SymbolicWedderburn.Character}
+                @test Characters.irreducible_characters(G) isa
+                      Vector{<:Characters.Character}
                 generictest_dixon_Fp(G)
                 generictest_dixon_C(G)
             end
         end
     end
-end
-
-@testset "Characters io" begin
-    G = PermGroup([perm"(2,3)(4,5)"])
-    chars = SymbolicWedderburn.characters_dixon(Int, G)
-
-    @test sprint(show, chars[1]) == "[1, 1]"
-    @test sprint(show, chars[2]) == "[1, -1]"
-
-    @test occursin(
-        "()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t 1*E(1)^0",
-        sprint(show, MIME"text/plain"(), chars[1]),
-    )
-    @test occursin(
-        "()^G         → \t 1*E(1)^0\n(2,3)(4,5)^G → \t-1*E(1)^0",
-        sprint(show, MIME"text/plain"(), chars[2])
-    )
 end

@@ -1,28 +1,41 @@
 module SymbolicWedderburn
 
 using LinearAlgebra
+using SparseArrays
 using Primes
 
 using Cyclotomics
 using GroupsCore
+using PermutationGroups
+using StarAlgebras
 
-import PermutationGroups:
-    AbstractOrbit, AbstractPerm, AbstractPermutationGroup, Orbit, Perm, degree
-import PermutationGroups
+export symmetry_adapted_basis, WedderburnDecomposition
+export basis,
+    # degree, # too common name to export
+    direct_summands,
+    invariant_vectors,
+    issimple,
+    multiplicity
 
-export conjugacy_classes, symmetry_adapted_basis
+macro spawn_compat(expr)
+    @static if VERSION < v"1.3.0"
+        return :(@async $(esc(expr)))
+    else
+        return :(Threads.@spawn $(esc(expr)))
+    end
+end
 
-include("gf.jl")
-include("eigenspacedecomposition.jl")
-include("cmmatrix.jl")
-
-include("powermap.jl")
-include("characters.jl")
-include("characters_arith.jl")
-include("dixon.jl")
+include("Characters/Characters.jl")
+using .Characters
+import .Characters: row_echelon_form!
+import .Characters.FiniteFields
 
 include("actions.jl")
-include("projections.jl")
+include("action_characters.jl")
+include("matrix_projections.jl")
+include("minimal_projections.jl")
+include("direct_summands.jl")
 include("sa_basis.jl")
+include("wedderburn_decomposition.jl")
 
 end # module
