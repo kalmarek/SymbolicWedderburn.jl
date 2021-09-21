@@ -99,24 +99,16 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     idems = small_idempotents(RG), # idems are AlgebraElements over Rational{Int}
     iters=3
 )
-
-    k = if isirreducible(χ)
-        1
-    else
-        sum(constituents(χ).>0)
-        # the minimal rank projection for the composite character
-    end
-
-    degree(χ) == k && return one(RG, Rational{Int}), true
+    degree(χ) == 1 && return one(RG, Rational{Int}), true
 
     for µ in idems
-        χ(µ) == k && µ^2 == µ && return µ, true
+        isone(χ(µ)) && µ^2 == µ && return µ, true
     end
 
     for n in 2:iters
-        for elts in Iterators.product(ntuple(i -> idems, n)...)
+        for (i, elts) in enumerate(Iterators.product(fill(idems, n)...))
             µ = *(elts...)
-            χ(µ) == k && µ^2 == µ && return µ, true
+            isone(χ(µ)) && µ^2 == µ && return µ, true
         end
     end
     @debug "Could not find minimal projection for $χ"
