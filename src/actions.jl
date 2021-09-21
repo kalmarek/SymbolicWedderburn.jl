@@ -10,6 +10,22 @@ implements:
 * action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature`
 =#
 
+function action(
+    hom::InducedActionHomomorphism{<:ByPermutations},
+    g::GroupElement,
+    v::AbstractVector,
+)
+    return v^induce(hom, g)
+end
+
+function action(
+    hom::InducedActionHomomorphism{<:ByLinearTransformation},
+    g::GroupElement,
+    v::AbstractVector,
+)
+    return induce(hom, g) * v
+end
+
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     throw(
         "No fallback is provided for $(typeof(ac)). You need to implement `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.",

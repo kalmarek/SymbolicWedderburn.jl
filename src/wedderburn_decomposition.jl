@@ -145,8 +145,8 @@ function invariant_vectors(
         # * `tmp_subspace`, the subspace spanned by the orbit
 
         for g in G
-            k = induce(hom, g) * b_orth
-            @assert isapprox(norm(k, 2), 1.0, atol=atol)
+            k = SymbolicWedderburn.action(hom, g, b_orth)
+            @assert isapprox(norm(k, 2), 1.0, atol = atol)
             inv_v .+= k
 
             residual = k - _orth_proj(orbit_subspace, k)
