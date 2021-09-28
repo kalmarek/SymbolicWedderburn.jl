@@ -49,7 +49,7 @@ function Base.iterate(citr::CyclicSubgroups)
     g, state = iterate(citr.group) # g is identity here
     @assert isone(g)
     if citr.min_order ≤ 1 ≤ citr.max_order
-        citr.seen[ord] = Set([g])
+        citr.seen[1] = Set([g])
         return Set([g]), state
     end
     return iterate(citr, state)
