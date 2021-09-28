@@ -42,6 +42,8 @@ end
 invariant_vectors(wbdec::WedderburnDecomposition) = wbdec.invariants
 StarAlgebras.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
+Base.eltype(wbdec::WedderburnDecomposition) =
+    eltype(eltype(direct_summands(wbdec)))
 
 _tmps(wbdec::WedderburnDecomposition) =
     zeros.(eltype(wbdec), size.(direct_summands(wbdec)))
