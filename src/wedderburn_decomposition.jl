@@ -11,7 +11,8 @@ function WedderburnDecomposition(
     action::Action,
     basis_full,
     basis_half,
-    S = Rational{Int},
+    S = Rational{Int};
+    semisimple=false,
 )
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(G, action, basis)
@@ -20,20 +21,12 @@ function WedderburnDecomposition(
     ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute = true)
 
     Uπs = let
-        sa_basis = symmetry_adapted_basis(T, tbl, ehom; semisimple = false)
-        @debug "fill factor of sa_basis:" round.(
-            _fillfactor.(sa_basis),
-            digits = 3,
+        sa_basis = symmetry_adapted_basis(
+            T,
+            tbl,
+            ehom;
+            semisimple = semisimple
         )
-        sp_basis = sparse.(sa_basis)
-        if T <: AbstractFloat
-            droptol!.(sp_basis, eps(T) * length(basis_half))
-            @debug "fill factor after sparsification" round.(
-                _fillfactor.(sa_basis),
-                digits = 3,
-            )
-        end
-        sp_basis
     end
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
