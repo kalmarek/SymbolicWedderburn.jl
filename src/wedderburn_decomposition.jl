@@ -21,12 +21,7 @@ function WedderburnDecomposition(
     ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute = true)
 
     Uπs = let
-        sa_basis = symmetry_adapted_basis(
-            T,
-            tbl,
-            ehom;
-            semisimple = semisimple
-        )
+        sa_basis = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
     end
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
