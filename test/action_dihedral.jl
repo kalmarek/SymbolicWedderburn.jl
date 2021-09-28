@@ -67,16 +67,18 @@ end
         ]
 
         # preallocating
-        Mπs = zeros.(T, size.(psds))
         M_orb = similar(M, T)
-        tmps = zeros.(T, reverse.(size.(direct_summands(wedderburn))))
+        # these could be preallocated as well:
+        # Mπs = zeros.(T, size.(psds))
+        # tmps = SymbolicWedderburn._temps(wedderburn)
 
         C = DynamicPolynomials.coefficients(robinson_form - t, basis(wedderburn))
 
         for iv in invariant_vectors(wedderburn)
             c = dot(C, iv)
             M_orb = invariant_constraint!(M_orb, M, iv)
-            Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
+            # Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
+            Mπs = SymbolicWedderburn.diagonalize(M_orb, wedderburn)
 
             JuMP.@constraint m sum(
                 dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)

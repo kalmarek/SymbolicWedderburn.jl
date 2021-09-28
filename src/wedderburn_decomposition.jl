@@ -12,7 +12,7 @@ function WedderburnDecomposition(
     basis_full,
     basis_half,
     S = Rational{Int};
-    semisimple=false,
+    semisimple = false,
 )
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(G, action, basis)
@@ -27,12 +27,24 @@ function WedderburnDecomposition(
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
 end
 
+function Base.show(io::IO, wbdec::SymbolicWedderburn.WedderburnDecomposition)
+    ds = direct_summands(wbdec)
+    simple = all(issimple.(ds))
+    dims = size.(ds, 1)
+    norbs = length(invariant_vectors(wbdec))
+
+    print(io, "Wedderburn Decomposition into $norbs orbits and $(length(ds))")
+    all(simple) && print(io, " simple")
+    println(io, " summands of sizes")
+    return print(io, dims)
+end
+
 invariant_vectors(wbdec::WedderburnDecomposition) = wbdec.invariants
 StarAlgebras.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
 
 _tmps(wbdec::WedderburnDecomposition) =
-    [zeros(eltype(U), reverse(size(U))) for U in wbdec.Uπs]
+    zeros.(eltype(wbdec), size.(direct_summands(wbdec)))
 
 _fillfactor(M::AbstractMatrix) = count(!iszero, M) / length(M)
 _fillfactor(M::AbstractSparseMatrix) = nnz(M) / length(M)
@@ -107,7 +119,7 @@ end
 function _orth_proj(A::AbstractMatrix, v, QR = qr(A))
     # return A * (QR \ v)
     y = QR.Q' * v
-    y[size(A,2)+1:end] .= 0 # project to y = Q̂'x
+    y[size(A, 2)+1:end] .= 0 # project to y = Q̂'x
     return QR.Q * y
 end
 
