@@ -64,12 +64,14 @@ function diagonalize!(
     Uπs::AbstractVector{<:DirectSummand},
     tmps,
 )
+    @assert length(Mπs) == length(Uπs)
+
     for (π, Uπ) in enumerate(Uπs)
         imUπ = image_basis(Uπ) # Base.Matrix to allow BLAS paths below
-        LinearAlgebra.mul!(tmps[π], M, imUπ')
-        LinearAlgebra.mul!(Mπs[π], imUπ, tmps[π])
-        deg = degree(Uπ)
-        Mπs[π] .*= deg
+        LinearAlgebra.mul!(tmps[π], imUπ, M)
+        LinearAlgebra.mul!(Mπs[π], tmps[π], imUπ')
+        zerotol!(Mπs[π], atol = eps(eltype(imUπ)) * max(size(imUπ)...))
+        Mπs[π] .*= degree(Uπ)
     end
     return Mπs
 end
