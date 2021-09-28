@@ -86,11 +86,13 @@ end
 @static if VERSION < v"1.3.0"
     function (χ::Character)(α::AlgebraElement{<:StarAlgebra{<:Group}})
         @assert parent(χ) === parent(parent(α))
+        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
         return sum(α(g) * χ(g) for g in supp(α))
     end
 else
     function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
         @assert parent(χ) === parent(parent(α))
+        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
         return sum(α(g) * χ(g) for g in supp(α))
     end
 end
