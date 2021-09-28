@@ -107,7 +107,12 @@ function invariant_vectors(
     return invariant_vs
 end
 
-_orth_proj(A::AbstractMatrix, v, QR = qr(A)) = A * (QR \ v)
+function _orth_proj(A::AbstractMatrix, v, QR = qr(A))
+    # return A * (QR \ v)
+    y = QR.Q' * v
+    y[size(A,2)+1:end] .= 0 # project to y = Q̂'x
+    return QR.Q * y
+end
 
 function invariant_vectors(
     G::Group,
