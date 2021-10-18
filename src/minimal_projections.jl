@@ -49,7 +49,7 @@ function Base.iterate(citr::CyclicSubgroups)
     g, state = iterate(citr.group) # g is identity here
     @assert isone(g)
     if citr.min_order ≤ 1 ≤ citr.max_order
-        citr.seen[ord] = Set([g])
+        citr.seen[1] = Set([g])
         return Set([g]), state
     end
     return iterate(citr, state)
@@ -86,11 +86,13 @@ end
 @static if VERSION < v"1.3.0"
     function (χ::Character)(α::AlgebraElement{<:StarAlgebra{<:Group}})
         @assert parent(χ) === parent(parent(α))
+        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
         return sum(α(g) * χ(g) for g in supp(α))
     end
 else
     function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
         @assert parent(χ) === parent(parent(α))
+        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
         return sum(α(g) * χ(g) for g in supp(α))
     end
 end
@@ -99,24 +101,16 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     idems = small_idempotents(RG), # idems are AlgebraElements over Rational{Int}
     iters=3
 )
-
-    k = if isirreducible(χ)
-        1
-    else
-        sum(constituents(χ).>0)
-        # the minimal rank projection for the composite character
-    end
-
-    degree(χ) == k && return one(RG, Rational{Int}), true
+    degree(χ) == 1 && return one(RG, Rational{Int}), true
 
     for µ in idems
-        χ(µ) == k && µ^2 == µ && return µ, true
+        isone(χ(µ)) && µ^2 == µ && return µ, true
     end
 
     for n in 2:iters
-        for elts in Iterators.product(ntuple(i -> idems, n)...)
+        for (i, elts) in enumerate(Iterators.product(fill(idems, n)...))
             µ = *(elts...)
-            χ(µ) == k && µ^2 == µ && return µ, true
+            isone(χ(µ)) && µ^2 == µ && return µ, true
         end
     end
     @debug "Could not find minimal projection for $χ"

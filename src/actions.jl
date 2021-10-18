@@ -10,18 +10,34 @@ implements:
 * action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature`
 =#
 
+function action(
+    hom::InducedActionHomomorphism{<:ByPermutations},
+    g::GroupElement,
+    v::AbstractVector,
+)
+    return v^induce(hom, g)
+end
+
+function action(
+    hom::InducedActionHomomorphism{<:ByLinearTransformation},
+    g::GroupElement,
+    v::AbstractVector,
+)
+    return induce(hom, g) * v
+end
+
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
-    throw(
+    return throw(
         "No fallback is provided for $(typeof(ac)). You need to implement `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.",
     )
 end
 
-induce(hom::InducedActionHomomorphism, g::GroupElement) = induce(action(hom), hom, g)
+induce(hom::InducedActionHomomorphism, g::GroupElement) =
+    induce(action(hom), hom, g)
 
 decompose(x::Any, hom::InducedActionHomomorphism) = throw(
     "No fallback is provided for $(typeof(x)). You need to implement `decompose(::$(typeof(x)), ::$(typeof(hom)))`.",
 )
-
 coeff_type(ac::ByLinearTransformation) = throw(
     "No fallback is provided for $(typeof(ac)). You need to implement `_coeff_type(::$(typeof(ac)))`.",
 )
@@ -30,8 +46,11 @@ coeff_type(ac::ByLinearTransformation) = throw(
 # an SDP constraint of size 65535×65535, which is highly unlikely ;)
 _int_type(::InducedActionHomomorphism) = UInt16
 
-function induce(ac::ByLinearTransformation, hom::InducedActionHomomorphism, g::GroupElement)
-
+function induce(
+    ac::ByLinearTransformation,
+    hom::InducedActionHomomorphism,
+    g::GroupElement,
+)
     n = length(features(hom))
 
     I = Int[]
@@ -53,7 +72,6 @@ function decompose(m::T, hom::InducedActionHomomorphism{A,T}) where {A,T}
     return [hom[m]], [one(coeff_type(action(hom)))]
 end
 
-
 struct ExtensionHomomorphism{A,T,I,V} <: InducedActionHomomorphism{A,T}
     ac::A
     features::V # supports linear indexing
@@ -61,18 +79,21 @@ struct ExtensionHomomorphism{A,T,I,V} <: InducedActionHomomorphism{A,T}
 end
 
 # see the comment about UInt16 above
-ExtensionHomomorphism(ac::Action, features) = ExtensionHomomorphism{UInt16}(ac, features)
+ExtensionHomomorphism(ac::Action, features) =
+    ExtensionHomomorphism{UInt16}(ac, features)
 
-function ExtensionHomomorphism{I}(ac::Action, features) where {I <: Integer}
+function ExtensionHomomorphism{I}(ac::Action, features) where {I<:Integer}
     @assert typemax(I) >= length(features) "Use wider Integer type!"
-    reversef = Dict{eltype(features),I}(f => idx for (idx, f) in pairs(features))
+    reversef =
+        Dict{eltype(features),I}(f => idx for (idx, f) in pairs(features))
     return ExtensionHomomorphism(ac, features, reversef)
 end
 
 _int_type(::ExtensionHomomorphism{A,T,I}) where {A,T,I} = I
 
 Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
-Base.getindex(ehom::ExtensionHomomorphism{A,T}, f::T) where {A,T} = ehom.reversef[f]
+Base.getindex(ehom::ExtensionHomomorphism{A,T}, f::T) where {A,T} =
+    ehom.reversef[f]
 
 # interface:
 features(hom::ExtensionHomomorphism) = hom.features
@@ -83,7 +104,8 @@ function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
     return Perm(vec(I[hom[action(action(hom), g, f)] for f in features(hom)]))
 end
 
-struct CachedExtensionHomomorphism{A,T,G,H,E <: InducedActionHomomorphism{A,T}} <: InducedActionHomomorphism{A,T}
+struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
+       InducedActionHomomorphism{A,T}
     ehom::E
     cache::Dict{G,H}
 end
@@ -94,10 +116,15 @@ end
 
 Base.getindex(h::CachedExtensionHomomorphism, x::Any) = h.ehom[x]
 
-function CachedExtensionHomomorphism(G::Group, action::Action, basis; precompute=false)
+function CachedExtensionHomomorphism(
+    G::Group,
+    action::Action,
+    basis;
+    precompute = false,
+)
     hom = ExtensionHomomorphism(action, basis)
     S = typeof(induce(hom, one(G)))
-    chom = CachedExtensionHomomorphism{eltype(G), S}(hom)
+    chom = CachedExtensionHomomorphism{eltype(G),S}(hom)
     if precompute
         # to make sure that the future access to chom is read-only, i.e. thread-safe
         # one may choose to precompute the images
@@ -118,7 +145,11 @@ function induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
     return hom.cache[g]
 end
 #disambiguation:
-function induce(ac::ByLinearTransformation, hom::CachedExtensionHomomorphism, g::GroupElement)
+function induce(
+    ac::ByLinearTransformation,
+    hom::CachedExtensionHomomorphism,
+    g::GroupElement,
+)
     if !haskey(hom.cache, g)
         hom.cache[g] = induce(ac, hom.ehom, g)
     end

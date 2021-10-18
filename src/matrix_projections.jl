@@ -91,6 +91,15 @@ function matrix_projection(χ::Character{T}) where T
     return eltype(res) == T ? res : T.(res)
 end
 
+function matrix_projection(hom::InducedActionHomomorphism, χ::Character{T}) where T
+    tbl = table(χ)
+    res = sum(
+        c .* matrix_projection_irr(hom, ψ)
+        for (c, ψ) in zip(constituents(χ), irreducible_characters(tbl)) if !iszero(c)
+    )
+    return eltype(res) == T ? res : T.(res)
+end
+
 function matrix_projection(
     hom::InducedActionHomomorphism{<:ByPermutations},
     α::AlgebraElement,

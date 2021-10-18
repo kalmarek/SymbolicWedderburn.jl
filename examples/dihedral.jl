@@ -1,4 +1,4 @@
-import GroupsCore
+import GroupsCore #GroupsCore API
 
 struct DihedralGroup <: GroupsCore.Group
     n::Int
@@ -28,7 +28,8 @@ end
 Base.IteratorSize(::Type{DihedralGroup}) = Base.HasLength()
 
 GroupsCore.order(::Type{T}, G::DihedralGroup) where {T} = convert(T, 2G.n)
-GroupsCore.gens(G::DihedralGroup) = [DihedralElement(G.n, false, 1), DihedralElement(G.n, true, 0)]
+GroupsCore.gens(G::DihedralGroup) =
+    [DihedralElement(G.n, false, 1), DihedralElement(G.n, true, 0)]
 
 # Base.rand not needed for our purposes here
 
@@ -38,11 +39,8 @@ function Base.:(==)(g::DihedralElement, h::DihedralElement)
 end
 
 function Base.inv(el::DihedralElement)
-    if el.reflection || iszero(el.id)
-        return el
-    else
-        return DihedralElement(el.n, false, el.n - el.id)
-    end
+    (el.reflection || iszero(el.id)) && return el
+    return DihedralElement(el.n, false, el.n - el.id)
 end
 function Base.:*(a::DihedralElement, b::DihedralElement)
     a.n == b.n || error("Cannot multiply elements from different Dihedral groups")
@@ -54,13 +52,7 @@ Base.copy(a::DihedralElement) = DihedralElement(a.n, a.reflection, a.id)
 
 # optional functions:
 function GroupsCore.order(T::Type, el::DihedralElement)
-    if el.reflection
-        return T(2)
-    else
-        if iszero(el.id)
-            return T(1)
-        else
-            return T(div(el.n, gcd(el.n, el.id)))
-        end
-    end
+    el.reflection && return T(2)
+    iszero(el.id )&& return T(1)
+    return T(div(el.n, gcd(el.n, el.id)))
 end

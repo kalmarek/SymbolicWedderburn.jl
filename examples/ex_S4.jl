@@ -118,7 +118,7 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
             # preallocating
             Mπs = zeros.(T, size.(psds))
             M_orb = similar(M, T)
-            tmps = zeros.(T, reverse.(size.(direct_summands(wedderburn))))
+            tmps = SymbolicWedderburn._tmps(wedderburn)
 
             C = DynamicPolynomials.coefficients(f-t, SymbolicWedderburn.basis(wedderburn))
 

@@ -144,6 +144,10 @@ function symmetry_adapted_basis(
     irr, multips = _constituents_decomposition(ψ, tbl)
     if T <: Real
         irr, multips = affordable_real(irr, multips)
+        @debug "Decomposition into real character spaces:
+        degrees:        $(join([lpad(d, 6) for d in degrees], ""))
+        multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+
     end
 
     if semisimple || all(isone ∘ degree, irr)
@@ -195,6 +199,7 @@ function _symmetry_adapted_basis(
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             simple = size(image, 1) == m
             deg = degree(µ)
+            @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"
             if deg == 1
                 @assert simple "Central projection associated to character is not simple unless its degree == 1"
             end
@@ -217,6 +222,7 @@ function _symmetry_adapted_basis(
         @spawn_compat begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
+            @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"
             DirectSummand(image, m, deg, simple)
         end
     end
