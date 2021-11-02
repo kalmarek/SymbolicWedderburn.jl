@@ -13,6 +13,7 @@ function WedderburnDecomposition(
     basis_half,
     S = Rational{Int};
     semisimple = false,
+    try_harder = false,
 )
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(G, action, basis)
@@ -22,6 +23,10 @@ function WedderburnDecomposition(
 
     Uπs = let
         sa_basis = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
+    end
+
+    if try_harder
+        Uπs .= simple_projection.(Uπs, Ref(G), Ref(ehom))
     end
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
