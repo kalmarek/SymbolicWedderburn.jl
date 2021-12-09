@@ -6,37 +6,16 @@ struct WedderburnDecomposition{B,iV,DS<:DirectSummand,Hom}
 end
 
 """
-Compute a Wedderburn decomposition of for group *-algebras arising from (non)commutative
-polynomial optimization.
+    WedderburnDecomposition(T::Type, G::Group, action::Action, basis_full, basis_half, S = Rational{Int}; semisimple = false)
+Compute a Wedderburn decomposition of for group *-algebras arising from (non)commutative sum-of-squares optimization.
 
-Main input arguments (G, basis_half, basis_full) define the G-modules `V=span(basis_half)`
-and its associated endomorphism ring `End(V)=span(basis_full)` with the adjoint action.
-Warning:  the structure `End(V)` enforces a relation between basis_half and basis_full,
-that is these cannot be independently specified!
+Return a WedderburnDecomposition consisting of
+- basis: the original basis_full
+- invariants: a basis for the invariant subspace <basis_full>^G
+- Uπs: a Vector of `DirectSummand`s of the G-modules `V=span(basis_half)`.
+- hom: elements of G as endomorphisms of V (a sparse matrix if action<:ByLinearTransformation, or a permutation if action<:ByPermutations)
 
-Consider the decomposition of `V` into irreducible (simple) G-invariant subspaces
-    `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ`
-and write `Wₖ = mₖVₖ` (the `mₖ`-fold direct sum of `Vₖ`). This induces a decomposition
-    `End(V) = End_G(V) ⊕ End_G(V)'`
-into `End(V)^G ≅ End_G(V)` and its (orthogonal) complement which coincides with the
-commutant `End_G(V)'`. Moreover,
-    `End_G(V)  = id_V₁⊗M_m₁(k) ⊕ ⋯ ⊕ id_Vᵣ⊗M_mᵣ(k) ≅ M_m₁(k) ⊕ ⋯ ⊕ M_mᵣ(k)`
-    `End_G(V)' = M_n₁(k)⊗id_m₁ ⊕ ⋯ ⊕ M_nᵣ(k)⊗id_mᵣ ≅ M_n₁(k) ⊕ ⋯ ⊕ M_nᵣ(k)`
-
-Remaining arguments (T, S, semisimple) control the behavior of the algorithm and its output
-- basis: the original basis_full of End(V) as a linear space
-- invariants: a basis of End(V)^G as a linear space
-- Uπs: vector of `DirectSummand`s of End_G(V) indexed by irrep type i of G
-- hom: extension homomorphism ???
-Each summand `Uπs[i]` contains the following fields:
-- basis: a **dense** nᵢmᵢ×length(basis_half) matrix giving the
-orthogonal projection to this isotypic summand. That is X ↦ Uπ.basis X Uπ.basis^† projects
-X ∈ End(V) to the summand id_Vᵢ⊗M_mᵢ(k)
-- degree: dimension of an irrep of this type
-- multiplicity: multiplicity of this irrep in this isotypic component
-- simple: true if `Wᵢ≅mᵢVᵢ` (given by basis) is an isomorphism
-
-See also: symmetry_adapted_basis([T::Type,] G::AbstractPermutationGroup[, S=Rational{Int}; semisimple=false])
+See also: [symmetry_adapted_basis](@ref)
 """
 function WedderburnDecomposition(
     T::Type,
