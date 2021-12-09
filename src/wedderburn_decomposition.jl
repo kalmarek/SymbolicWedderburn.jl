@@ -12,29 +12,8 @@ Compute a Wedderburn decomposition of for group *-algebras arising from (non)com
 Return a WedderburnDecomposition consisting of
 - basis: the original basis_full
 - invariants: a basis for the invariant subspace <basis_full>^G
-<<<<<<< HEAD
 - Uπs: a Vector of `DirectSummand`s of the G-modules `V=span(basis_half)`.
 - hom: elements of G as endomorphisms of V (a sparse matrix if action<:ByLinearTransformation, or a permutation if action<:ByPermutations)
-=======
-- Uπs: a Vector (indexed by irrep type i of G) of `DirectSummand`s of the G-modules `V=span(basis_half)`
-- hom: stores elements of G as endomorphism of V (a sparse matrix if action<:ByLinearTransformation, or a permutation if action<:ByPermutations)
-
-
-Remaining arguments (T, S, semisimple) control the behavior of the algorithm and its output
-- basis: the original basis_full
-- invariants: a basis of End(V)^G as a linear space
-- Uπs: a vector (indexed by irrep type i of G) of `DirectSummand`s of End_G(V)
-- hom: extension homomorphism ???
-Each summand `Uπs[i]` contains the following fields:
-- basis: a **dense** mᵢnᵢ×length(basis_half) [depends on semisimple: if true, correct] matrix giving the
-orthogonal projection to this isotypic summand. That is X ↦ Uπ.basis X Uπ.basis^† projects
-X ∈ End(V) to the summand id_Vᵢ⊗M_mᵢ(k) [in V, projects to mᵢVᵢ and adjoint to id_Vᵢ⊗M_mᵢ(k) as a direct sum]
-- degree: dimension of an irrep of this type
-- multiplicity: multiplicity of this irrep in this isotypic component
-- simple: true if `Wᵢ≅mᵢVᵢ` (given by basis) is an isomorphism
-
-The
->>>>>>> 000f23dd660eaf6a09e345543e0fed01a6857bec
 
 See also: [symmetry_adapted_basis](@ref)
 """
