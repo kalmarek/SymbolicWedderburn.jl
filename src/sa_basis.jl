@@ -43,9 +43,9 @@ subspaces invariant under the natural permutation action of `G`.
 
 Consider the decomposition of `V` into irreducible (simple) subspaces
     `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ`
-and write `Wₖ = mₖVₖ` (the `mₖ`-fold direct sum of `Vₖ`). The decomposition is
+and write `Wᵢ = mᵢVᵢ` (the `mᵢ`-fold direct sum of `Vᵢ`). The decomposition is
 returned as a vector of `DirectSummand{T}`s (blocks) corresponding
-to the distinct irreducible characters of `G` (types of action, here from `1`
+to the distinct irreducible characters of `G` (i.e. types of action, here from `1`
 to `r`). Each block contains a basis for a `G`-invariant subspace in `V` (`Vᵢ` or `Wᵢ`). The blocks are guaranteed to be orthogonal to **each other**, however vectors within a single block may *not* be orthogonal.
 
 If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to orthogonalize
@@ -109,18 +109,16 @@ end
 """
     symmetry_adapted_basis([T::Type,] G::Group, action, basis[, S=Rational{Int}];
         semisimple=false)
-Compute a decomposition of `V=span(basis)` into subspaces invariant under the
+Compute a decomposition of `V=⟨basis⟩` into subspaces invariant under the
 given action of `G`.
 
 It is assumed that `G` acts on a subset of basis and the action needs to be
 extended to the whole `basis`. If `G` is a permutation group already acting on
 the whole `basis`, a call to `symmetry_adapted_basis(G)` is preferred.
 
-
 * For inducing the action `basis` needs to be indexable and iterable
 (e.g. in the form of an `AbstractVector`).
 
-See also: symmetry_adapted_basis([T::Type,] G::AbstractPermutationGroup[, S=Rational{Int}; semisimple=false])
 """
 function symmetry_adapted_basis(
     G::Group,
