@@ -3,12 +3,13 @@ using PermutationGroups
 using Cyclotomics
 
 using SparseArrays
+using LinearAlgebra
 
 using DynamicPolynomials
 using SumOfSquares
 using SCS
 
-const OPTIMIZER = optimizer_with_attributes(
+OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 10,
     "max_iters" => 10_000,

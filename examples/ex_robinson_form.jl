@@ -16,11 +16,11 @@ using DynamicPolynomials
 using SumOfSquares
 using SCS
 
-const OPTIMIZER = optimizer_with_attributes(
+OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 10,
     "max_iters" => 3_000,
-    "alpha" => 1.95,
+    "alpha" => 1.2,
     "eps" => 1e-6,
     "linear_solver" => SCS.DirectSolver,
 )
@@ -140,7 +140,10 @@ include(joinpath(@__DIR__, "util.jl"))
 orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
     basis_monoms = monomials([x,y], 0:DynamicPolynomials.maxdegree(f))
 
-    invariant_vs, symmetry_adaptation_time, = @timed invariant_vectors(G, DihedralAction(), basis_monoms)
+    invariant_vs, symmetry_adaptation_time, = @timed let G = G
+        tblG = SymbolicWedderburn.Characters.CharacterTable(Rational{Int}, G)
+        invariant_vectors(tblG, DihedralAction(), basis_monoms)
+    end
 
     M = let basis_full = StarAlgebras.Basis{UInt32}(basis_monoms), basis_half = monomials([x,y], 0:(DynamicPolynomials.maxdegree(f) ÷ 2))
         [basis_full[x * y] for x in basis_half, y in basis_half]

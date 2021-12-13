@@ -25,7 +25,7 @@ include("action_permutation.jl")
 include("action_linear.jl")
 include("action_dihedral.jl")
 
-if VERSION >= v"1.6.0" && !haskey(ENV, "CI")
+if VERSION >= v"1.7.0" && !haskey(ENV, "CI")
     @testset "Examples" begin
         using Pkg
         Pkg.activate(joinpath(@__DIR__, "..", "examples"))
