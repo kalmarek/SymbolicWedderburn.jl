@@ -36,6 +36,9 @@ function irreducible_characters(
     return irreducible_characters(CharacterTable(R, G, cclasses))
 end
 
+trivial_character(chtbl::CharacterTable) =
+	   Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
+
 ## construcing tables
 
 function CharacterTable(
