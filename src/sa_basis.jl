@@ -145,8 +145,8 @@ function symmetry_adapted_basis(
     if T <: Real
         irr, multips = affordable_real(irr, multips)
         @debug "Decomposition into real character spaces:
-        degrees:        $(join([lpad(d, 6) for d in degrees], ""))
-        multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+        degrees:        $(join([lpad(d, 6) for d in degree.(irr)], ""))
+        multiplicities: $(join([lpad(m, 6) for m in multips], ""))"
 
     end
 
