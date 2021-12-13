@@ -14,15 +14,15 @@ function WedderburnDecomposition(
     S = Rational{Int};
     semisimple = false,
 )
-    basis = StarAlgebras.Basis{UInt32}(basis_full)
-    invariants = invariant_vectors(G, action, basis)
-
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute = true)
 
     Uπs = let
         sa_basis = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
     end
+
+    basis = StarAlgebras.Basis{UInt32}(basis_full)
+    invariants = invariant_vectors(tbl, action, basis_full)
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
 end
@@ -91,95 +91,13 @@ function diagonalize!(
 end
 
 function invariant_vectors(
-    G::Group,
-    act::ByPermutations,
-    basis::StarAlgebras.Basis{T,I},
-) where {T,I}
-    tovisit = trues(length(basis))
-    invariant_vs = Vector{SparseVector{Rational{Int}}}()
-
-    ordG = order(Int, G)
-    elts = collect(G)
-    orbit = zeros(I, ordG)
-
-    for i in eachindex(basis)
-        if tovisit[i]
-            bi = basis[i]
-            Threads.@threads for j in eachindex(elts)
-                orbit[j] = basis[action(act, elts[j], bi)]
-            end
-            tovisit[orbit] .= false
-            push!(
-                invariant_vs,
-                sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
-            )
-        end
-    end
-    return invariant_vs
-end
-
-function _orth_proj(A::AbstractMatrix, v, QR = qr(A))
-    # return A * (QR \ v)
-    y = QR.Q' * v
-    y[size(A, 2)+1:end] .= 0 # project to y = Q̂'x
-    return QR.Q * y
-end
-
-function invariant_vectors(
-    G::Group,
-    act::ByLinearTransformation,
-    basis,
-    atol = 1e-12,
+    tbl::Characters.CharacterTable,
+    act::Action,
+    basis
 )
-    hom = CachedExtensionHomomorphism(G, act, basis, precompute = true)
+    trχ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
+    ehom = CachedExtensionHomomorphism(parent(tbl), act, basis, precompute = true)
 
-    dim = 0
-    T = coeff_type(action(hom))
-    @assert T == Float64
-    subspaces = SparseMatrixCSC{T,Int64}[]
-    qrs = LinearAlgebra.QRCompactWY{Float64,Matrix{Float64}}[]
-
-    inv_vectors = SparseVector{T,Int64}[]
-    inv_v = Vector{T}(undef, length(basis))
-
-    for b in basis
-        b_orth = sparsevec(decompose(b, hom)..., length(basis))
-        if dim > 0
-            b_orth -= sum(
-                _orth_proj(V, b_orth, QR) for (V, QR) in zip(subspaces, qrs)
-            )
-            @debug "orthogonalizing $b:" norm(b_orth)
-            norm(b_orth, 2) < atol && continue
-        end
-
-        # we found a new subspace!
-        b_orth ./= norm(b_orth, 2)
-        orbit_subspace = Matrix{T}(undef, length(basis), 1)
-        orbit_subspace[:, 1] .= b_orth
-        inv_v .= zero(T)
-
-        # for the orbit of b_orth find
-        # * `inv_v`, the invariant (average) vector, and
-        # * `tmp_subspace`, the subspace spanned by the orbit
-
-        for g in G
-            k = induce(hom, g) * b_orth
-            @assert isapprox(norm(k, 2), 1.0, atol = atol)
-            inv_v .+= k
-
-            residual = k - _orth_proj(orbit_subspace, k)
-            (rnorm = norm(residual, 2)) < atol && continue
-            orbit_subspace = hcat(orbit_subspace, Vector(residual ./ rnorm))
-        end
-
-        push!(inv_vectors, inv_v / order(Int, G)) # a copy if inv_v
-        push!(subspaces, orbit_subspace) # orbit_subspace is freshly allocated every nonzero b_orth
-        dim += size(orbit_subspace, 2)
-        dim == length(basis) && break
-        dim > length(basis) && throw("This should never occur")
-        # moving qr here to save one qr decomposition
-        push!(qrs, qr(orbit_subspace))
-    end
-    @assert dim == length(basis) "Encountered incomplete decomposition into orbits!"
-    return inv_vectors
+    # change the format of invariant_vectors to image_basis(ehom, trχ)
+    return sparsevec.(eachrow(image_basis(ehom, trχ)))
 end
