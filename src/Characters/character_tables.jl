@@ -36,6 +36,10 @@ function irreducible_characters(
     return irreducible_characters(CharacterTable(R, G, cclasses))
 end
 
+@static if VERSION < v"1.1"
+	eachrow(A::AbstractMatrix) = [A[i, :] for i in 1:size(A,1)]
+end
+
 trivial_character(chtbl::CharacterTable) =
 	   Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
 

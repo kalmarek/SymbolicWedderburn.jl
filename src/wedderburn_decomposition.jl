@@ -101,3 +101,7 @@ function invariant_vectors(
     # change the format of invariant_vectors to image_basis(ehom, trχ)
     return sparsevec.(eachrow(image_basis(ehom, trχ)))
 end
+
+@static if VERSION < v"1.1"
+    eachrow(A::AbstractMatrix) = [A[i, :] for i in size(A, 1)]
+end
