@@ -36,12 +36,16 @@ function irreducible_characters(
     return irreducible_characters(CharacterTable(R, G, cclasses))
 end
 
-@static if VERSION < v"1.1"
-	eachrow(A::AbstractMatrix) = [A[i, :] for i in 1:size(A,1)]
+function trivial_character(chtbl::CharacterTable)
+	# return Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
+	# can't use findfirst(f, eachrow(...)) on julia-1.6
+	for i in 1:size(chtbl, 1)
+		all(isone, @view(chtbl[i, :])) && return Character(chtbl, i)
+	end
+	# never hit, to keep compiler happy
+	return Character(chtbl, 0)
 end
 
-trivial_character(chtbl::CharacterTable) =
-	   Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
 
 ## construcing tables
 
