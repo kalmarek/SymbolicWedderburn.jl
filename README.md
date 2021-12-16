@@ -15,7 +15,7 @@ By Masche's theorem, `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ ≅ W₁ ⊕ ⋯ ⊕ W
 
 The isomorphism gives a decomposition of `End_G(V)` in the sense of Wedderburn-Artin theorem. The projection is enough to reconstruct any matrix `P ∈ End_G(V)'` in the commutant of the endomorphism algebra.
 
-In case of problems of positive semi-definite optimization which enjoy group symmetry this decomposition can be used to reduce an **invariant** psd constraint
+In case of problems of positive semidefinite optimization which enjoy group symmetry this decomposition can be used to reduce an **invariant** psd constraint
 
 > `0 ⪯ P[1:N, 1:N]`
 
