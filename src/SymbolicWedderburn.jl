@@ -17,13 +17,6 @@ export basis,
     issimple,
     multiplicity
 
-macro spawn_compat(expr)
-    @static if VERSION < v"1.3.0"
-        return :(@async $(esc(expr)))
-    else
-        return :(Threads.@spawn $(esc(expr)))
-    end
-end
 
 include("Characters/Characters.jl")
 using .Characters

@@ -194,7 +194,7 @@ function _symmetry_adapted_basis(
     hom=nothing
 )
     res = map(zip(irr, multiplicities)) do (µ, m)
-        @spawn_compat begin
+        Threads.@spawn begin
             µT = eltype(µ) == T ? µ : Character{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             simple = size(image, 1) == m
@@ -219,7 +219,7 @@ function _symmetry_adapted_basis(
     mps, simples = minimal_projection_system(irr, RG)
     degrees = degree.(irr)
     res = map(zip(mps, multiplicities, degrees, simples)) do (µ, m, deg, simple)
-        @spawn_compat begin
+        Threads.@spawn begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"
