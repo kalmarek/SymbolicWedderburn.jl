@@ -7,7 +7,7 @@ Group *-algebras are closely related to
 * linear actions of **finite groups** on **finite dimensional** `k`-vector space `V` (i.e. a `k(G)`-module structure on `V`), which can be expressed in the language of
 * representations `ρ : G → GL(V)` of a (finite) group `G` on a (finite dimensional) `k`-vector space `V`.
 
-These objects naturally arise from (non)commutative polynomial optimization with symmetry and the aim of the package is to faciliate such uses.
+These objects naturally arise from (non)commutative polynomial optimization with symmetry and the aim of the package is to facilitate such uses.
 
 By Masche's theorem, `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ ≅ W₁ ⊕ ⋯ ⊕ Wᵣ` can be decomposed uniquely into isotypic/semisimple components `Wᵢ` and nonuniquely into irreducible/simple components `Vᵢ` associated with a group G. By (symbolic) computation in `k(G)`, `SymbolicWedderburn.jl` is capable of producing exact
 * isomorphism `V ≅ W₁ ⊕ ⋯ ⊕ Wᵣ`, or
