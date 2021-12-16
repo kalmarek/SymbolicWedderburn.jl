@@ -9,7 +9,7 @@ Group *-algebras are closely related to
 
 These objects naturally arise from (non)commutative polynomial optimization with symmetry and the aim of the package is to facilitate such uses.
 
-By Masche's theorem, `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ ≅ W₁ ⊕ ⋯ ⊕ Wᵣ` can be decomposed uniquely into isotypic/semisimple components `Wᵢ` and nonuniquely into irreducible/simple components `Vᵢ` associated with a group G. By (symbolic) computation in `k(G)`, `SymbolicWedderburn.jl` is capable of producing exact
+By Masche's theorem, `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ ≅ W₁ ⊕ ⋯ ⊕ Wᵣ` can be decomposed uniquely into isotypic/semisimple components `Wᵢ` and nonuniquely into irreducible/simple components `Vᵢ` associated with a group `G`. By (symbolic) computation in `k(G)`, `SymbolicWedderburn.jl` is capable of producing exact
 * isomorphism `V ≅ W₁ ⊕ ⋯ ⊕ Wᵣ`, or
 * projection `V → V₁ ⊕ ⋯ ⊕ Vᵣ`.
 
