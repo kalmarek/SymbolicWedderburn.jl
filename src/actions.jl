@@ -5,7 +5,7 @@ abstract type ByLinearTransformation <: Action end
 abstract type InducedActionHomomorphism{A,T} end
 #=
 implements:
-* features(action_hom)
+* basis(action_hom)
 * action(hom::InducedActionHomomorphism) → Action
 * action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature`
 =#
@@ -44,20 +44,21 @@ coeff_type(ac::ByLinearTransformation) = throw(
 
 # Exceeding typemax(UInt16) here would mean e.g. that you're trying to block-diagonalize
 # an SDP constraint of size 65535×65535, which is highly unlikely ;)
-_int_type(::InducedActionHomomorphism) = UInt16
+_int_type(::Type{<:InducedActionHomomorphism}) = UInt16
+_int_type(hom::InducedActionHomomorphism) = _int_type(typeof(hom))
 
 function induce(
     ac::ByLinearTransformation,
     hom::InducedActionHomomorphism,
     g::GroupElement,
 )
-    n = length(features(hom))
+    n = length(basis(hom))
 
     I = Int[]
     J = Int[]
     V = coeff_type(ac)[]
 
-    for (i, f) in enumerate(features(hom))
+    for (i, f) in enumerate(basis(hom))
         k = action(action(hom), g, f)
         idcs, vals = decompose(k, hom)
         append!(I, fill(i, length(idcs)))
@@ -72,36 +73,33 @@ function decompose(m::T, hom::InducedActionHomomorphism{A,T}) where {A,T}
     return [hom[m]], [one(coeff_type(action(hom)))]
 end
 
-struct ExtensionHomomorphism{A,T,I,V} <: InducedActionHomomorphism{A,T}
-    ac::A
-    features::V # supports linear indexing
-    reversef::Dict{T,I}
+struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
+       InducedActionHomomorphism{A,T}
+    action::A
+    basis::B
 end
 
 # see the comment about UInt16 above
-ExtensionHomomorphism(ac::Action, features) =
-    ExtensionHomomorphism{UInt16}(ac, features)
+ExtensionHomomorphism(action::Action, basis) =
+    ExtensionHomomorphism(_int_type(ExtensionHomomorphism), action, basis)
 
-function ExtensionHomomorphism{I}(ac::Action, features) where {I<:Integer}
-    @assert typemax(I) >= length(features) "Use wider Integer type!"
-    reversef =
-        Dict{eltype(features),I}(f => idx for (idx, f) in pairs(features))
-    return ExtensionHomomorphism(ac, features, reversef)
-end
+ExtensionHomomorphism(::Type{I}, action::Action, basis) where {I<:Integer} =
+    ExtensionHomomorphism(action, StarAlgebras.Basis{I}(basis))
 
-_int_type(::ExtensionHomomorphism{A,T,I}) where {A,T,I} = I
+_int_type(::Type{<:ExtensionHomomorphism{A,T,B}}) where {A,T,B} = _int_type(B)
+_int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I
 
-Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = ehom.features[i]
+Base.getindex(ehom::ExtensionHomomorphism, i::Integer) = basis(ehom)[i]
 Base.getindex(ehom::ExtensionHomomorphism{A,T}, f::T) where {A,T} =
-    ehom.reversef[f]
+    ehom.basis[f]
 
 # interface:
-features(hom::ExtensionHomomorphism) = hom.features
-action(hom::ExtensionHomomorphism) = hom.ac
+StarAlgebras.basis(hom::ExtensionHomomorphism) = hom.basis
+action(hom::ExtensionHomomorphism) = hom.action
 
 function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
     I = _int_type(hom)
-    return Perm(vec(I[hom[action(action(hom), g, f)] for f in features(hom)]))
+    return Perm(vec(I[hom[action(action(hom), g, f)] for f in basis(hom)]))
 end
 
 struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
@@ -110,9 +108,9 @@ struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
     cache::Dict{G,H}
 end
 
-for f in (:action, :features, :_int_type)
-    @eval $f(h::CachedExtensionHomomorphism) = $f(h.ehom)
-end
+action(h::CachedExtensionHomomorphism) = action(h.ehom)
+StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
+_int_type(chom::CachedExtensionHomomorphism) = _int_type(h.ehom)
 
 Base.getindex(h::CachedExtensionHomomorphism, x::Any) = h.ehom[x]
 

@@ -103,7 +103,7 @@ end
 function matrix_projection(
     hom::InducedActionHomomorphism{<:ByPermutations},
     α::AlgebraElement,
-    dim::Integer = length(features(hom)),
+    dim::Integer = length(basis(hom)),
 )
     result = zeros(eltype(α), dim, dim)
     b = basis(parent(α))
@@ -121,7 +121,7 @@ end
 function matrix_projection(
     hom::InducedActionHomomorphism{<:ByLinearTransformation},
     α::AlgebraElement,
-    dim::Integer = length(features(hom)),
+    dim::Integer = length(basis(hom)),
 )
 
     result = zeros(Base._return_type(*, Tuple{eltype(α), coeff_type(action(hom))}), dim, dim)

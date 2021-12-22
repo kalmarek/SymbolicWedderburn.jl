@@ -35,7 +35,7 @@ function SymbolicWedderburn.decompose(
     k::MP.AbstractPolynomialLike,
     hom::SymbolicWedderburn.InducedActionHomomorphism,
 )
-    # correct only if features(hom) == monomials
+    # correct only if basis(hom) == monomials
 
     indcs = [hom[mono] for mono in MP.monomials(k)]
     coeffs = MP.coefficients(k)
