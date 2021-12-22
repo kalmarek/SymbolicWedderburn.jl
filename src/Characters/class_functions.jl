@@ -25,6 +25,18 @@ function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     return val
 end
 
+function (χ::AbstractClassFunction)(g::GroupElement)
+    for (i, cc) in enumerate(conjugacy_classes(χ))
+        g ∈ cc && return χ[i]
+    end
+    throw(
+        DomainError(
+            g,
+            "element does not belong to conjugacy classes of $χ",
+        ),
+    )
+end
+
 _div(val, orderG) = div(val, orderG)
 _div(val::AbstractFloat, orderG) = val / orderG
 _div(val::Complex{<:AbstractFloat}, orderG) = val / orderG
@@ -111,24 +123,18 @@ Base.parent(χ::Character) = parent(table(χ))
 conjugacy_classes(χ::Character) = conjugacy_classes(table(χ))
 Base.values(χ::Character) = (χ[i] for i in 1:nconjugacy_classes(table(χ)))
 
-Base.@propagate_inbounds function Base.getindex(χ::Character{T}, i::Integer) where T
+Base.@propagate_inbounds function Base.getindex(
+    χ::Character{T},
+    i::Integer,
+) where {T}
     i = i < 0 ? table(χ).inv_of[abs(i)] : i
     @boundscheck 1 ≤ i ≤ nconjugacy_classes(table(χ))
-    return T(
-        sum(c * table(χ)[idx, i] for (idx, c) in enumerate(constituents(χ))
-        if !iszero(c))
-    )
-end
 
-# TODO: move to AbstractClassFunction when we drop julia-1.0
-function (χ::Character)(g::GroupElement)
-    for (i, cc) in enumerate(conjugacy_classes(χ))
-        g ∈ cc && return χ[i]
-    end
-    throw(
-        DomainError(
-            g,
-            "element does not belong to conjugacy classes of $χ",
+    return convert(
+        T,
+        sum(
+            c * table(χ)[idx, i] for
+            (idx, c) in enumerate(constituents(χ)) if !iszero(c)
         ),
     )
 end
