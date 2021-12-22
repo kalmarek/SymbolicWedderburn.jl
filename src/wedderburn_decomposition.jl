@@ -17,12 +17,10 @@ function WedderburnDecomposition(
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute = true)
 
-    Uπs = let
-        sa_basis = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
-    end
+    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 
     basis = StarAlgebras.Basis{UInt32}(basis_full)
-    invariants = invariant_vectors(tbl, action, basis_full)
+    invariants = invariant_vectors(tbl, action, basis)
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
 end
@@ -93,11 +91,14 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Action,
-    basis
+    basis::StarAlgebras.Basis
 )
     trχ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
-    ehom = CachedExtensionHomomorphism(parent(tbl), act, basis, precompute = true)
+
+    ehom = ExtensionHomomorphism(act, basis)
+    img = image_basis(ehom, trχ)
 
     # change the format of invariant_vectors to image_basis(ehom, trχ)
-    return sparsevec.(eachrow(image_basis(ehom, trχ)))
+    return sparsevec.(eachrow(img))
+end
 end

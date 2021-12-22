@@ -142,7 +142,11 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
 
     invariant_vs, symmetry_adaptation_time, = @timed let G = G
         tblG = SymbolicWedderburn.Characters.CharacterTable(Rational{Int}, G)
-        invariant_vectors(tblG, DihedralAction(), basis_monoms)
+        invariant_vectors(
+            tblG,
+            DihedralAction(),
+            StarAlgebras.Basis{UInt32}(basis_monoms),
+        )
     end
 
     M = let basis_full = StarAlgebras.Basis{UInt32}(basis_monoms), basis_half = monomials([x,y], 0:(DynamicPolynomials.maxdegree(f) ÷ 2))
