@@ -91,7 +91,7 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Action,
-    basis::StarAlgebras.Basis
+    basis::StarAlgebras.Basis,
 )
     trχ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
 
@@ -101,4 +101,32 @@ function invariant_vectors(
     # change the format of invariant_vectors to image_basis(ehom, trχ)
     return sparsevec.(eachrow(img))
 end
+
+function invariant_vectors(
+    tbl::Characters.CharacterTable,
+    act::ByPermutations,
+    basis::StarAlgebras.Basis{T,I},
+) where {T,I}
+    G = parent(tbl)
+    tovisit = trues(length(basis))
+    invariant_vs = Vector{SparseVector{Rational{Int}}}()
+
+    ordG = order(Int, G)
+    elts = collect(G)
+    orbit = zeros(I, ordG)
+
+    for i in eachindex(basis)
+        if tovisit[i]
+            bi = basis[i]
+            Threads.@threads for j in eachindex(elts)
+                orbit[j] = basis[action(act, elts[j], bi)]
+            end
+            tovisit[orbit] .= false
+            push!(
+                invariant_vs,
+                sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
+            )
+        end
+    end
+    return invariant_vs
 end
