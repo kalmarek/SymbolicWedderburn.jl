@@ -136,20 +136,18 @@ end
 CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
     CachedExtensionHomomorphism(hom, Dict{G,H}())
 
-function induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
+function _induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
     if !haskey(hom.cache, g)
         hom.cache[g] = induce(ac, hom.ehom, g)
     end
     return hom.cache[g]
 end
-#disambiguation:
-function induce(
+
+induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement) =
+    _induce(ac, hom, g)
+# disabmiguation:
+induce(
     ac::ByLinearTransformation,
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
-)
-    if !haskey(hom.cache, g)
-        hom.cache[g] = induce(ac, hom.ehom, g)
-    end
-    return hom.cache[g]
-end
+) = _induce(ac, hom, g)
