@@ -121,7 +121,7 @@ constituents(χ::Character) = χ.constituents
 ## AbstractClassFunction api
 Base.parent(χ::Character) = parent(table(χ))
 conjugacy_classes(χ::Character) = conjugacy_classes(table(χ))
-Base.values(χ::Character) = (χ[i] for i in 1:nconjugacy_classes(table(χ)))
+Base.values(χ::Character{T}) where T = T[χ[i] for i in 1:nconjugacy_classes(table(χ))]
 
 Base.@propagate_inbounds function Base.getindex(
     χ::Character{T},

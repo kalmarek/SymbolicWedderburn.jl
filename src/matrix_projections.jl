@@ -44,6 +44,15 @@ function matrix_projection_irr(
     return sum(val .* sum(g -> inv(Matrix(g)), cc) for (val, cc) in zip(vals, ccls))
 end
 
+function matrix_projection(χ::Character{T}) where T
+    tbl = table(χ)
+    res = sum(
+        c .* matrix_projection_irr(ψ)
+        for (c, ψ) in zip(constituents(χ), irreducible_characters(T, tbl)) if !iszero(c)
+    )
+    return res
+end
+
 ## versions with InducedActionHomomorphisms
 
 function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character{T}) where T
@@ -82,22 +91,15 @@ function matrix_projection_irr(
     )
 end
 
-function matrix_projection(χ::Character{T}) where T
-    tbl = table(χ)
-    res = sum(
-        c .* matrix_projection_irr(ψ)
-        for (c, ψ) in zip(constituents(χ), irreducible_characters(tbl)) if !iszero(c)
-    )
-    return eltype(res) == T ? res : T.(res)
-end
-
 function matrix_projection(hom::InducedActionHomomorphism, χ::Character{T}) where T
-    tbl = table(χ)
+    irr = irreducible_characters(T, table(χ))
+    cnsttnts = constituents(χ)
+
     res = sum(
         c .* matrix_projection_irr(hom, ψ)
-        for (c, ψ) in zip(constituents(χ), irreducible_characters(tbl)) if !iszero(c)
+        for (c, ψ) in zip(cnsttnts, irr) if !iszero(c)
     )
-    return eltype(res) == T ? res : T.(res)
+    return res
 end
 
 function matrix_projection(
