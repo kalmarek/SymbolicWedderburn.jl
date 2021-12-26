@@ -130,13 +130,18 @@ Base.@propagate_inbounds function Base.getindex(
     i = i < 0 ? table(χ).inv_of[abs(i)] : i
     @boundscheck 1 ≤ i ≤ nconjugacy_classes(table(χ))
 
-    return convert(
-        T,
-        sum(
-            c * table(χ)[idx, i] for
-            (idx, c) in enumerate(constituents(χ)) if !iszero(c)
-        ),
-    )
+    if isirreducible(χ)
+        k = findfirst(!iszero, constituents(χ))::Int
+        return convert(T, table(χ)[k, i])
+    else
+        return convert(
+            T,
+            sum(
+                c * table(χ)[idx, i] for
+                (idx, c) in enumerate(constituents(χ)) if !iszero(c)
+            ),
+        )
+    end
 end
 
 ## Basic functionality
@@ -183,9 +188,13 @@ isvirtual(χ::Character) =
     any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
 
 function isirreducible(χ::Character)
-    count(isone, constituents(χ)) == 1 || return false
-    count(iszero, constituents(χ)) == length(constituents(χ)) - 1 || return false
-    return true
+    C = constituents(χ)
+    k = findfirst(!iszero, C)
+    k !== nothing || return false # χ is zero
+    isone(C[k]) || return false # muliplicity is ≠ 1
+    kn = findnext(!iszero, C, k+1)
+    kn === nothing && return true # there is only one ≠ 0 entry
+    return false
 end
 
 """
