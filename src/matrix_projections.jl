@@ -335,12 +335,25 @@ function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
 end
 
 image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
+function image_basis!(A::AbstractSparseMatrix)
+    A, p = row_echelon_form!(A)
+    dropzeros!(A)
+    return A, p
+end
 
 function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
     A, p = row_echelon_form!(A)
     fact = svd!(convert(Matrix{T}, @view(A[1:length(p), :])))
     A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
     @assert A_rank == length(p)
+    return fact.Vt, 1:length(p)
+end
+
+import Arpack
+
+function image_basis!(A::SparseMatrixCSC{T}) where {T<:AbstractFloat}
+    A, p = row_echelon_form!(A)
+    fact, _ = Arpack.svds(A, nsv = length(p))
     return fact.Vt, 1:length(p)
 end
 
