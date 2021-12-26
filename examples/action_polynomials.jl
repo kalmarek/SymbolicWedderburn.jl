@@ -1,5 +1,5 @@
 using DynamicPolynomials
-MP = DynamicPolynomials.MultivariatePolynomials
+const  MPoly = DynamicPolynomials.MultivariatePolynomials
 using GroupsCore
 using PermutationGroups
 
@@ -19,26 +19,26 @@ abstract type OnMonomials <: SymbolicWedderburn.ByLinearTransformation end
 function SymbolicWedderburn.action(
     a::Union{VariablePermutation,OnMonomials},
     el::GroupElement,
-    term::MP.AbstractTerm,
+    term::MPoly.AbstractTerm,
 )
-    return MP.coefficient(term) * SymbolicWedderburn.action(a, el, MP.monomial(term))
+    return MPoly.coefficient(term) * SymbolicWedderburn.action(a, el, MPoly.monomial(term))
 end
 function SymbolicWedderburn.action(
     a::Union{VariablePermutation,OnMonomials},
     el::GroupElement,
-    poly::MP.AbstractPolynomial,
+    poly::MPoly.AbstractPolynomial,
 )
-    return sum([SymbolicWedderburn.action(a, el, term) for term in MP.terms(poly)])
+    return sum([SymbolicWedderburn.action(a, el, term) for term in MPoly.terms(poly)])
 end
 
 function SymbolicWedderburn.decompose(
-    k::MP.AbstractPolynomialLike,
+    k::MPoly.AbstractPolynomialLike,
     hom::SymbolicWedderburn.InducedActionHomomorphism,
 )
     # correct only if basis(hom) == monomials
-
-    indcs = [hom[mono] for mono in MP.monomials(k)]
-    coeffs = MP.coefficients(k)
+    I = SymbolicWedderburn._int_type(hom)
+    indcs = I[hom[mono] for mono in MPoly.monomials(k)]
+    coeffs = MPoly.coefficients(k)
 
     return indcs, coeffs
 end
