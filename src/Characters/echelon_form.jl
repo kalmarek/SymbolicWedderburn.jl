@@ -36,7 +36,7 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     @boundscheck checkbounds(A, row_idx, col_idx)
     @boundscheck 1 ≤ starting_at ≤ size(A, 2)
 
-    Threads.@threads for ridx in 1:size(A, 1)
+    for ridx in 1:size(A, 1)
         ridx == row_idx && continue
         v = A[ridx, col_idx]
         iszero(v) && continue
@@ -91,7 +91,7 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     @boundscheck checkbounds(A, row_idx, col_idx)
     @boundscheck 1 ≤ starting_at ≤ size(A, 2)
 
-    Threads.@threads for ridx in 1:size(A, 1)
+    for ridx in 1:size(A, 1)
         ridx == row_idx && continue
         @inbounds v = A[ridx, col_idx]
         if abs(v) < eps(T)
