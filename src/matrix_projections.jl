@@ -12,27 +12,25 @@ __an_elt(α::AlgebraElement) = first(basis(parent(α)))
 _projection_size(p::PermutationGroups.AbstractPerm) = (d = degree(p); (d, d))
 _projection_size(m::AbstractMatrix) = size(m)
 
-_projection_size(χ::Character) = _projection_size(__an_elt(χ))
+_projection_size(::Nothing, χ::Character) = _projection_size(__an_elt(χ))
 _projection_size(hom::InducedActionHomomorphism, χ::Character) =
     _projection_size(induce(hom, __an_elt(χ)))
-_projection_size(α::AlgebraElement) = _projection_size(__an_elt(α))
+_projection_size(::Nothing, α::AlgebraElement) = _projection_size(__an_elt(α))
 _projection_size(hom::InducedActionHomomorphism, α::AlgebraElement) =
     _projection_size(induce(hom, __an_elt(χ)))
 
 _hint(χ::Character) = length(conjugacy_classes(χ))
 _hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
 
-function preallocate(::Type{T}, χ::Union{Character, AlgebraElement}) where {T}
-    sizes = _projection_size(χ)
-    return _preallocate_spmatrix(T, sizes, _hint(χ))
-end
+preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T} =
+    preallocate(T, nothing, χ)
 
 function preallocate(
     ::Type{T},
-    hom::InducedActionHomomorphism,
-    χ::Union{Character, AlgebraElement},
+    a::Union{Nothing,InducedActionHomomorphism},
+    χ::Union{Character,AlgebraElement},
 ) where {T}
-    sizes = _projection_size(hom, χ)
+    sizes = _projection_size(a, χ)
     return _preallocate_spmatrix(T, sizes, _hint(χ))
 end
 
@@ -53,27 +51,67 @@ The precise type of `M` can be altered by overloading
 preallocate(::Type{T}, [hom::InducedActionHomomorphism, ]χ::Character)
 ```
 """
-function matrix_projection(χ::Character{T}) where {T}
-    tbl = table(χ)
-    mproj = preallocate(T, χ)
-    for (c, ψ) in zip(constituents(χ), irreducible_characters(T, tbl))
-        iszero(c) && continue
-        mproj .= c .* matrix_projection_irr_acc!(mproj, ψ)
+matrix_projection(χ::Character{T}) where {T} =
+    _mproj_outsT!(preallocate(T, χ), χ)
+matrix_projection(hom::InducedActionHomomorphism, χ::Character{T}) where {T} =
+    _mproj_outsT!(preallocate(T, hom, χ), hom, χ)
+
+function matrix_projection(χ::Character{T}) where {T<:Rational}
+    if all(isone ∘ Cyclotomics.conductor, table(χ))
+        return _mproj_fitsT!(preallocate(T, χ), χ)
+    else
+        return _mproj_outsT!(preallocate(T, χ), χ)
     end
-    return mproj
+end
+
+matrix_projection(χ::Character{T}) where {T<:Union{Cyclotomic,Complex}} =
+    _mproj_fitsT!(preallocate(T, χ), χ)
+matrix_projection(
+    hom::InducedActionHomomorphism,
+    χ::Character{T},
+) where {T<:Union{Cyclotomic,Complex}} =
+    _mproj_fitsT!(preallocate(T, hom, χ), hom, χ)
+
+function matrix_projection(χ::Character{T}) where {T<:AbstractFloat}
+    if all(isreal, table(χ))
+        return _mproj_fitsT!(preallocate(T, χ), χ)
+    else
+        return _mproj_outsT!(preallocate(T, χ), χ)
+    end
 end
 
 function matrix_projection(
     hom::InducedActionHomomorphism,
     χ::Character{T},
-) where {T}
-    tbl = table(χ)
-    mproj = preallocate(T, hom, χ)
-
-    for (c, ψ) in zip(constituents(χ), irreducible_characters(T, tbl))
-        iszero(c) && continue
-        mproj .= c .* matrix_projection_irr_acc!(mproj, hom, ψ)
+) where {T<:AbstractFloat}
+    mproj .= if all(isreal, table(χ))
+        return _mproj_fitsT!(preallocate(T, hom, χ), hom, χ)
+    else
+        return _mproj_outsT!(preallocate(T, hom, χ), hom, χ)
     end
+    return mproj
+end
+
+_mproj_fitsT!(args...) = _mproj_outsT!(args...)
+
+
+function _mproj_outsT!(mproj::AbstractMatrix{T}, χ::Character) where {T}
+    mproj .= sum(
+        c .* matrix_projection_irr(Character(table(χ), i)) for
+        (i, c) in pairs(constituents(χ)) if !iszero(c)
+    )
+    return mproj
+end
+
+function _mproj_outsT!(
+    mproj::AbstractMatrix{T},
+    hom::InducedActionHomomorphism,
+    χ::Character,
+) where {T}
+    mproj .= sum(
+        c .* matrix_projection_irr(hom, Character(table(χ), i)) for
+        (i, c) in pairs(constituents(χ)) if !iszero(c)
+    )
     return mproj
 end
 
@@ -89,7 +127,7 @@ See also [matrix_projection](@ref).
 matrix_projection_irr(χ::Character{T}) where {T} = matrix_projection_irr(T, χ)
 
 matrix_projection_irr(::Type{T}, χ::Character) where {T} =
-    matrix_projection_irr_acc!(preallocate(T, χ), χ)
+    matrix_projection_irr_acc!(preallocate(T, χ), χ, 1)
 
 function matrix_projection_irr(
     hom::InducedActionHomomorphism,
@@ -103,16 +141,20 @@ function matrix_projection_irr(
     hom::InducedActionHomomorphism,
     χ::Character,
 ) where {T}
-    return matrix_projection_irr_acc!(preallocate(T, hom, χ), hom, χ)
+    return matrix_projection_irr_acc!(preallocate(T, hom, χ), hom, χ, 1)
 end
 
-function matrix_projection_irr_acc!(result::AbstractMatrix, χ::Character)
+function matrix_projection_irr_acc!(
+    result::AbstractMatrix,
+    χ::Character,
+    weight,
+)
     @assert isirreducible(χ)
     LinearAlgebra.checksquare(result)
     ccls = conjugacy_classes(χ)
     vals = collect(values(χ))
-    result .= matrix_projection_irr_acc!(result, vals, ccls)
-    result .*= degree(χ) // sum(length, ccls)
+    weight *= degree(χ) // sum(length, ccls)
+    matrix_projection_irr_acc!(result, vals, ccls, weight)
     return result
 end
 
@@ -120,11 +162,12 @@ function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
+    weight,
 ) where {T}
     for (val, cc) in zip(vals, ccls)
         for g in cc
             for i in 1:size(result, 1)
-                result[i, i^g] += val
+                result[i, i^g] += weight * val
             end
         end
     end
@@ -136,12 +179,13 @@ function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
+    weight,
 )
     # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
     # is given by a sparse matrix `inv(g)` will fail.
     for (val, cc) in zip(vals, ccls)
         for g in cc
-            res .+= val .* inv(convert(Matrix, g))
+            res .+= (weight * val) .* inv(convert(Matrix, g))
         end
     end
     return res
@@ -151,13 +195,14 @@ function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     hom::InducedActionHomomorphism,
     χ::Character,
+    weight,
 )
     @assert isirreducible(χ)
     LinearAlgebra.checksquare(result)
-    ccls = conjugacy_classes(χ)
     vals = collect(values(χ))
-    result .= matrix_projection_irr_acc!(result, hom, vals, ccls)
-    result .*= degree(χ) // sum(length, ccls)
+    ccls = conjugacy_classes(χ)
+    weight *= degree(χ) // sum(length, ccls)
+    matrix_projection_irr_acc!(result, hom, vals, ccls, weight)
     return result
 end
 
@@ -166,13 +211,14 @@ function matrix_projection_irr_acc!(
     hom::InducedActionHomomorphism{<:ByPermutations},
     class_values,
     conjugacy_cls,
+    weight,
 )
     for (val, ccl) in zip(class_values, conjugacy_cls)
         for g in ccl
             h = induce(hom, g)
             @assert h isa PermutationGroups.Perm
             for i in 1:size(result, 1)
-                result[i, i^h] += val
+                result[i, i^h] += weight * val
             end
         end
     end
@@ -184,11 +230,12 @@ function matrix_projection_irr_acc!(
     hom::InducedActionHomomorphism{<:ByLinearTransformation},
     class_values,
     conjugacy_cls,
+    weight,
 )
     for (val, cc) in zip(class_values, conjugacy_cls)
         iszero(val) && continue
         for g in cc
-            result .+= val .* induce(hom, inv(g))
+            result .+= (weight * val) .* induce(hom, inv(g))
         end
     end
     return result
