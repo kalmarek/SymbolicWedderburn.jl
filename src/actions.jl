@@ -41,6 +41,8 @@ decompose(x::Any, hom::InducedActionHomomorphism) = throw(
 coeff_type(ac::ByLinearTransformation) = throw(
     "No fallback is provided for $(typeof(ac)). You need to implement `_coeff_type(::$(typeof(ac)))`.",
 )
+coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
+coeff_type(::ByPermutations) = Int
 
 # Exceeding typemax(UInt16) here would mean e.g. that you're trying to block-diagonalize
 # an SDP constraint of size 65535×65535, which is highly unlikely ;)
