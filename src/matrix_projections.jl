@@ -29,7 +29,7 @@ function preallocate(
     hom::InducedActionHomomorphism,
     χ::Union{Character,AlgebraElement},
 )
-    T = promote_type(coeff_type(hom), eltype(χ))
+    T = Base._return_type(*, (coeff_type(hom), eltype(χ)))
     return preallocate(T, hom, χ)
 end
 
