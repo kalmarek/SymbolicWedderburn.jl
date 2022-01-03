@@ -52,6 +52,7 @@ function SymbolicWedderburn.action(
     el::DihedralElement,
     mono::AbstractMonomial,
 )
+    x, y = variables(mono)
     if iseven(el.reflection + el.id)
         var_x, var_y = x, y
     else
