@@ -53,6 +53,6 @@ end
 
     if VERSION > v"1.3.0"
         @test sprint(show, MIME"text/plain"(), chars[1]) ==
-        "Character over Cyclotomic{Rational{Int64}, SparseArrays.SparseVector{Rational{Int64}, Int64}}\nχ₁"
+        "Character over Cyclotomic{Rational{Int64}, SparseVector{Rational{Int64}, Int64}}\nχ₁"
     end
 end

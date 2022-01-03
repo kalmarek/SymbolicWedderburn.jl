@@ -8,6 +8,7 @@ using LinearAlgebra
 using GroupsCore
 using PermutationGroups
 using Cyclotomics
+using SparseArrays
 
 include("smallgroups.jl")
 
