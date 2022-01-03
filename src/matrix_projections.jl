@@ -164,10 +164,13 @@ function matrix_projection_irr_acc!(
     ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
     weight,
 ) where {T}
+    iszero(weight) && return result
     for (val, cc) in zip(vals, ccls)
+        iszero(val) && continue
+        w = weight * val
         for g in cc
             for i in 1:size(result, 1)
-                result[i, i^g] += weight * val
+                result[i, i^g] += w
             end
         end
     end
@@ -184,6 +187,7 @@ function matrix_projection_irr_acc!(
     # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
     # is given by a sparse matrix `inv(g)` will fail.
     for (val, cc) in zip(vals, ccls)
+        iszero(val) && continue
         for g in cc
             res .+= (weight * val) .* inv(convert(Matrix, g))
         end
@@ -213,12 +217,15 @@ function matrix_projection_irr_acc!(
     conjugacy_cls,
     weight,
 )
+    iszero(weight) && return result
     for (val, ccl) in zip(class_values, conjugacy_cls)
+        iszero(val) && continue
+        w = weight * val
         for g in ccl
             h = induce(hom, g)
             @assert h isa PermutationGroups.Perm
             for i in 1:size(result, 1)
-                result[i, i^h] += weight * val
+                result[i, i^h] += w
             end
         end
     end
@@ -232,10 +239,12 @@ function matrix_projection_irr_acc!(
     conjugacy_cls,
     weight,
 )
+    iszero(weight) && return result
     for (val, cc) in zip(class_values, conjugacy_cls)
         iszero(val) && continue
+        w = weight * val
         for g in cc
-            result .+= (weight * val) .* induce(hom, inv(g))
+            result .+= w .* induce(hom, inv(g))
         end
     end
     return result
@@ -272,6 +281,7 @@ function matrix_representation_acc!(
     b = basis(parent(α))
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         g = b[idx]
+        iszero(val) && continue
         for i in 1:size(result, 1)
             result[i, i^g] += val
         end
@@ -287,6 +297,7 @@ function matrix_representation_acc!(
 )
     b = basis(parent(α))
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+        iszero(val) && continue
         g = induce(hom, b[idx])
         @assert g isa PermutationGroups.Perm
         for i in 1:size(result, 1)
@@ -304,6 +315,7 @@ function matrix_representation_acc!(
 )
     b = basis(parent(α))
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+        iszero(val) && continue
         result .+= val .* induce(hom, inv(b[idx]))
     end
 
