@@ -92,12 +92,17 @@ struct Character{T, S, ChT<:CharacterTable} <: AbstractClassFunction{T}
     constituents::Vector{S}
 end
 
-function Character(
+function Character{R}(
     chtbl::CharacterTable{Gr, T},
     constituents::AbstractVector{S}
-) where {Gr, T, S}
-    R = Base._return_type(*, Tuple{S,T})
+) where {R, Gr, T, S}
     return Character{R, S, typeof(chtbl)}(chtbl, constituents)
+end
+
+function Character(chtbl::CharacterTable, constituents::AbstractVector)
+    R = Base._return_type(*, Tuple{eltype(chtbl), eltype(constituents)})
+    @assert R ≠ Any
+    return Character{R}(chtbl, constituents)
 end
 
 Character(chtbl::CharacterTable, i::Integer) = Character{eltype(chtbl)}(chtbl, i)

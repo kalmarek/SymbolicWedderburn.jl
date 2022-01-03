@@ -35,29 +35,51 @@ function _action_class_fun(
 end
 
 """
-    action_character(conjugacy_cls, tbl::CharacterTable)
+    action_character([::Type{T}, ]conjugacy_cls, tbl::CharacterTable)
 Return the character of the representation given by the elements in the
 conjugacy classes `conjugacy_cls`.
 
 This corresponds to the classical definition of characters as a traces of the
 representation matrices.
 """
-function action_character(conjugacy_cls, tbl::CharacterTable)
-    ac_char = _action_class_fun(conjugacy_cls)
+action_character(conjugacy_clss, tbl::CharacterTable) =
+    action_character(eltype(tbl), conjugacy_clss, tbl)
+
+function action_character(::Type{T}, conjugacy_clss, tbl::CharacterTable) where T
+    ac_char = _action_class_fun(conjugacy_clss)
     constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(tbl)]
-    return Character(tbl, constituents)
+    return Character{T}(tbl, constituents)
+end
+
+function action_character(::Type{T}, conjugacy_cls, tbl::CharacterTable) where T <: Union{AbstractFloat, ComplexF64}
+    ac_char = _action_class_fun(conjugacy_cls)
+
+    constituents = [dot(ac_char, χ) for χ in irreducible_characters(tbl)]
+    all(constituents) do c
+        ac = abs(c)
+        abs(ac - round(ac)) < eps(real(T))*length(conjugacy_cls)
+    end
+
+    return Character{T}(tbl, round.(Int, abs.(constituents)))
 end
 
 """
-    action_character(hom::InducedActionHomomorphism, tbl::CharacterTable)
+    action_character([::Type{T}, ]hom::InducedActionHomomorphism, tbl::CharacterTable)
 Return the character of the representation given by the images under `hom` of
 elements in `conjugacy_classes(tbl)`.
 
 This corresponds to the classical definition of characters as a traces of the
 representation matrices.
 """
-function action_character(hom::InducedActionHomomorphism, tbl::CharacterTable)
+action_character(hom::InducedActionHomomorphism, tbl::CharacterTable) =
+    action_character(eltype(tbl), hom, tbl)
+
+function action_character(
+    ::Type{T},
+    hom::InducedActionHomomorphism,
+    tbl::CharacterTable
+) where T
     ac_char = _action_class_fun(hom, conjugacy_classes(tbl))
-    constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(tbl)]
-    return Character(tbl, constituents)
+    constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
+    return Character{T}(tbl, constituents)
 end

@@ -80,7 +80,7 @@ function symmetry_adapted_basis(
     semisimple::Bool = false,
 )
     irr, multips = _constituents_decomposition(
-        action_character(conjugacy_classes(tbl), tbl),
+        action_character(T, conjugacy_classes(tbl), tbl),
         tbl,
     )
 
