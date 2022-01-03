@@ -93,10 +93,14 @@ function invariant_vectors(
     act::Action,
     basis::StarAlgebras.Basis,
 )
-    trχ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
+    triv_χ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
+    ehom =
+        CachedExtensionHomomorphism(parent(tbl), act, basis, precompute = true)
+    # ehom = ExtensionHomomorphism(act, basis)
 
-    ehom = ExtensionHomomorphism(act, basis)
-    img = image_basis(ehom, trχ)
+    mpr = matrix_projection_irr(ehom, triv_χ)
+    mpr, pivots = row_echelon_form!(mpr)
+    img = mpr[1:length(pivots), :]
 
     # change the format of invariant_vectors to image_basis(ehom, trχ)
     return sparsevec.(eachrow(img))
