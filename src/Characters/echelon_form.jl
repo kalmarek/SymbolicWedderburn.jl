@@ -58,15 +58,28 @@ end
 
 # version over AbstractFloat
 
-Base.@propagate_inbounds function __findmax(f, A::AbstractArray)
+Base.@propagate_inbounds function __findmax(
+    f,
+    A::AbstractArray{T};
+    atol=eps(real(eltype(A)))*max(size(A)...)
+) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     @assert !isempty(A)
-    mval, midx = f(first(A)), firstindex(A)
+
+    midx = first(eachindex(A))
+    mval = f(A[midx])
+
     @inbounds for idx in eachindex(A)
-        if (v = f(A[idx])) > mval
-            mval, midx = v, idx
+        iszero(A[idx]) && continue
+        v = f(A[idx])
+        if v > mval
+            midx, mval = idx, v
+        end
+        if v < atol
+            A[idx] = zero(T)
         end
     end
-    return mval, midx
+
+    return midx, mval
 end
 
 Base.@propagate_inbounds function _find_pivot(
@@ -80,11 +93,8 @@ Base.@propagate_inbounds function _find_pivot(
     # find the largest entry in the column below the last pivot
     @boundscheck @assert 1 ≤ col_idx ≤ size(A, 2)
 
-    mval, midx = __findmax(abs, @view(A[starting_at:end, col_idx]))
+    midx, mval = __findmax(abs, @view(A[starting_at:end, col_idx]), atol=atol)
     if mval < atol # the largest entry is below threshold so we zero everything in the column
-        @inbounds for ridx in starting_at:size(A, 1)
-            A[ridx, col_idx] = zero(eltype(A))
-        end
         return false, starting_at
     end
     return true, oftype(starting_at, starting_at + midx - 1)
