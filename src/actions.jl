@@ -10,6 +10,9 @@ implements:
 * action(hom::InducedActionHomomorphism, g::GroupElement, feature) → the action of `g` on `feature`
 =#
 
+"""
+Compute the vector g⋅v which is the result of acting g on v by permutation.
+"""
 function action(
     hom::InducedActionHomomorphism{<:ByPermutations},
     g::GroupElement,
@@ -18,6 +21,9 @@ function action(
     return v^induce(hom, g)
 end
 
+"""
+Compute the vector g⋅v which is the result of acting g on v by linear transformation.
+"""
 function action(
     hom::InducedActionHomomorphism{<:ByLinearTransformation},
     g::GroupElement,
@@ -49,6 +55,9 @@ coeff_type(::ByPermutations) = Int
 _int_type(::Type{<:InducedActionHomomorphism}) = UInt16
 _int_type(hom::InducedActionHomomorphism) = _int_type(typeof(hom))
 
+"""
+Compute the (sparse) matrix corresponding to g acting by linear transformation.
+"""
 function induce(
     ac::ByLinearTransformation,
     hom::InducedActionHomomorphism,

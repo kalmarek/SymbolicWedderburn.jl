@@ -26,38 +26,6 @@ function affordable_real(
     return irr_real, mls_real
 end
 
-"""
-    symmetry_adapted_basis([T::Type,] G::AbstractPermutationGroup[, S=Rational{Int};
-        semisimple=false])
-Compute a basis for the linear space `ℝⁿ` (where `n = degree(G)`) which is
-invariant under the symmetry of `G`.
-
-The basis is returned as a vector of `DirectSummand{T}`s (blocks) corresponding
-to the irreducible characters of `G`. The blocks are orthogonal to **each other**,
-however vectors within a single block may *not* be orthogonal.
-If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to orthogonalize
-vectors within each `DirectSummand`.
-
-Arguments:
-* `S` controls the types of `Cyclotomic`s used in the computation of
-character table. Exact type are preferred. For larger groups `G` `Rational{BigInt}`
-might be necessary.
-* `T` controls the type of coefficients of the returned basis.
-* `semisimple`: if set to `false` (the default) an effort to find minimal
-projection system is made, so that each block defines a projection to a single
-simple summand within each (isotypical) block. Otherwise an isomorphism to the
-semisimple decomposition is computed.
-
-!!! Note:
-Each returned block (a `DirectSummand`) is invariant under the action of `G`,
-which means that the action may still e.g. permute (row) vectors , but only
-*within* each block.
-
-When `semisimple=true` the blocks constitute an isomorphism. Otherwise blocks
-may represent only a projection onto the commutant of the appropriate matrix
-algebra (which has in general lower dimension). This happens precisely when
-`issimple` on a block returns `true` and `SymbolicWedderburn.degree(ds) == 1`.
-"""
 function symmetry_adapted_basis(
     G::PermutationGroups.AbstractPermutationGroup,
     S::Type = Rational{Int};
@@ -67,6 +35,48 @@ function symmetry_adapted_basis(
     return symmetry_adapted_basis(eltype(tbl), tbl, semisimple = semisimple)
 end
 
+"""
+    symmetry_adapted_basis([T::Type,] G::AbstractPermutationGroup[, S=Rational{Int};
+        semisimple=false])
+Compute a decomposition of `V=𝕂ⁿ` (with `n = degree(G)`) into
+subspaces invariant under the natural permutation action of `G`.
+
+Consider the decomposition of `V` into irreducible (simple) subspaces
+    `V ≅ m₁V₁ ⊕ ⋯ ⊕ mᵣVᵣ`
+and write `Wᵢ = mᵢVᵢ` (the `mᵢ`-fold direct sum of `Vᵢ`). The decomposition is
+returned as a vector of `DirectSummand{T}`s (blocks) corresponding
+to the distinct irreducible characters of `G` (i.e. types of action, here from `1`
+to `r`). Each block contains a basis for a `G`-invariant subspace in `V` (`Vᵢ` or `Wᵢ`). The blocks are guaranteed to be orthogonal to **each other**, however vectors within a single block may *not* be orthogonal.
+
+If `T<:LinearAlgebra.BlasFloat` BLAS routines will be used to orthogonalize
+vectors within each block.
+
+!!! note:
+Each returned block is invariant (as a subspace) under the action of `G`, which
+means that the action may still e.g. permute (row) vectors, but only *within* each block.
+
+Arguments:
+* `T` controls the type of coefficients of the returned basis. Unless specified,
+the coefficients will be computed exactly in the field of cyclotomic numbers.
+If you know that the group has rational characters only (which happens e.g. for
+the full symmetric groups) You may specify `Rational{Int}` here. For a group
+with complex characters specifying `T<:Real` will result in the computation of the realified basis.
+* `S` controls the types of `Cyclotomic`s used in the computation of
+character table. Exact type are preferred. For larger groups `G` (or if
+overflow occurs during the computation of characters) specifying
+`Rational{BigInt}` might be necessary.
+* `semisimple::Bool` controls the nature of the the returned basis.
+  - `semisimple=true`: the returned basis consists of orthogonal blocks
+  (`DirectSummand`s) which define an isomorphism
+  `V ≅ Wₖ ⊕ ⋯ ⊕ Wₖ`.
+  associated to isotypical components `Wₖ`, which are (in general) semi-simple.
+  I.e. each direct summand `ds` may further decopose into `G`-invariant
+  subspaces `Wₖ ≅ mₖVₖ`, all of the same _type_. Multiplicity `mₖ` can be
+  obtained by calling `multiplicity(@ref)`.
+  - `semisimple=false`: (the default) In addition to finding blocks `Wₖ`, an
+  effort to find _minimal projection system_ is made, i.e all, some (or none!)
+  of the returned blocks corresponds to a **projection** `V → Wₖ ≅ mₖVₖ → Vₖ` for a single irreducible subspace `Vₖ`. This means that some blocks can not be further decomposed into nontrivial `G`-invariant subspaces.
+"""
 symmetry_adapted_basis(
     T::Type,
     G::PermutationGroups.AbstractPermutationGroup,
@@ -99,14 +109,16 @@ end
 """
     symmetry_adapted_basis([T::Type,] G::Group, action, basis[, S=Rational{Int}];
         semisimple=false)
-Compute a decomposition of basis into (semi)simple subspaces which are invariant under
-the action of `G`.
+Compute a decomposition of `V=⟨basis⟩` into subspaces invariant under the
+given action of `G`.
 
 It is assumed that `G` acts on a subset of basis and the action needs to be
 extended to the whole `basis`. If `G` is a permutation group already acting on
 the whole `basis`, a call to `symmetry_adapted_basis(G)` is preferred.
+
 * For inducing the action `basis` needs to be indexable and iterable
 (e.g. in the form of an `AbstractVector`).
+
 """
 function symmetry_adapted_basis(
     G::Group,
