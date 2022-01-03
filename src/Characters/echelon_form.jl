@@ -10,7 +10,12 @@ Base.@propagate_inbounds function _swap_rows!(A::AbstractMatrix, i, j)
     return A
 end
 
-Base.@propagate_inbounds function _mul_row!(A::AbstractMatrix, val, row_idx, starting_at = 1)
+Base.@propagate_inbounds function _mul_row!(
+    A::AbstractMatrix,
+    val,
+    row_idx,
+    starting_at = 1,
+)
     @boundscheck @assert 1 ≤ starting_at ≤ size(A, 2)
 
     @inbounds for col_idx in starting_at:size(A, 2)
@@ -21,7 +26,11 @@ end
 
 # Version over exact field:
 
-Base.@propagate_inbounds function _find_pivot(A::AbstractMatrix, col_idx, starting_at = 1)
+Base.@propagate_inbounds function _find_pivot(
+    A::AbstractMatrix,
+    col_idx,
+    starting_at = 1,
+)
     k = findnext(!iszero, @view(A[:, col_idx]), starting_at)
     isnothing(k) && return false, col_idx
     return true, k
@@ -61,11 +70,11 @@ Base.@propagate_inbounds function __findmax(f, A::AbstractArray)
 end
 
 Base.@propagate_inbounds function _find_pivot(
-    A::AbstractMatrix{<:AbstractFloat},
+    A::AbstractMatrix{T},
     col_idx,
     starting_at = 1;
-    atol = eps(eltype(A))*max(size(A)...),
-)
+    atol = eps(real(eltype(A))) * size(A, 1),
+) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     isempty(starting_at:size(A, 1)) && return false, starting_at
     @boundscheck @assert 1 ≤ starting_at
     # find the largest entry in the column below the last pivot
@@ -86,15 +95,15 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     row_idx,
     col_idx,
     starting_at = 1,
-) where {T<:AbstractFloat}
-
+    atol = eps(real(eltype(A))) * size(A, 1),
+) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     @boundscheck checkbounds(A, row_idx, col_idx)
     @boundscheck 1 ≤ starting_at ≤ size(A, 2)
 
     for ridx in 1:size(A, 1)
         ridx == row_idx && continue
         @inbounds v = A[ridx, col_idx]
-        if abs(v) < eps(T)
+        if abs(v) < atol
             @inbounds A[ridx, col_idx] = zero(T)
             continue
         end

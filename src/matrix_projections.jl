@@ -388,10 +388,11 @@ function image_basis!(A::AbstractSparseMatrix)
     return A, p
 end
 
-function image_basis!(A::AbstractMatrix{T}) where {T<:AbstractFloat}
+function image_basis!(A::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
     A, p = row_echelon_form!(A)
     fact = svd!(convert(Matrix{T}, @view(A[1:length(p), :])))
-    A_rank = sum(fact.S .> maximum(size(A)) * eps(T))
+    m = T <: Complex ? 2eps(real(T)) : eps(T)
+    A_rank = sum(fact.S .> maximum(size(A)) * m)
     @assert A_rank == length(p)
     return fact.Vt, 1:length(p)
 end
@@ -402,10 +403,4 @@ function image_basis!(A::SparseMatrixCSC{T}) where {T<:AbstractFloat}
     A, p = row_echelon_form!(A)
     fact, _ = Arpack.svds(A, nsv = length(p))
     return fact.Vt, 1:length(p)
-end
-
-function image_basis!(A::AbstractMatrix{T}) where {T<:Complex}
-    fact = svd!(A)
-    A_rank = sum(fact.S .> maximum(size(A)) * 2eps(real(T)))
-    return fact.Vt, 1:A_rank
 end
