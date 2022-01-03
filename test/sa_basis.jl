@@ -46,7 +46,7 @@ end
         @test all(simple)
 
         @test rank(float.(SymbolicWedderburn.matrix_projection(irr[1]))) == 2
-        @test rank(float.(SymbolicWedderburn.matrix_projection(mps[1]))) == 1
+        @test rank(float.(SymbolicWedderburn.matrix_representation(mps[1]))) == 1
 
         sa_basis_ssimple = symmetry_adapted_basis(Rational{Int}, G, Rational{Int}, semisimple=true)
 
@@ -103,7 +103,7 @@ end
 
                     @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(G)
 
-                    S = if (ord, n) in ((21,1),)
+                    S = if (ord, n) in ((26,1),)
                         Rational{BigInt}
                     else
                         Rational{Int}

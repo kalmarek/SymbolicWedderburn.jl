@@ -101,17 +101,17 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
 
             µR = AlgebraElement{Rational{Int}}(µ)
             mpr = SymbolicWedderburn.image_basis(ehom, µR)
-            @test mpr isa Matrix{eltype(µR)}
+            @test mpr isa AbstractMatrix{eltype(µR)}
             @test size(mpr, 1) == m
 
             µFl = AlgebraElement{Float64}(µ)
             mpr = SymbolicWedderburn.image_basis(ehom, µFl)
-            @test mpr isa Matrix{eltype(µFl)}
+            @test mpr isa AbstractMatrix{eltype(µFl)}
             @test size(mpr, 1) == m
         end
 
@@ -121,7 +121,7 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
         end
 
@@ -131,7 +131,7 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
         end
 
