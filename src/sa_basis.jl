@@ -80,7 +80,7 @@ function symmetry_adapted_basis(
     semisimple::Bool = false,
 )
     irr, multips = _constituents_decomposition(
-        action_character(conjugacy_classes(tbl), tbl),
+        action_character(T, conjugacy_classes(tbl), tbl),
         tbl,
     )
 
@@ -145,8 +145,8 @@ function symmetry_adapted_basis(
     if T <: Real
         irr, multips = affordable_real(irr, multips)
         @debug "Decomposition into real character spaces:
-        degrees:        $(join([lpad(d, 6) for d in degrees], ""))
-        multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+        degrees:        $(join([lpad(d, 6) for d in degree.(irr)], ""))
+        multiplicities: $(join([lpad(m, 6) for m in multips], ""))"
 
     end
 
@@ -194,7 +194,7 @@ function _symmetry_adapted_basis(
     hom=nothing
 )
     res = map(zip(irr, multiplicities)) do (µ, m)
-        @spawn_compat begin
+        Threads.@spawn begin
             µT = eltype(µ) == T ? µ : Character{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             simple = size(image, 1) == m
@@ -219,7 +219,7 @@ function _symmetry_adapted_basis(
     mps, simples = minimal_projection_system(irr, RG)
     degrees = degree.(irr)
     res = map(zip(mps, multiplicities, degrees, simples)) do (µ, m, deg, simple)
-        @spawn_compat begin
+        Threads.@spawn begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
             @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"

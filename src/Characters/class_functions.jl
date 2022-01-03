@@ -25,6 +25,18 @@ function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     return val
 end
 
+function (χ::AbstractClassFunction)(g::GroupElement)
+    for (i, cc) in enumerate(conjugacy_classes(χ))
+        g ∈ cc && return χ[i]
+    end
+    throw(
+        DomainError(
+            g,
+            "element does not belong to conjugacy classes of $χ",
+        ),
+    )
+end
+
 _div(val, orderG) = div(val, orderG)
 _div(val::AbstractFloat, orderG) = val / orderG
 _div(val::Complex{<:AbstractFloat}, orderG) = val / orderG
@@ -80,12 +92,17 @@ struct Character{T, S, ChT<:CharacterTable} <: AbstractClassFunction{T}
     constituents::Vector{S}
 end
 
-function Character(
+function Character{R}(
     chtbl::CharacterTable{Gr, T},
     constituents::AbstractVector{S}
-) where {Gr, T, S}
-    R = Base._return_type(*, Tuple{S,T})
+) where {R, Gr, T, S}
     return Character{R, S, typeof(chtbl)}(chtbl, constituents)
+end
+
+function Character(chtbl::CharacterTable, constituents::AbstractVector)
+    R = Base._return_type(*, Tuple{eltype(chtbl), eltype(constituents)})
+    @assert R ≠ Any
+    return Character{R}(chtbl, constituents)
 end
 
 Character(chtbl::CharacterTable, i::Integer) = Character{eltype(chtbl)}(chtbl, i)
@@ -109,28 +126,27 @@ constituents(χ::Character) = χ.constituents
 ## AbstractClassFunction api
 Base.parent(χ::Character) = parent(table(χ))
 conjugacy_classes(χ::Character) = conjugacy_classes(table(χ))
-Base.values(χ::Character) = (χ[i] for i in 1:nconjugacy_classes(table(χ)))
+Base.values(χ::Character{T}) where T = T[χ[i] for i in 1:nconjugacy_classes(table(χ))]
 
-Base.@propagate_inbounds function Base.getindex(χ::Character{T}, i::Integer) where T
+Base.@propagate_inbounds function Base.getindex(
+    χ::Character{T},
+    i::Integer,
+) where {T}
     i = i < 0 ? table(χ).inv_of[abs(i)] : i
     @boundscheck 1 ≤ i ≤ nconjugacy_classes(table(χ))
-    return T(
-        sum(c * table(χ)[idx, i] for (idx, c) in enumerate(constituents(χ))
-        if !iszero(c))
-    )
-end
 
-# TODO: move to AbstractClassFunction when we drop julia-1.0
-function (χ::Character)(g::GroupElement)
-    for (i, cc) in enumerate(conjugacy_classes(χ))
-        g ∈ cc && return χ[i]
+    if isirreducible(χ)
+        k = findfirst(!iszero, constituents(χ))::Int
+        return convert(T, table(χ)[k, i])
+    else
+        return convert(
+            T,
+            sum(
+                c * table(χ)[idx, i] for
+                (idx, c) in enumerate(constituents(χ)) if !iszero(c)
+            ),
+        )
     end
-    throw(
-        DomainError(
-            g,
-            "element does not belong to conjugacy classes of $χ",
-        ),
-    )
 end
 
 ## Basic functionality
@@ -177,9 +193,13 @@ isvirtual(χ::Character) =
     any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
 
 function isirreducible(χ::Character)
-    count(isone, constituents(χ)) == 1 || return false
-    count(iszero, constituents(χ)) == length(constituents(χ)) - 1 || return false
-    return true
+    C = constituents(χ)
+    k = findfirst(!iszero, C)
+    k !== nothing || return false # χ is zero
+    isone(C[k]) || return false # muliplicity is ≠ 1
+    kn = findnext(!iszero, C, k+1)
+    kn === nothing && return true # there is only one ≠ 0 entry
+    return false
 end
 
 """

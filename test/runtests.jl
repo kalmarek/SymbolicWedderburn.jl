@@ -8,6 +8,7 @@ using LinearAlgebra
 using GroupsCore
 using PermutationGroups
 using Cyclotomics
+using SparseArrays
 
 include("smallgroups.jl")
 
@@ -25,14 +26,8 @@ include("action_permutation.jl")
 include("action_linear.jl")
 include("action_dihedral.jl")
 
-if VERSION >= v"1.6.0" && !haskey(ENV, "CI")
+if VERSION >= v"1.7.0" && !haskey(ENV, "CI")
     @testset "Examples" begin
-        using Pkg
-        Pkg.activate(joinpath(@__DIR__, "..", "examples"))
-        Pkg.instantiate()
-        include("../examples/ex_C2_linear.jl")
-        include("../examples/ex_S4.jl")
-        include("../examples/ex_motzkin.jl")
-        include("../examples/ex_robinson_form.jl")
+        include("../examples/run_examples.jl")
     end
 end

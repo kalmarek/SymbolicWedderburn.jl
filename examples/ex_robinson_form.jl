@@ -16,17 +16,18 @@ using DynamicPolynomials
 using SumOfSquares
 using SCS
 
-const OPTIMIZER = optimizer_with_attributes(
+OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 10,
     "max_iters" => 3_000,
-    "alpha" => 1.95,
+    "alpha" => 1.2,
     "eps" => 1e-6,
     "linear_solver" => SCS.DirectSolver,
 )
 
 @polyvar x y
-const robinson_form = x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
+const robinson_form =
+    x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
 
 # The Robinson form is invariant under the following action of the Dihedral group on monomials:
 # The action of each element of the groups is to map the variables `x, y` to:
@@ -46,7 +47,12 @@ include(joinpath(@__DIR__, "action_polynomials.jl"))
 struct DihedralAction <: OnMonomials end
 
 SymbolicWedderburn.coeff_type(::DihedralAction) = Float64
-function SymbolicWedderburn.action(::DihedralAction, el::DihedralElement, mono::AbstractMonomial)
+function SymbolicWedderburn.action(
+    ::DihedralAction,
+    el::DihedralElement,
+    mono::AbstractMonomial,
+)
+    x, y = variables(mono)
     if iseven(el.reflection + el.id)
         var_x, var_y = x, y
     else
@@ -59,7 +65,8 @@ end
 
 G = DihedralGroup(4)
 for g in G
-    @assert SymbolicWedderburn.action(DihedralAction(), g, robinson_form) == robinson_form
+    @assert SymbolicWedderburn.action(DihedralAction(), g, robinson_form) ==
+            robinson_form
 end
 
 # A simple Gramm-matrix like formulation of SOS problem:
@@ -74,7 +81,8 @@ no_symmetry = let f = robinson_form
     end
     m = stats.value
     optimize!(m)
-    @info (m,) termination_status(m) objective_value(m) creation_time = (stats.time) solve_time(m)
+    @info (m,) termination_status(m) objective_value(m) creation_time =
+        (stats.time) solve_time(m)
 
     @assert isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-2)
 
@@ -82,7 +90,7 @@ no_symmetry = let f = robinson_form
         status = termination_status(m),
         objective = objective_value(m),
         creation_t = stats.time,
-        solve_t = solve_time(m)
+        solve_t = solve_time(m),
     )
 end
 
@@ -92,17 +100,18 @@ end
 # of one psd constraint of size N we have k constraints of sizes n₁,… nₖ.
 # The number of linear constraints remains the same as before.
 semisimple_dec = let f = robinson_form, G = DihedralGroup(4)
-    basis = monomials([x, y], 0:(DynamicPolynomials.maxdegree(f) ÷ 2))
+    basis = monomials([x, y], 0:(DynamicPolynomials.maxdegree(f)÷2))
 
     stats = @timed begin
         sa_basis, symmetry_adaptation_time, = @timed let
-            ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(
-                Rational{Int},
-                G,
-                DihedralAction(),
-                basis,
-                semisimple = true
-            )
+            ssimple_basis =
+                SymbolicWedderburn.symmetry_adapted_basis(
+                    Rational{Int},
+                    G,
+                    DihedralAction(),
+                    basis,
+                    semisimple = true,
+                )
             sp = sparse.(ssimple_basis)
             droptol!.(sp, 1e-12)
         end
@@ -113,7 +122,9 @@ semisimple_dec = let f = robinson_form, G = DihedralGroup(4)
             @variable m t
             @objective m Max t
 
-            soses = @variable m [r in R] SOSPoly(FixedPolynomialBasis(r * basis))
+            soses = @variable m [r in R] SOSPoly(
+                FixedPolynomialBasis(r * basis),
+            )
             @constraint m f - t == sum(soses)
         end
         m
@@ -123,12 +134,13 @@ semisimple_dec = let f = robinson_form, G = DihedralGroup(4)
 
     @assert isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-2)
 
-    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time = (stats.time) symmetry_adaptation_time
+    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time =
+        (stats.time) symmetry_adaptation_time
     (
         status = termination_status(m),
         objective = objective_value(m),
         creation_t = stats.time,
-        solve_t = solve_time(m)
+        solve_t = solve_time(m),
     )
 end
 
@@ -138,13 +150,24 @@ end
 include(joinpath(@__DIR__, "util.jl"))
 
 orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
-    basis_monoms = monomials([x,y], 0:DynamicPolynomials.maxdegree(f))
+    basis_monoms = monomials([x, y], 0:DynamicPolynomials.maxdegree(f))
 
-    invariant_vs, symmetry_adaptation_time, = @timed invariant_vectors(G, DihedralAction(), basis_monoms)
-
-    M = let basis_full = StarAlgebras.Basis{UInt32}(basis_monoms), basis_half = monomials([x,y], 0:(DynamicPolynomials.maxdegree(f) ÷ 2))
-        [basis_full[x * y] for x in basis_half, y in basis_half]
+    invariant_vs, symmetry_adaptation_time, = @timed let G = G
+        tblG = SymbolicWedderburn.Characters.CharacterTable(Rational{Int}, G)
+        invariant_vectors(
+            tblG,
+            DihedralAction(),
+            StarAlgebras.Basis{UInt32}(basis_monoms),
+        )
     end
+
+    M =
+        let basis_full = StarAlgebras.Basis{UInt32}(basis_monoms),
+            basis_half =
+                monomials([x, y], 0:(DynamicPolynomials.maxdegree(f)÷2))
+
+            [basis_full[x*y] for x in basis_half, y in basis_half]
+        end
 
     stats = @timed let m = JuMP.Model(OPTIMIZER)
         JuMP.@variable m t
@@ -186,36 +209,38 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
 
     @assert isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-2)
 
-    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time = (stats.time) symmetry_adaptation_time
+    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time =
+        (stats.time) symmetry_adaptation_time
     (
         status = termination_status(m),
         objective = objective_value(m),
         creation_t = stats.time,
-        solve_t = solve_time(m)
+        solve_t = solve_time(m),
     )
 end
 
-
 wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
-
-    basis_half = monomials([x,y], 0:(DynamicPolynomials.maxdegree(f) ÷ 2))
+    basis_half = monomials([x, y], 0:(DynamicPolynomials.maxdegree(f)÷2))
 
     wedderburn, symmetry_adaptation_time, = @timed WedderburnDecomposition(
         T,
         G,
         DihedralAction(),
-        monomials([x,y], 0:DynamicPolynomials.maxdegree(f)),
-        basis_half
+        monomials([x, y], 0:DynamicPolynomials.maxdegree(f)),
+        basis_half,
     )
 
-    M = [SymbolicWedderburn.basis(wedderburn)[x * y] for x in basis_half, y in basis_half]
+    M = [
+        SymbolicWedderburn.basis(wedderburn)[x*y] for x in basis_half,
+        y in basis_half
+    ]
 
     stats = @timed let m = JuMP.Model(OPTIMIZER)
         JuMP.@variable m t
         JuMP.@objective m Max t
         psds = [
-            JuMP.@variable(m, [1:d, 1:d] in PSDCone())
-            for d in size.(direct_summands(wedderburn), 1)
+            JuMP.@variable(m, [1:d, 1:d] in PSDCone()) for
+            d in size.(direct_summands(wedderburn), 1)
         ]
 
         # preallocating
@@ -223,7 +248,10 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
         M_orb = similar(M, T)
         tmps = SymbolicWedderburn._tmps(wedderburn)
 
-        C = DynamicPolynomials.coefficients(f - t, SymbolicWedderburn.basis(wedderburn))
+        C = DynamicPolynomials.coefficients(
+            f - t,
+            SymbolicWedderburn.basis(wedderburn),
+        )
 
         for iv in invariant_vectors(wedderburn)
             c = dot(C, iv)
@@ -259,11 +287,12 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
     @info value(m[:t])
     @assert isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-2)
 
-    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time = (stats.time)
+    @info (m,) termination_status(m) objective_value(m) solve_time(m) creation_time =
+        (stats.time)
     (
         status = termination_status(m),
         objective = objective_value(m),
         creation_t = stats.time,
-        solve_t = solve_time(m)
+        solve_t = solve_time(m),
     )
 end

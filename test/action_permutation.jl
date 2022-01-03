@@ -18,14 +18,14 @@ function SymbolicWedderburn.action(::OnLetters, p::PermutationGroups.AbstractPer
 end
 
 @testset "Extending homomorphism" begin
-    words = let A = [:a, :b, :c]
+    words = let A = [:a, :b, :c], radius = 4
         w = Word(A, [1,2,3,2,1])
 
         # (a·b·c·b·a)^(2,3) == a·c·b·c·a
         @test SymbolicWedderburn.action(OnLetters(), perm"(2,3)", w) == Word(A, [1,3,2,3,1])
 
         words = [Word(A, [1]), Word(A, [2]), Word(A, [3])]
-        for r in 2:4
+        for r in 2:radius
             append!(
                 words,
                 [Word(A, collect(w)) for w in Iterators.product(fill(1:3, r)...)]
@@ -48,6 +48,10 @@ end
     @test dot(SymbolicWedderburn.degree.(irr), multips) == length(basis)
     simple = isone.(SymbolicWedderburn.degree.(irr))
     @test simple == [false, true, true]
+
+    inv_vec = SymbolicWedderburn.invariant_vectors(tbl, action, SymbolicWedderburn.basis(ehom))
+    @test length(inv_vec) == 22
+    @test eltype(inv_vec) == SparseVector{Rational{Int}}
 
     @testset "semisimple decomposition" begin
         let i = 1
@@ -101,17 +105,17 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
 
             µR = AlgebraElement{Rational{Int}}(µ)
             mpr = SymbolicWedderburn.image_basis(ehom, µR)
-            @test mpr isa Matrix{eltype(µR)}
+            @test mpr isa AbstractMatrix{eltype(µR)}
             @test size(mpr, 1) == m
 
             µFl = AlgebraElement{Float64}(µ)
             mpr = SymbolicWedderburn.image_basis(ehom, µFl)
-            @test mpr isa Matrix{eltype(µFl)}
+            @test mpr isa AbstractMatrix{eltype(µFl)}
             @test size(mpr, 1) == m
         end
 
@@ -121,7 +125,7 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
         end
 
@@ -131,7 +135,7 @@ end
 
             µ = AlgebraElement(χ, RG)*a
             mpr = SymbolicWedderburn.image_basis(ehom, µ)
-            @test mpr isa Matrix{eltype(µ)}
+            @test mpr isa AbstractMatrix{eltype(µ)}
             @test size(mpr, 1) == m
         end
 

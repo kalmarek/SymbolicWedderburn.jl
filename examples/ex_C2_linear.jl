@@ -20,7 +20,7 @@ function SymbolicWedderburn.action(::By90Rotation, g::CyclicGroupElement, m::Mon
 end
 
 function SymbolicWedderburn.decompose(k::AbstractPolynomial, hom::SymbolicWedderburn.InducedActionHomomorphism)
-    # correct only if features(hom) == monomials
+    # correct only if basis(hom) == monomials
 
     indcs = [hom[m] for m in monomials(k)]
     coeffs = coefficients(k)

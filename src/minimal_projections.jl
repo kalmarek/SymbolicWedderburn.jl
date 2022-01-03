@@ -83,18 +83,10 @@ function small_idempotents(
     return (algebra_elt_from_support(H, RG) // length(H) for H in subgroups)
 end
 
-@static if VERSION < v"1.3.0"
-    function (χ::Character)(α::AlgebraElement{<:StarAlgebra{<:Group}})
-        @assert parent(χ) === parent(parent(α))
-        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
-        return sum(α(g) * χ(g) for g in supp(α))
-    end
-else
-    function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
-        @assert parent(χ) === parent(parent(α))
-        iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
-        return sum(α(g) * χ(g) for g in supp(α))
-    end
+function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
+    @assert parent(χ) === parent(parent(α))
+    iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
+    return sum(α(g) * χ(g) for g in supp(α))
 end
 
 function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
@@ -121,7 +113,7 @@ function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
     RG::StarAlgebra{<:Group}
 )
-    res = fetch.([@spawn_compat minimal_rank_projection(χ, RG) for χ in chars])
+    res = fetch.([Threads.@spawn minimal_rank_projection(χ, RG) for χ in chars])
 
     r1p, simple = first.(res), last.(res) # rp1 are sparse storage
 

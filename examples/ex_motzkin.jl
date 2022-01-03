@@ -12,7 +12,7 @@ include(joinpath(@__DIR__, "action_polynomials.jl"))
 OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 0,
-    "max_iters" => 10_000,
+    "max_iters" => 20_000,
     "eps" => 2e-6,
     "linear_solver" => SCS.DirectSolver,
 )
