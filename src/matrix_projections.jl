@@ -1,8 +1,11 @@
 ## preallocation
 
-function _preallocate_spmatrix(::Type{T}, sizes, sizehint) where {T}
-    res = spzeros(T, sizes)
-    sizehint!(res, first(sizes) * sizehint)
+function _preallocate_spmatrix(::Type{T}, sizes::Tuple, sizehint) where {T}
+    res = spzeros(T, sizes...)
+    @static if VERSION >= v"1.7"
+        sizehint!(res, first(sizes) * sizehint)
+    end
+
     return res
 end
 
