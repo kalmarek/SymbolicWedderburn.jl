@@ -390,10 +390,3 @@ function image_basis!(A::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Comple
     return fact.Vt, 1:length(p)
 end
 
-import Arpack
-
-function image_basis!(A::SparseMatrixCSC{T}) where {T<:AbstractFloat}
-    A, p = row_echelon_form!(A)
-    fact, _ = Arpack.svds(A, nsv = length(p))
-    return fact.Vt, 1:length(p)
-end
