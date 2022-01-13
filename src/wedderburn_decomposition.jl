@@ -72,10 +72,9 @@ function diagonalize(
     M::AbstractMatrix,
     wbdec::WedderburnDecomposition,
     tmps = _tmps(wbdec),
-)
+)# or AbstractMatrix{T} where T
     # return [degree(Uπ).*(Uπ*(M*Uπ')) for Uπ in summands(wbdec)]
-
-    T = eltype(eltype(direct_summands(wbdec)))
+    T = promote_type(eltype(M),eltype(eltype(direct_summands(wbdec))))
     Mπs = [(d = size(Uπ, 1); zeros(T, d, d)) for Uπ in direct_summands(wbdec)]
     return diagonalize!(Mπs, M, direct_summands(wbdec), tmps)
 end
@@ -149,6 +148,48 @@ function invariant_vectors(
                 invariant_vs,
                 sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
             )
+        end
+    end
+    return invariant_vs
+end
+
+"""
+Compute a basis of invariant vectors for signed permutation actions.
+"""
+function invariant_vectors(
+    tbl::Characters.CharacterTable,
+    act::BySignedPermutations,
+    basis::StarAlgebras.Basis{T,I},
+) where {T, I}
+
+    G = parent(tbl)
+    ordG = order(Int, G)
+    elts = collect(G)
+    orbit = zeros(I, ordG)
+    CT = promote_type(coeff_type(act), Rational{Int}) # output coeff type
+    coeffs = Vector{CT}(undef, ordG)
+    tovisit = trues(length(basis))
+    invariant_vs = Vector{SparseVector{CT, Int}}()
+
+    sizehint!(invariant_vs, length(basis)÷ordG)
+
+    for (i, b) in enumerate(basis)
+        if tovisit[i]
+            Threads.@threads for j in eachindex(elts)
+                g = elts[j]
+                gb, c = SymbolicWedderburn.action(act, g, b)
+                orbit[j] = basis[gb]
+                coeffs[j] = c
+            end
+            @view(tovisit[orbit]) .= false
+            v = sparsevec(orbit, 1//ordG.*coeffs, length(basis))
+            if (VT = eltype(v)) <: Union{AbstractFloat, Complex}
+                # fix error in earlier version
+                droptol!(v, eps(real(eltype(v)))*length(v)) # Marek, check this!
+            end
+            if !iszero(v)
+                push!(invariant_vs, v)
+            end
         end
     end
     return invariant_vs

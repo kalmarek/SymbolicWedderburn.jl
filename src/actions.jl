@@ -1,8 +1,22 @@
 abstract type Action end
 abstract type ByPermutations <: Action end
 abstract type ByLinearTransformation <: Action end
-
+abstract type BySignedPermutations <: ByLinearTransformation end
+abstract type BySigns <: ByLinearTransformation end
 abstract type InducedActionHomomorphism{A,T} end
+
+"""
+    BySignedPermutations
+
+Instances of `BySignedPermutations` must satisfy
+```
+action(act::BySignedPermutations, g, b) == (gb, s)
+```
+whenever the action maps `(g, b)` to  `s*gb`. Note: `s` must be a sign (this limitation is a design choice).
+
+For problems over the complex field, `s` is necessarily a root of unity. You need to define your own abstract type.
+"""
+
 #=
 implements:
 * basis(action_hom)
@@ -56,7 +70,8 @@ _int_type(::Type{<:InducedActionHomomorphism}) = UInt16
 _int_type(hom::InducedActionHomomorphism) = _int_type(typeof(hom))
 
 """
-Compute the (sparse) matrix corresponding to g acting by linear transformation.
+Compute the matrix corresponding to g acting by linear transformation.
+Note: the return matrix is of type SparseMatrixCSC but may in fact be dense.
 """
 function induce(
     ac::ByLinearTransformation,
@@ -135,11 +150,15 @@ function CachedExtensionHomomorphism(
     S = typeof(induce(hom, one(G)))
     chom = CachedExtensionHomomorphism{eltype(G),S}(hom)
     if precompute
-        # to make sure that the future access to chom is read-only, i.e. thread-safe
-        # one may choose to precompute the images
-        for g in G
-            induce(chom, g)
-        end
+        lck = Threads.SpinLock()
+        tasks = [
+        Threads.@spawn begin
+            val = SymbolicWedderburn.induce(action, chom.ehom, g)
+            lock(lck) do
+                chom.cache[g] = val
+            end
+        end for g in G]
+        foreach(wait, tasks)
     end
     return chom
 end
@@ -162,3 +181,53 @@ induce(
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
 ) = _induce(ac, hom, g)
+
+
+"""
+Compute the vector g⋅v which is the result of acting g on v by signed permutation.
+"""
+function action(
+    hom::InducedActionHomomorphism{<:BySignedPermutations},
+    g::GroupElement,# TODO: narrow to signed permutation group element
+    v::AbstractVector,
+)
+    return action(ByPermutations(), g, v), action(BySigns(), g, v)
+end
+
+# TODO: define action BySigns, which requires API for signed permutation group
+
+
+"""
+Compute the sparse matrix representing the action of g by signed permutation.
+"""
+function induce(
+    ac::BySignedPermutations,
+    hom::InducedActionHomomorphism,
+    g::GroupElement, # need to be signed permutation group element
+)
+    bs = basis(hom)
+    n = length(bs)
+
+    I = Int[]
+    J = Int[]
+    V = coeff_type(ac)[]
+
+    for (i, f) in enumerate(bs)
+        k, s = action(action(hom), g, f) # k::MonoidElement
+        push!(I, i)
+        push!(J, bs[k]) # refactor into decompose(::MonoidElement, hom)?
+        push!(V, s)
+    end
+    return sparse(I, J, V)
+end
+
+# disambiguation:
+induce(
+    ac::BySignedPermutations,
+    hom::CachedExtensionHomomorphism,
+    g::GroupElement,
+) = _induce(ac, hom, g)
+
+coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
+
+coeff_type(::BySigns) = Int
