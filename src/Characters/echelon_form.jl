@@ -13,7 +13,7 @@ end
 Base.@propagate_inbounds function _mul_row!(
     A::AbstractMatrix,
     val,
-    row_idx,
+    row_idx;
     starting_at = 1,
 )
     @boundscheck @assert 1 ≤ starting_at ≤ size(A, 2)
@@ -28,7 +28,7 @@ end
 
 Base.@propagate_inbounds function _find_pivot(
     A::AbstractMatrix,
-    col_idx,
+    col_idx;
     starting_at = 1,
 )
     k = findnext(!iszero, @view(A[:, col_idx]), starting_at)
@@ -39,7 +39,7 @@ end
 Base.@propagate_inbounds function _reduce_column_by_pivot!(
     A::AbstractMatrix,
     row_idx,
-    col_idx,
+    col_idx;
     starting_at = 1,
 )
     @boundscheck checkbounds(A, row_idx, col_idx)
@@ -84,8 +84,8 @@ end
 
 Base.@propagate_inbounds function _find_pivot(
     A::AbstractMatrix{T},
-    col_idx,
-    starting_at = 1;
+    col_idx;
+    starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
 ) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
     isempty(starting_at:size(A, 1)) && return false, starting_at
@@ -103,7 +103,7 @@ end
 Base.@propagate_inbounds function _reduce_column_by_pivot!(
     A::AbstractMatrix{T},
     row_idx,
-    col_idx,
+    col_idx;
     starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
 ) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
@@ -129,7 +129,7 @@ Base.@propagate_inbounds function row_echelon_form!(A::AbstractMatrix)
     pivots = Int[]
     row_idx = 0 # also: current_rank
     @inbounds for col_idx in 1:size(A, 2)
-        found, j = _find_pivot(A, col_idx, row_idx + 1)
+        found, j = _find_pivot(A, col_idx, starting_at = row_idx + 1)
         found || continue
         row_idx += 1
         push!(pivots, col_idx)
@@ -141,12 +141,12 @@ Base.@propagate_inbounds function row_echelon_form!(A::AbstractMatrix)
         w = inv(A[row_idx, col_idx])
 
         # multiply A[row_idx, :] by w
-        _mul_row!(A, w, row_idx, col_idx)
+        _mul_row!(A, w, row_idx, starting_at = col_idx)
         # A[current_rank, col_idx] is 1 now
 
         # zero the whole col_idx-th column above and below pivot:
         # to the left of col_idx everything is zero
-        _reduce_column_by_pivot!(A, row_idx, col_idx, col_idx)
+        _reduce_column_by_pivot!(A, row_idx, col_idx, starting_at = col_idx)
     end
     return A, pivots
 end
