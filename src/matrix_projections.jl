@@ -398,23 +398,23 @@ function image_basis!(A::AbstractSparseMatrix)
     return A, p
 end
 
-function _orth!(M::AbstractMatrix{T}) where T<:Union{AbstractFloat, Complex}
+_eps(::Type{T}) where {T} = T <: Complex ? 2eps(real(T)) : eps(T)
+
+function _orth!(M::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
     F = svd!(convert(Matrix{T}, M))
-    M_rank = let m = T <: Complex ? 2eps(real(T)) : eps(T)
-        sum(F.S .> maximum(size(M)) * m)
-    end
+    M_rank = count(>(maximum(size(M)) * _eps(T)), F.S)
     return F.Vt, M_rank
 end
 
-function _orth!(M::AbstractSparseMatrix{T}) where T<:Union{AbstractFloat, Complex}
+function _orth!(
+    M::AbstractSparseMatrix{T},
+) where {T<:Union{AbstractFloat,Complex}}
     F = qr(M)
-    M_rank= rank(F)
+    M_rank = rank(F)
     result = let tmp = F.Q * Matrix(I, size(F.Q, 2), M_rank)
         sparse(tmp[invperm(F.prow), :]')
     end
-    result = let m = T <: Complex ? 2eps(real(T)) : eps(T)
-        droptol!(result, maximum(size(result)) * m)
-    end
+    result = droptol!(result, maximum(size(result)) * _eps(T))
     return result, M_rank
 end
 
@@ -430,7 +430,8 @@ end
 function image_basis!(
     A::AbstractSparseMatrix{T},
 ) where {T<:Union{AbstractFloat,Complex}}
-    droptol!(A, eps(real(eltype(A))) * size(A, 1))
+    N = LinearAlgebra.checksquare(A)
+    droptol!(A, N * _eps(T))
     # A, p = row_echelon_form!(A)
     A_orth, A_rank = _orth!(A)
     # @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
