@@ -75,6 +75,7 @@ Base.@propagate_inbounds function _find_pivot(
 
     mval, midx = findmax(abs, @view A[starting_at:end, col_idx])
     if mval < atol # the largest entry is below threshold so we zero everything in the column
+        @view(A[starting_at:end, col_idx]) .= zero(T)
         return false, starting_at
     end
     return true, oftype(starting_at, starting_at + midx - 1)
@@ -106,9 +107,8 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
             @inbounds A[ridx, col_idx] = zero(T)
             continue
         end
-        for cidx in starting_at:size(A, 2)
-            @inbounds A[ridx, cidx] -=
-                cidx == col_idx ? A[ridx, cidx] : v * A[row_idx, cidx]
+        @inbounds for cidx in starting_at:size(A, 2)
+            A[ridx, cidx] -= v * A[row_idx, cidx]
         end
     end
     return A
@@ -121,21 +121,22 @@ Base.@propagate_inbounds function row_echelon_form!(A::AbstractMatrix)
         found, j = _find_pivot(A, col_idx, starting_at = row_idx + 1)
         found || continue
         row_idx += 1
+        # @info col_idx
         push!(pivots, col_idx)
 
         # swap the rows so that  A[row_idx, :] is the row with leading nz in
         # i-th column
-        _swap_rows!(A, row_idx, j)
+        A = _swap_rows!(A, row_idx, j)
 
         w = inv(A[row_idx, col_idx])
 
         # multiply A[row_idx, :] by w
-        _mul_row!(A, w, row_idx, starting_at = col_idx)
+        A = _mul_row!(A, w, row_idx, starting_at = col_idx)
         # A[current_rank, col_idx] is 1 now
 
         # zero the whole col_idx-th column above and below pivot:
         # to the left of col_idx everything is zero
-        _reduce_column_by_pivot!(A, row_idx, col_idx, starting_at = col_idx)
+        A = _reduce_column_by_pivot!(A, row_idx, col_idx, starting_at = col_idx)
         A = _finalize_pivot_reduce!(A, col_idx)
     end
     return A, pivots
