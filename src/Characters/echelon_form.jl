@@ -81,13 +81,14 @@ Base.@propagate_inbounds function __findmax(
 
     return midx, mval
 end
+const FloatOrComplex = Union{AbstractFloat,Complex{<:AbstractFloat}}
 
 Base.@propagate_inbounds function _find_pivot(
     A::AbstractMatrix{T},
     col_idx;
     starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+) where {T<:FloatOrComplex}
     isempty(starting_at:size(A, 1)) && return false, starting_at
     @boundscheck @assert 1 ≤ starting_at
     # find the largest entry in the column below the last pivot
@@ -106,7 +107,7 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     col_idx;
     starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+) where {T<:FloatOrComplex}
     @boundscheck checkbounds(A, row_idx, col_idx)
     @boundscheck 1 ≤ starting_at ≤ size(A, 2)
 
