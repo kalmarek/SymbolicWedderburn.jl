@@ -137,8 +137,15 @@ function CachedExtensionHomomorphism(
     if precompute
         # to make sure that the future access to chom is read-only, i.e. thread-safe
         # one may choose to precompute the images
-        for g in G
-            induce(chom, g)
+
+        lck = Threads.SpinLock()
+        @sync for g in G
+            Threads.@spawn begin
+                val = induce(action, chom.ehom, g)
+                lock(lck) do
+                    chom.cache[g] = val
+                end
+            end
         end
     end
     return chom
