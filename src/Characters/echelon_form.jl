@@ -56,31 +56,9 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     return A
 end
 
+
 # version over AbstractFloat
 
-Base.@propagate_inbounds function __findmax(
-    f,
-    A::AbstractArray{T};
-    atol=eps(real(eltype(A)))*max(size(A)...)
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
-    @assert !isempty(A)
-
-    midx = first(eachindex(A))
-    mval = f(A[midx])
-
-    @inbounds for idx in eachindex(A)
-        iszero(A[idx]) && continue
-        v = f(A[idx])
-        if v > mval
-            midx, mval = idx, v
-        end
-        if v < atol
-            A[idx] = zero(T)
-        end
-    end
-
-    return midx, mval
-end
 const FloatOrComplex = Union{AbstractFloat,Complex{<:AbstractFloat}}
 
 Base.@propagate_inbounds function _find_pivot(
@@ -94,7 +72,7 @@ Base.@propagate_inbounds function _find_pivot(
     # find the largest entry in the column below the last pivot
     @boundscheck @assert 1 ≤ col_idx ≤ size(A, 2)
 
-    midx, mval = __findmax(abs, @view(A[starting_at:end, col_idx]), atol=atol)
+    mval, midx = findmax(abs, @view A[starting_at:end, col_idx])
     if mval < atol # the largest entry is below threshold so we zero everything in the column
         return false, starting_at
     end
