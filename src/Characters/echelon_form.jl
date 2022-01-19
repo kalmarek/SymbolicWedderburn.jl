@@ -13,7 +13,7 @@ end
 Base.@propagate_inbounds function _mul_row!(
     A::AbstractMatrix,
     val,
-    row_idx,
+    row_idx;
     starting_at = 1,
 )
     @boundscheck @assert 1 ≤ starting_at ≤ size(A, 2)
@@ -28,7 +28,7 @@ end
 
 Base.@propagate_inbounds function _find_pivot(
     A::AbstractMatrix,
-    col_idx,
+    col_idx;
     starting_at = 1,
 )
     k = findnext(!iszero, @view(A[:, col_idx]), starting_at)
@@ -39,7 +39,7 @@ end
 Base.@propagate_inbounds function _reduce_column_by_pivot!(
     A::AbstractMatrix,
     row_idx,
-    col_idx,
+    col_idx;
     starting_at = 1,
 )
     @boundscheck checkbounds(A, row_idx, col_idx)
@@ -56,57 +56,47 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     return A
 end
 
+_finalize_pivot_reduce!(A::AbstractMatrix, pivot) = A
+
 # version over AbstractFloat
 
-Base.@propagate_inbounds function __findmax(
-    f,
-    A::AbstractArray{T};
-    atol=eps(real(eltype(A)))*max(size(A)...)
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
-    @assert !isempty(A)
-
-    midx = first(eachindex(A))
-    mval = f(A[midx])
-
-    @inbounds for idx in eachindex(A)
-        iszero(A[idx]) && continue
-        v = f(A[idx])
-        if v > mval
-            midx, mval = idx, v
-        end
-        if v < atol
-            A[idx] = zero(T)
-        end
-    end
-
-    return midx, mval
-end
+const FloatOrComplex = Union{AbstractFloat,Complex{<:AbstractFloat}}
 
 Base.@propagate_inbounds function _find_pivot(
     A::AbstractMatrix{T},
-    col_idx,
-    starting_at = 1;
+    col_idx;
+    starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+) where {T<:FloatOrComplex}
     isempty(starting_at:size(A, 1)) && return false, starting_at
     @boundscheck @assert 1 ≤ starting_at
     # find the largest entry in the column below the last pivot
     @boundscheck @assert 1 ≤ col_idx ≤ size(A, 2)
 
-    midx, mval = __findmax(abs, @view(A[starting_at:end, col_idx]), atol=atol)
+    mval, midx = findmax(abs, @view A[starting_at:end, col_idx])
     if mval < atol # the largest entry is below threshold so we zero everything in the column
+        @view(A[starting_at:end, col_idx]) .= zero(T)
         return false, starting_at
     end
     return true, oftype(starting_at, starting_at + midx - 1)
 end
 
+function _finalize_pivot_reduce!(
+    A::AbstractSparseMatrix{T},
+    pivot,
+) where {T<:FloatOrComplex}
+    m = T <: Complex ? 2abs(eps(T)) : eps(T)
+    droptol!(A, max(size(A)...) * m)
+    return A
+end
+
 Base.@propagate_inbounds function _reduce_column_by_pivot!(
     A::AbstractMatrix{T},
     row_idx,
-    col_idx,
+    col_idx;
     starting_at = 1,
     atol = eps(real(eltype(A))) * size(A, 1),
-) where {T<:Union{AbstractFloat,Complex{<:AbstractFloat}}}
+) where {T<:FloatOrComplex}
     @boundscheck checkbounds(A, row_idx, col_idx)
     @boundscheck 1 ≤ starting_at ≤ size(A, 2)
 
@@ -117,9 +107,8 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
             @inbounds A[ridx, col_idx] = zero(T)
             continue
         end
-        for cidx in starting_at:size(A, 2)
-            @inbounds A[ridx, cidx] -=
-                cidx == col_idx ? A[ridx, cidx] : v * A[row_idx, cidx]
+        @inbounds for cidx in starting_at:size(A, 2)
+            A[ridx, cidx] -= v * A[row_idx, cidx]
         end
     end
     return A
@@ -129,24 +118,26 @@ Base.@propagate_inbounds function row_echelon_form!(A::AbstractMatrix)
     pivots = Int[]
     row_idx = 0 # also: current_rank
     @inbounds for col_idx in 1:size(A, 2)
-        found, j = _find_pivot(A, col_idx, row_idx + 1)
+        found, j = _find_pivot(A, col_idx, starting_at = row_idx + 1)
         found || continue
         row_idx += 1
+        # @info col_idx
         push!(pivots, col_idx)
 
         # swap the rows so that  A[row_idx, :] is the row with leading nz in
         # i-th column
-        _swap_rows!(A, row_idx, j)
+        A = _swap_rows!(A, row_idx, j)
 
         w = inv(A[row_idx, col_idx])
 
         # multiply A[row_idx, :] by w
-        _mul_row!(A, w, row_idx, col_idx)
+        A = _mul_row!(A, w, row_idx, starting_at = col_idx)
         # A[current_rank, col_idx] is 1 now
 
         # zero the whole col_idx-th column above and below pivot:
         # to the left of col_idx everything is zero
-        _reduce_column_by_pivot!(A, row_idx, col_idx, col_idx)
+        A = _reduce_column_by_pivot!(A, row_idx, col_idx, starting_at = col_idx)
+        A = _finalize_pivot_reduce!(A, col_idx)
     end
     return A, pivots
 end

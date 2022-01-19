@@ -15,7 +15,7 @@ const OPTIMIZER = optimizer_with_attributes(
     SCS.Optimizer,
     "acceleration_lookback" => 10,
     "max_iters" => 3_000,
-    "alpha" => 1.2,
+    "alpha" => 1.0,
     "eps" => 1e-6,
     "linear_solver" => SCS.DirectSolver,
 )
