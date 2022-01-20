@@ -76,6 +76,14 @@ function invariant_vectors(
     ordG = length(elts)
     orbit = zeros(I, ordG)
 
+    val = convert(S, 1 // ordG)
+    # we can pre-allocate vals since sparsevec doesn't alter or alias its args
+    vals = if isbitstype(S)
+        fill(val, ordG)
+    else
+        [deepcopy(val) for _ in 1:ordG]
+    end
+
     for i in eachindex(basis)
         if tovisit[i]
             bi = basis[i]
@@ -85,7 +93,7 @@ function invariant_vectors(
             tovisit[orbit] .= false
             push!(
                 invariant_vs,
-                sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
+                sparsevec(orbit, vals, length(basis)),
             )
         end
     end
