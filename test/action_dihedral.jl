@@ -74,7 +74,7 @@ end
 
         C = DynamicPolynomials.coefficients(robinson_form - t, basis(wedderburn))
 
-        for iv in invariant_vectors(wedderburn)
+        for iv in eachrow(invariant_vectors(wedderburn))
             c = dot(C, iv)
             M_orb = invariant_constraint!(M_orb, M, iv)
             # Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)

@@ -155,6 +155,7 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
     invariant_vs, symmetry_adaptation_time, = @timed let G = G
         tblG = SymbolicWedderburn.Characters.CharacterTable(Rational{Int}, G)
         invariant_vectors(
+            T,
             tblG,
             DihedralAction(),
             StarAlgebras.Basis{UInt32}(basis_monoms),
@@ -179,7 +180,7 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
 
         C = DynamicPolynomials.coefficients(f - t, basis_monoms)
 
-        for iv in invariant_vs
+        for iv in eachrow(invariant_vs)
             c = dot(C, iv)
 
             # invariant_constraint! is defined locally in util.jl
@@ -253,7 +254,7 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
             SymbolicWedderburn.basis(wedderburn),
         )
 
-        for iv in invariant_vectors(wedderburn)
+        for iv in eachrow(invariant_vectors(wedderburn))
             c = dot(C, iv)
 
             # invariant_constraint! is defined locally in util.jl

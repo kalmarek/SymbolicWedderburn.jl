@@ -30,6 +30,7 @@ include("matrix_projections.jl")
 include("minimal_projections.jl")
 include("direct_summands.jl")
 include("sa_basis.jl")
+include("invariant_vecs.jl")
 include("wedderburn_decomposition.jl")
 
 end # module

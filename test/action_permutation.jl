@@ -49,9 +49,10 @@ end
     simple = isone.(SymbolicWedderburn.degree.(irr))
     @test simple == [false, true, true]
 
-    inv_vec = SymbolicWedderburn.invariant_vectors(tbl, action, SymbolicWedderburn.basis(ehom))
-    @test length(inv_vec) == 22
-    @test eltype(inv_vec) == SparseVector{Rational{Int}}
+    inv_vec = SymbolicWedderburn.invariant_vectors(Rational{Int}, tbl, action, SymbolicWedderburn.basis(ehom))
+    @test size(inv_vec, 1) == 22
+    @test eltype(inv_vec) == Rational{Int}
+    @test eltype(inv_vec.rows) == SparseVector{Rational{Int}}
 
     @testset "semisimple decomposition" begin
         let i = 1
