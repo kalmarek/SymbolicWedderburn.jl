@@ -1,7 +1,7 @@
 using SparseArrays
 
 function invariant_constraint!(
-    M_orb::AbstractMatrix{<:AbstractFloat},
+    M_orb::AbstractMatrix,
     M::Matrix{<:Integer},
     invariant_vec::SparseVector,
 )
@@ -14,3 +14,14 @@ function invariant_constraint!(
     return M_orb
 end
 
+function invariant_constraint!(
+    M_orb::AbstractMatrix,
+    M::Matrix,
+    invariant_vec::AbstractVector,
+)
+    M_orb .= zero(eltype(M_orb))
+    for i in eachindex(M)
+        M_orb[i] += invariant_vec[M[i]]
+    end
+    return M_orb
+end

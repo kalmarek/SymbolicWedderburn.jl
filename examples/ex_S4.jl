@@ -123,7 +123,7 @@ wedderburn_dec = let f=f, G = PermGroup([perm"(1,2)", Perm([2:N; 1])]), T = Floa
 
             C = DynamicPolynomials.coefficients(f-t, SymbolicWedderburn.basis(wedderburn))
 
-            for iv in eachrow(invariant_vectors(wedderburn))
+            for iv in invariant_vectors(wedderburn)
                 c = dot(C, iv)
                 # C needs to be invariant under G,
                 # which is eqivalent to being constant on the orbits

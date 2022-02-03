@@ -180,7 +180,7 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
 
         C = DynamicPolynomials.coefficients(f - t, basis_monoms)
 
-        for iv in eachrow(invariant_vs)
+        for iv in invariant_vs
             c = dot(C, iv)
 
             # invariant_constraint! is defined locally in util.jl
