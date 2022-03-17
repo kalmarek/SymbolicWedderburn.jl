@@ -26,7 +26,6 @@ where `v = a₁e₁ + ⋯ + aₙeₙ`. Additionally [`decompose`](@ref) must be
 implemented to return a (possibly sparse) decomposition of `v` in `B`.
 """
 abstract type ByLinearTransformation <: Action end
-abstract type InducedActionHomomorphism{A,T} end
 
 """
     BySignedPermutations
@@ -46,6 +45,8 @@ action(act::BySignedPermutations, g, eₖ) == (eₗ, u)
 """
 abstract type BySignedPermutations <: ByLinearTransformation end
 
+abstract type InducedActionHomomorphism{A,T} end
+
 #=
 implements:
 * basis(action_hom)
@@ -54,7 +55,11 @@ implements:
 =#
 
 """
-Compute the vector g⋅v which is the result of acting g on v by permutation.
+    action(hom::InducedActionHomomorphism, g::GroupElement, x)
+Return the result of `g` acting on `x` through action homomorphism `hom`.
+
+This can be understood as first evaluating the homomorphism: `h = hom(g)` and
+then computing `x^h`, the action of the result on `x`.
 """
 function action(
     hom::InducedActionHomomorphism{<:ByPermutations},
@@ -64,9 +69,6 @@ function action(
     return v^induce(hom, g)
 end
 
-"""
-Compute the vector g⋅v which is the result of acting g on v by linear transformation.
-"""
 function action(
     hom::InducedActionHomomorphism{<:ByLinearTransformation},
     g::GroupElement,
@@ -77,18 +79,40 @@ end
 
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     return throw(
-        "No fallback is provided for $(typeof(ac)). You need to implement `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.",
+        "No fallback is provided for $(typeof(ac)).
+        You need to implement
+        `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.",
     )
 end
 
 induce(hom::InducedActionHomomorphism, g::GroupElement) =
     induce(action(hom), hom, g)
 
+"""
+    decompose(v, hom::InducedActionHomomorphism)
+Decompose element `v` in the (implicit) basis provided by `hom`.
+
+Let `B = basis(hom)::StarAlgebras.AbstractBasis`. Then `v` should be decomposed
+as a unique linear combination `v = a₁b₁ + ⋯ aₙbₙ` and the indices of `bᵢ`s in `B`
+and a vector of coefficients `A` returned, so that
+
+```
+@assert sparsevec(decompose(v, hom)...) == v
+```
+
+!!! note
+    For performance reasons it is best to drop zeros in `A`, i.e. return a
+    sparse representation.
+
+See also [`ByLinearTransformation`](@ref).
+"""
 decompose(x::Any, hom::InducedActionHomomorphism) = throw(
-    "No fallback is provided for $(typeof(x)). You need to implement `decompose(::$(typeof(x)), ::$(typeof(hom)))`.",
+    "No fallback is provided for $(typeof(x)). You need to implement
+    `decompose(::$(typeof(x)), ::$(typeof(hom)))`.",
 )
 coeff_type(ac::ByLinearTransformation) = throw(
-    "No fallback is provided for $(typeof(ac)). You need to implement `_coeff_type(::$(typeof(ac)))`.",
+    "No fallback is provided for $(typeof(ac)). You need to implement
+    `coeff_type(::$(typeof(ac)))`.",
 )
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
 coeff_type(::ByPermutations) = Int
@@ -98,10 +122,6 @@ coeff_type(::ByPermutations) = Int
 _int_type(::Type{<:InducedActionHomomorphism}) = UInt16
 _int_type(hom::InducedActionHomomorphism) = _int_type(typeof(hom))
 
-"""
-Compute the matrix corresponding to g acting by linear transformation.
-Note: the return matrix is of type SparseMatrixCSC but may in fact be dense.
-"""
 function induce(
     ac::ByLinearTransformation,
     hom::InducedActionHomomorphism,
@@ -134,7 +154,6 @@ struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
     basis::B
 end
 
-# see the comment about UInt16 above
 ExtensionHomomorphism(action::Action, basis) =
     ExtensionHomomorphism(_int_type(ExtensionHomomorphism), action, basis)
 
@@ -211,10 +230,7 @@ induce(
     g::GroupElement,
 ) = _induce(ac, hom, g)
 
-"""
-Compute the sparse matrix representing the action of g by signed permutation.
-"""
-function induce(
+function _induce(
     ac::BySignedPermutations,
     hom::InducedActionHomomorphism,
     g::GroupElement, # need to be signed permutation group element
