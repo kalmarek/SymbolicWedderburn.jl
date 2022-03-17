@@ -1,20 +1,50 @@
 abstract type Action end
+
+"""
+    ByPermutations <: Action
+A type of action where a group acts through permutations on a set.
+
+It means that for every group element `g ∈ G` and every `s ∈ S`
+```
+action(act::ByPermutations, g, s) = s′
+```
+where `s′ ∈ S` is a (potentially different) element of `S`. By fixing an order
+of elements in `S` one can then represent `g` as a permutation of degree `|S|`.
+"""
 abstract type ByPermutations <: Action end
+
+"""
+    ByLinearTransformation <: Action
+A type of action where a group acts through linear transformations on an
+(implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, … eₙ)`.
+
+That means that for every group element `g ∈ G` and every `eₖ ∈ B`
+```
+action(act::ByPermutations, g, eₖ) = v
+```
+where `v = a₁e₁ + ⋯ + aₙeₙ`. Additionally [`decompose`](@ref) must be
+implemented to return a (possibly sparse) decomposition of `v` in `B`.
+"""
 abstract type ByLinearTransformation <: Action end
-abstract type BySignedPermutations <: ByLinearTransformation end
 abstract type InducedActionHomomorphism{A,T} end
 
 """
     BySignedPermutations
+A type of action where a group acts through permutations _with sign_ on an
+(implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, …, eₙ)`.
 
-Instances of `BySignedPermutations` must satisfy
+It means that for every group element `g ∈ G` and every `eₖ ∈ B` the result of
+action of `g` on `eₖ` is `u·eₗ` for some `1≤l≤n`, where `u` is a root of unity
+(i.e. `±1` in the real case). To accomplish this it is required that
 ```
-action(act::BySignedPermutations, g, b) == (gb, s)
+action(act::BySignedPermutations, g, eₖ) == (eₗ, u)
 ```
-whenever the action maps `(g, b)` to  `s*gb`. Note: `s` must be a sign (this limitation is a design choice).
 
-For problems over the complex field, `s` is necessarily a root of unity. You need to define your own abstract type.
+!!! warning
+    Only support for the real case (i.e. `u = ±1`) is implemented at the moment.
+
 """
+abstract type BySignedPermutations <: ByLinearTransformation end
 
 #=
 implements:
