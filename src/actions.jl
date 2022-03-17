@@ -2,7 +2,6 @@ abstract type Action end
 abstract type ByPermutations <: Action end
 abstract type ByLinearTransformation <: Action end
 abstract type BySignedPermutations <: ByLinearTransformation end
-abstract type BySigns <: ByLinearTransformation end
 abstract type InducedActionHomomorphism{A,T} end
 
 """
@@ -182,21 +181,6 @@ induce(
     g::GroupElement,
 ) = _induce(ac, hom, g)
 
-
-"""
-Compute the vector g⋅v which is the result of acting g on v by signed permutation.
-"""
-function action(
-    hom::InducedActionHomomorphism{<:BySignedPermutations},
-    g::GroupElement,# TODO: narrow to signed permutation group element
-    v::AbstractVector,
-)
-    return action(ByPermutations(), g, v), action(BySigns(), g, v)
-end
-
-# TODO: define action BySigns, which requires API for signed permutation group
-
-
 """
 Compute the sparse matrix representing the action of g by signed permutation.
 """
@@ -229,5 +213,3 @@ induce(
 ) = _induce(ac, hom, g)
 
 coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
-
-coeff_type(::BySigns) = Int
