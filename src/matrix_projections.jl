@@ -110,7 +110,6 @@ end
 
 _mproj_fitsT!(args...) = _mproj_outsT!(args...)
 
-
 function _mproj_outsT!(mproj::AbstractMatrix{T}, χ::Character) where {T}
     mproj .= sum(
         c .* matrix_projection_irr(Character(table(χ), i)) for
@@ -337,8 +336,11 @@ For characters or algebra elements return a basis of the row-space of
 `matrix_projection([hom, ]χ)` or `matrix_representation([hom, ]α)`.
 
 Two methods are employed to achieve the goal.
-* By default (symbolic, exact) row echelon form is produced, and therefore there is no guarantee on the orthogonality of the returned basis vectors (rows).
-* If `eltype(A) <: AbstractFloat` this is followed by a call to `svd` and the appropriate rows of its `Vt` are returned, thus the basis is (numerically) orthonormal.
+* By default (symbolic, exact) row echelon form is produced, and therefore there
+is no guarantee on the orthogonality of the returned basis vectors (rows).
+* If `eltype(A) <: AbstractFloat` this is followed by a call to `svd` (or
+`qr` in the sparse case) and the appropriate rows of its orthogonal factor are
+returned, thus the basis is (numerically) orthonormal.
 
 # Examples:
 ```julia
@@ -396,12 +398,42 @@ function image_basis!(A::AbstractSparseMatrix)
     return A, p
 end
 
-function image_basis!(A::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
-    A, p = row_echelon_form!(A)
-    fact = svd!(convert(Matrix{T}, @view(A[1:length(p), :])))
-    m = T <: Complex ? 2eps(real(T)) : eps(T)
-    A_rank = sum(fact.S .> maximum(size(A)) * m)
-    @assert A_rank == length(p)
-    return fact.Vt, 1:length(p)
+_eps(::Type{T}) where {T} = T <: Complex ? 2eps(real(T)) : eps(T)
+
+function _orth!(M::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
+    F = svd!(convert(Matrix{T}, M))
+    M_rank = count(>(maximum(size(M)) * _eps(T)), F.S)
+    return F.Vt, M_rank
 end
 
+function _orth!(
+    M::AbstractSparseMatrix{T},
+) where {T<:Union{AbstractFloat,Complex}}
+    F = qr(M)
+    M_rank = rank(F)
+    result = let tmp = F.Q * Matrix(I, size(F.Q, 2), M_rank)
+        sparse(tmp[invperm(F.prow), :]')
+    end
+    result = droptol!(result, maximum(size(result)) * _eps(T))
+    return result, M_rank
+end
+
+function image_basis!(
+    A::AbstractMatrix{T},
+) where {T<:Union{AbstractFloat,Complex}}
+    A, p = row_echelon_form!(A)
+    A_orth, A_rank = _orth!(@view A[1:length(p), :])
+    @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
+    return A_orth, 1:A_rank
+end
+
+function image_basis!(
+    A::AbstractSparseMatrix{T},
+) where {T<:Union{AbstractFloat,Complex}}
+    N = LinearAlgebra.checksquare(A)
+    droptol!(A, N * _eps(T))
+    # A, p = row_echelon_form!(A)
+    A_orth, A_rank = _orth!(A)
+    # @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
+    return A_orth, 1:A_rank
+end

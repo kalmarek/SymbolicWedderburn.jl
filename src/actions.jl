@@ -82,6 +82,7 @@ function induce(
     return sparse(I, J, V)
 end
 
+# disabmiguation:
 induce(
     ac::ByLinearTransformation,
     hom::CachedExtensionHomomorphism,
@@ -151,6 +152,7 @@ function induce(
     return sparse(I, J, V)
 end
 
+# disabmiguation
 induce(
     ac::BySignedPermutations,
     hom::CachedExtensionHomomorphism,
