@@ -90,7 +90,7 @@ end
 function sos_problem(
     poly::AbstractPolynomial,
     wedderburn::SymbolicWedderburn.WedderburnDecomposition,
-    basis_psd;,
+    basis_psd;
 )
     m = JuMP.Model()
 
