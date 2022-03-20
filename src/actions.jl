@@ -180,7 +180,11 @@ struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
        InducedActionHomomorphism{A,T}
     ehom::E
     cache::Dict{G,H}
+    lock::Base.Threads.SpinLock
 end
+
+CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
+    CachedExtensionHomomorphism(hom, Dict{G,H}(), Threads.SpinLock())
 
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
 StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
@@ -197,28 +201,24 @@ function CachedExtensionHomomorphism(
     hom = ExtensionHomomorphism(action, basis)
     S = typeof(induce(hom, one(G)))
     chom = CachedExtensionHomomorphism{eltype(G),S}(hom)
-    if precompute
-        lck = Threads.SpinLock()
-        tasks = [
-        Threads.@spawn begin
-            val = SymbolicWedderburn.induce(action, chom.ehom, g)
-            lock(lck) do
-                chom.cache[g] = val
+    @sync if precompute
+        for g in G
+            Threads.@spawn begin
+                induce(action, chom, g)
             end
-        end for g in G]
-        foreach(wait, tasks)
+        end
     end
     return chom
 end
 
-CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
-    CachedExtensionHomomorphism(hom, Dict{G,H}())
-
-function _induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement)
-    if !haskey(hom.cache, g)
-        hom.cache[g] = induce(ac, hom.ehom, g)
+function _induce(ac::Action, chom::CachedExtensionHomomorphism, g::GroupElement)
+    if !haskey(chom.cache, g)
+        val = induce(ac, chom.ehom, g)
+        lock(chom.lock) do
+            chom.cache[g] = val
+        end
     end
-    return hom.cache[g]
+    return chom.cache[g]
 end
 
 induce(ac::Action, hom::CachedExtensionHomomorphism, g::GroupElement) =
