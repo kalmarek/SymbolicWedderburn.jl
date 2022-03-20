@@ -182,7 +182,7 @@ orbit_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
         for iv in invariant_vs
             c = dot(C, iv)
 
-            # invariant_constraint! is defined locally in util.jl
+            # invariant_constraint! is defined locally in sos_problem.jl
             # it essentially amounts to averaging constraint matrices defined by M
             # with weights provided by iv and storing the result in (dense) matrix M_orb
             M_orb = invariant_constraint!(M_orb, M, iv)
@@ -256,7 +256,7 @@ wedderburn_dec = let f = robinson_form, G = DihedralGroup(4), T = Float64
         for iv in invariant_vectors(wedderburn)
             c = dot(C, iv)
 
-            # invariant_constraint! is defined locally in util.jl
+            # invariant_constraint! is defined locally in sos_problem.jl
             # it essentially amounts to averaging constraint matrices defined by M
             # with weights provided by iv and storing the result in (dense) matrix M_orb
             M_orb = invariant_constraint!(M_orb, M, iv)
