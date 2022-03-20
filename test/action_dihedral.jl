@@ -11,14 +11,26 @@ include(joinpath(dirname(@__DIR__), "examples", "util.jl"))
 using JuMP
 using SCS
 
-const OPTIMIZER = optimizer_with_attributes(
-    SCS.Optimizer,
-    "acceleration_lookback" => 10,
-    "max_iters" => 3_000,
-    "alpha" => 1.2,
-    "eps" => 1e-6,
-    "linear_solver" => SCS.DirectSolver,
+function scs_optimizer(;
+    accel = 0,
+    alpha = 1.5,
+    eps = 1e-6,
+    max_iters = 100_000,
+    verbose = true,
 )
+    return JuMP.optimizer_with_attributes(
+        SCS.Optimizer,
+        "acceleration_lookback" => accel,
+        "acceleration_interval" => 10,
+        "alpha" => alpha,
+        "eps_abs" => eps,
+        "eps_rel" => eps,
+        "linear_solver" => SCS.DirectSolver,
+        "max_iters" => max_iters,
+        "warm_start" => true,
+        "verbose" => verbose,
+    )
+end
 
 @polyvar x y
 const robinson_form = x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
@@ -57,8 +69,7 @@ end
     M = let bh = monomials([x,y], 0:(DynamicPolynomials.maxdegree(robinson_form) ÷ 2))
         [SymbolicWedderburn.basis(wedderburn)[x * y] for x in bh, y in bh]
     end
-
-    m = let m = JuMP.Model(OPTIMIZER)
+    m = let m = JuMP.Model(scs_optimizer(eps = 1e-5, alpha = 1.95, accel=-15))
         JuMP.@variable m t
         JuMP.@objective m Max t
         psds = [

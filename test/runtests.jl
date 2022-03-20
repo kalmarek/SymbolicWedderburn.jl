@@ -1,14 +1,15 @@
 using Test
 
 using LinearAlgebra
-using SymbolicWedderburn
-using SymbolicWedderburn.FiniteFields
-using LinearAlgebra
+using SparseArrays
 
 using GroupsCore
 using PermutationGroups
 using Cyclotomics
-using SparseArrays
+using StarAlgebras
+
+using SymbolicWedderburn
+using SymbolicWedderburn.FiniteFields
 
 include("smallgroups.jl")
 
