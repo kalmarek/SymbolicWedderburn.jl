@@ -68,7 +68,7 @@ no_symmetry = let f = robinson_form
     m, creation_t = @timed sos_problem(f)
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters=10_000, alpha=1.8, accel=-10, eps=1e-5)
+        scs_optimizer(max_iters = 10_000, alpha = 1.8, accel = -10, eps = 1e-5),
     )
     optimize!(m)
 
@@ -97,48 +97,48 @@ orbit_dec = let f = robinson_form, T = Float64
         f,
         DihedralGroup(4),
         DihedralAction(),
-        decompose_psd = false
+        decompose_psd = false,
     )
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters=10_000, alpha=1.9, accel=-10, eps=1e-5)
+        scs_optimizer(max_iters = 10_000, alpha = 1.9, accel = -10, eps = 1e-5),
     )
     optimize!(m)
 
     @info isapprox(objective_value(m), -3825 / 4096, rtol = 1e-4)
 
     (
-        status=termination_status(m),
-        objective=objective_value(m),
-        symmetry_adaptation_t=stats["symmetry_adaptation"],
-        creation_t=["problem_creation"],
-        solve_t=solve_time(m)
+        status = termination_status(m),
+        objective = objective_value(m),
+        symmetry_adaptation_t = stats["symmetry_adaptation"],
+        creation_t = ["problem_creation"],
+        solve_t = solve_time(m),
     )
 end
 
 semisimple_dec = let f = robinson_form, T = Float64
-    m, stats = sos_problem(
-        f,
-        DihedralGroup(4),
-        DihedralAction(),
-        semisimple = true
-    )
+    m, stats = sos_problem(f, DihedralGroup(4), DihedralAction(), semisimple = true)
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters=10_000, alpha=1.95, accel=-15, eps=1e-5)
+        scs_optimizer(
+            max_iters = 10_000,
+            alpha = 1.95,
+            accel = -15,
+            eps = 1e-5,
+        ),
     )
     optimize!(m)
 
     @info isapprox(objective_value(m), -3825 / 4096, rtol = 1e-4)
 
     (
-        status=termination_status(m),
-        objective=objective_value(m),
-        symmetry_adaptation_t=stats["symmetry_adaptation"],
-        creation_t=["problem_creation"],
-        solve_t=solve_time(m)
+        status = termination_status(m),
+        objective = objective_value(m),
+        symmetry_adaptation_t = stats["symmetry_adaptation"],
+        creation_t = ["problem_creation"],
+        solve_t = solve_time(m),
     )
 end
 
@@ -147,28 +147,33 @@ wedderburn_dec = let f = robinson_form, T = Float64
         f,
         DihedralGroup(4),
         DihedralAction(),
-        semisimple = false
+        semisimple = false,
     )
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters=5_000, alpha=1.75, accel=-10, eps=1e-5, verbose=true)
+        scs_optimizer(
+            max_iters = 5_000,
+            alpha = 1.95,
+            accel = -15,
+            eps = 1e-5,
+            verbose = true,
+        ),
     )
     optimize!(m)
 
     (
-        status=termination_status(m),
-        objective=objective_value(m),
-        symmetry_adaptation_t=stats["symmetry_adaptation"],
-        creation_t=["problem_creation"],
-        solve_t=solve_time(m)
+        status = termination_status(m),
+        objective = objective_value(m),
+        symmetry_adaptation_t = stats["symmetry_adaptation"],
+        creation_t = ["problem_creation"],
+        solve_t = solve_time(m),
     )
 end
 
 @assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL
-@assert isapprox(wedderburn_dec.objective, no_symmetry.objective, atol=1e-3)
-@assert no_symmetry.solve_t/wedderburn_dec.solve_t > 1
-
+@assert isapprox(wedderburn_dec.objective, no_symmetry.objective, atol = 1e-3)
+@assert no_symmetry.solve_t / wedderburn_dec.solve_t > 1
 
 @info "Summary of Example: Robinson form" no_symmetry orbit_dec semisimple_dec wedderburn_dec
 

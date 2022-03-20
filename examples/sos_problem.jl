@@ -61,9 +61,8 @@ function sos_problem(
     invariant_vs::AbstractVector,
     basis_constraints::StarAlgebras.AbstractBasis,
     basis_psd,
-    T = Float64
+    T = Float64,
 )
-
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
 
     sos_model = JuMP.Model()
@@ -88,11 +87,10 @@ function sos_problem(
     return sos_model
 end
 
-
 function sos_problem(
     poly::AbstractPolynomial,
     wedderburn::SymbolicWedderburn.WedderburnDecomposition,
-    basis_psd;
+    basis_psd;,
 )
     m = JuMP.Model()
 
@@ -106,7 +104,7 @@ function sos_problem(
         dim = size(ds, 1)
         P = JuMP.@variable m [1:dim, 1:dim] Symmetric
         JuMP.@constraint m P in PSDCone()
-        P
+        return P
     end
 
     # preallocating
@@ -127,16 +125,16 @@ function sos_problem(
             dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
         ) == c
     end
-    m
+    return m
 end
 
 function sos_problem(
     poly::AbstractPolynomial,
     G::Group,
     action::SymbolicWedderburn.Action,
-    T=Float64;
+    T = Float64;
     decompose_psd = true,
-    semisimple = false
+    semisimple = false,
 )
     max_deg = DynamicPolynomials.maxdegree(poly)
     vars = DynamicPolynomials.variables(poly)
@@ -150,33 +148,31 @@ function sos_problem(
             action,
             basis_constraints,
             basis_psd,
-            semisimple = semisimple
+            semisimple = semisimple,
         )
 
-        model, model_creation_time = @timed sos_problem(poly, wedderburn, basis_psd)
+        model, model_creation_time =
+            @timed sos_problem(poly, wedderburn, basis_psd)
     else
         (invariant_vs, basis_cnstr), symmetry_adaptation_time = @timed let G = G
-
             basis = StarAlgebras.Basis{UInt32}(basis_constraints)
 
-            tblG = SymbolicWedderburn.Characters.CharacterTable(Rational{Int}, G)
+            tblG = SymbolicWedderburn.Characters.CharacterTable(
+                Rational{Int},
+                G,
+            )
             iv = invariant_vectors(tblG, action, basis)
             iv, basis
         end
 
-        model, model_creation_time = @timed sos_problem(
-            poly,
-            invariant_vs,
-            basis_cnstr,
-            basis_psd,
-            T
-        )
+        model, model_creation_time =
+            @timed sos_problem(poly, invariant_vs, basis_cnstr, basis_psd, T)
     end
 
     stats = Dict(
         "symmetry_adaptation" => symmetry_adaptation_time,
-        "model_creation" => model_creation_time
-        )
+        "model_creation" => model_creation_time,
+    )
 
     return model, stats
 end

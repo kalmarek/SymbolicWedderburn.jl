@@ -6,7 +6,6 @@ using SparseArrays
 using GroupsCore
 using PermutationGroups
 using Cyclotomics
-using StarAlgebras
 
 using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields

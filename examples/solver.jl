@@ -36,10 +36,8 @@ function cosmo_optimizer(;
 )
     return JuMP.optimizer_with_attributes(
         COSMO.Optimizer,
-        "accelerator" => COSMO.with_options(
-            COSMO.AndersonAccelerator,
-            mem = accel
-        ),
+        "accelerator" =>
+            COSMO.with_options(COSMO.AndersonAccelerator, mem = accel),
         "alpha" => alpha,
         "decompose" => true,
         "eps_abs" => eps,

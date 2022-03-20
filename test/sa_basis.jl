@@ -1,4 +1,4 @@
-using StarAlgebras
+using SymbolicWedderburn.StarAlgebras
 
 @testset "affordable real degrees/dot" begin
     G = SmallPermGroups[10][2] # C₂⊕C₅
