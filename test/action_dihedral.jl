@@ -6,16 +6,16 @@ using DynamicPolynomials
 
 include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
 include(joinpath(dirname(@__DIR__), "examples", "dihedral.jl"))
-include(joinpath(dirname(@__DIR__), "examples", "util.jl"))
+include(joinpath(dirname(@__DIR__), "examples", "sos_problem.jl"))
 
 using JuMP
-using SCS
+import SCS
 
 function scs_optimizer(;
     accel = 0,
     alpha = 1.5,
     eps = 1e-6,
-    max_iters = 100_000,
+    max_iters = 10_000,
     verbose = true,
 )
     return JuMP.optimizer_with_attributes(
@@ -33,12 +33,17 @@ function scs_optimizer(;
 end
 
 @polyvar x y
-const robinson_form = x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
+const robinson_form =
+    x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
 
 struct DihedralAction <: OnMonomials end
 
 SymbolicWedderburn.coeff_type(::DihedralAction) = Float64
-function SymbolicWedderburn.action(::DihedralAction, el::DihedralElement, mono::AbstractMonomial)
+function SymbolicWedderburn.action(
+    ::DihedralAction,
+    el::DihedralElement,
+    mono::AbstractMonomial,
+)
     if iseven(el.reflection + el.id)
         var_x, var_y = x, y
     else
@@ -52,55 +57,62 @@ end
 @testset "Dihedral Action" begin
     G = DihedralGroup(4)
     @test all(
-        SymbolicWedderburn.action(DihedralAction(), g, robinson_form) == robinson_form
-        for g in DihedralGroup(4)
+        SymbolicWedderburn.action(DihedralAction(), g, robinson_form) ==
+        robinson_form for g in DihedralGroup(4)
     )
 
     T = Float64
 
-    wedderburn = WedderburnDecomposition(
-        T,
-        G,
-        DihedralAction(),
-        monomials([x,y], 0:DynamicPolynomials.maxdegree(robinson_form)),
-        monomials([x,y], 0:(DynamicPolynomials.maxdegree(robinson_form) ÷ 2))
-    )
-
-    M = let bh = monomials([x,y], 0:(DynamicPolynomials.maxdegree(robinson_form) ÷ 2))
-        [SymbolicWedderburn.basis(wedderburn)[x * y] for x in bh, y in bh]
-    end
-    m = let m = JuMP.Model(scs_optimizer(eps = 1e-5, alpha = 1.95, accel=-15))
-        JuMP.@variable m t
-        JuMP.@objective m Max t
-        psds = [
-            JuMP.@variable(m, [1:d, 1:d] in PSDCone())
-            for d in size.(direct_summands(wedderburn), 1)
-        ]
-
-        # preallocating
-        M_orb = similar(M, T)
-        # these could be preallocated as well:
-        # Mπs = zeros.(T, size.(psds))
-        # tmps = SymbolicWedderburn._temps(wedderburn)
-
-        C = DynamicPolynomials.coefficients(robinson_form - t, basis(wedderburn))
-
-        for iv in invariant_vectors(wedderburn)
-            c = dot(C, iv)
-            M_orb = invariant_constraint!(M_orb, M, iv)
-            # Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
-            Mπs = SymbolicWedderburn.diagonalize(M_orb, wedderburn)
-
-            JuMP.@constraint m sum(
-                dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
-            ) == c
-        end
-        m
-    end
+    m, _ = sos_problem(robinson_form, G, DihedralAction())
+    JuMP.set_optimizer(m, scs_optimizer(eps = 1e-5, alpha = 1.95, accel = -15))
 
     optimize!(m)
 
     @test isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-4)
     status = termination_status(m)
     @test status ∈ (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
+end
+
+# same action but through BySignedPermutations:
+struct DihedralActionSP <: SymbolicWedderburn.BySignedPermutations end
+
+function SymbolicWedderburn.action(
+    ::DihedralActionSP,
+    el::DihedralElement,
+    mono::AbstractMonomial,
+)
+    g_mono = SymbolicWedderburn.action(DihedralAction(), el, mono)
+    u = leadingcoefficient(g_mono) ÷ leadingcoefficient(mono)
+
+    return leadingmonomial(g_mono), u
+end
+
+# This is only needed to define action on the whole Robinson form to check that is actually invariant.
+function SymbolicWedderburn.action(
+    ac::SymbolicWedderburn.BySignedPermutations,
+    g::DihedralElement,
+    poly::AbstractPolynomial,
+)
+    return sum(monomials(poly)) do m
+        c = DynamicPolynomials.coefficient(poly, m)
+        gm, u = SymbolicWedderburn.action(ac, g, m)
+        return u * c * gm
+    end
+end
+
+@testset "Dihedral action through Signed Permutations" begin
+    m, _ = sos_problem(robinson_form, DihedralGroup(4), DihedralActionSP())
+
+    JuMP.set_optimizer(
+        m,
+        scs_optimizer(max_iters = 5_000, alpha = 1.95, accel = -20, eps = 1e-5),
+    )
+    optimize!(m)
+    @test termination_status(m) == MOI.OPTIMAL
+    @test isapprox(objective_value(m), -3825 / 4096, atol = 1e-3)
+
+    @test all(
+        SymbolicWedderburn.action(DihedralActionSP(), g, robinson_form) ==
+        robinson_form for g in DihedralGroup(4)
+    )
 end

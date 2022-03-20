@@ -110,4 +110,49 @@ decompose(x, hom::InducedActionHomomorphism) =
     throw("""No fallback is provided for $(typeof(x)). You need to implement
           `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
 
+"""
+    BySignedPermutations
+A type of action where a group acts through permutations _with sign_ on an
+(implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, …, eₙ)`.
+
+It means that for every group element `g ∈ G` and every `eₖ ∈ B` the result of
+action of `g` on `eₖ` is `u·eₗ` for some `1≤l≤n`, where `u` is a root of unity
+(i.e. `±1` in the real case). To accomplish this it is required that
+```
+action(act::BySignedPermutations, g, eₖ) == (eₗ, u)
+```
+
+!!! warning
+    Only support for the real case (i.e. `u = ±1`) is implemented at the moment.
+
+"""
+abstract type BySignedPermutations <: ByLinearTransformation end
+
+coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
+
+function induce(
+    ac::BySignedPermutations,
+    hom::InducedActionHomomorphism,
+    g::GroupElement, # need to be signed permutation group element
 )
+    bs = basis(hom)
+    n = length(bs)
+
+    I = Int[]
+    J = Int[]
+    V = coeff_type(ac)[]
+
+    for (i, f) in enumerate(bs)
+        k, s = action(action(hom), g, f) # k::MonoidElement
+        push!(I, i)
+        push!(J, bs[k]) # refactor into decompose(::MonoidElement, hom)?
+        push!(V, s)
+    end
+    return sparse(I, J, V)
+end
+
+induce(
+    ac::BySignedPermutations,
+    hom::CachedExtensionHomomorphism,
+    g::GroupElement,
+) = _induce(ac, hom, g)
