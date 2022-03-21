@@ -105,7 +105,7 @@ end
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters = 5_000, alpha = 1.95, accel = -20, eps = 1e-5),
+        scs_optimizer(max_iters = 5_000, alpha = 1.8, accel = -15, eps = 1e-5),
     )
     optimize!(m)
     @test termination_status(m) == MOI.OPTIMAL
