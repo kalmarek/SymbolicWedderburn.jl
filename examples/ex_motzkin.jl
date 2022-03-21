@@ -1,66 +1,57 @@
 using SymbolicWedderburn
 using PermutationGroups
 
-using SparseArrays
-
 using DynamicPolynomials
-using SumOfSquares
-using SCS
 
 include(joinpath(@__DIR__, "action_polynomials.jl"))
+include(joinpath(@__DIR__, "sos_problem.jl"))
+include(joinpath(@__DIR__, "solver.jl"))
 
-OPTIMIZER = optimizer_with_attributes(
-    SCS.Optimizer,
-    "acceleration_lookback" => 0,
-    "max_iters" => 20_000,
-    "eps" => 2e-6,
-    "linear_solver" => SCS.DirectSolver,
-)
-
-@polyvar x y z
+@polyvar x y
 
 motzkin = x^4 * y^2 + y^4 * x^2 - 3 * x^2 * y^2 + 1
 g = (x^2 + y^2 + 1)
-monomial_basis = monomials([x, y], 0:7)
 
-ts, st = let f = motzkin, basis = monomial_basis, m = SOSModel(OPTIMIZER)
-    @variable m t >=0
-    # @objective m Max t
-    @variable m sos SOSPoly(basis)
-    @constraint m g*f - t == sos
+no_symmetry = let poly = motzkin * g
+    m, model_creation_t = @timed sos_problem(poly)
+    JuMP.set_optimizer(
+        m,
+        scs_optimizer(max_iters = 20_000, eps = 1e-7, accel = 20),
+    )
+
     optimize!(m)
-    @info (m,) termination_status(m) objective_value(m) solve_time(m)
-    termination_status(m), solve_time(m)
+    (
+        status = termination_status(m),
+        objective = objective_value(m),
+        symmetry_adaptation_t = 0.0,
+        creation_t = model_creation_t,
+        solve_t = solve_time(m),
+    )
 end
 
-ts_sa, st_sa = let f = motzkin,
-    basis = monomial_basis,
-    G = PermGroup(perm"(1,2)")
+wedderburn_dec =
+    let poly = motzkin * g,
+        G = PermGroup(perm"(1,2)"),
+        action = VariablePermutation()
 
-    sa_basis, symmetry_adaptation_time, = @timed let
-        ssimple_basis = SymbolicWedderburn.symmetry_adapted_basis(
-            Float64,
-            G,
-            VariablePermutation(),
-            exponents.(basis),
-            semisimple=true
+        m, stats = sos_problem(poly, G, action)
+        JuMP.set_optimizer(
+            m,
+            scs_optimizer(max_iters = 20_000, eps = 1e-7, accel = 20),
         )
-        sp = sparse.(ssimple_basis)
-        droptol!.(sp, 1e-12)
-    end
-
-    let m = SOSModel(OPTIMIZER), basis = basis, R = sa_basis
-        @variable m t >= 0
-        # @objective m Max t
-
-        soses = @variable m [r in R] SOSPoly(FixedPolynomialBasis(r * basis))
-        @constraint m g*f - t == sum(soses)
 
         optimize!(m)
-        @info m, termination_status(m) objective_value(m) solve_time(m) symmetry_adaptation_time
-        termination_status(m), solve_time(m)
+        (
+            status = termination_status(m),
+            objective = objective_value(m),
+            symmetry_adaptation_t = stats["symmetry_adaptation"],
+            creation_t = stats["model_creation"],
+            solve_t = solve_time(m),
+        )
     end
-end
 
-@assert ts == ts_sa == SumOfSquares.MOI.OPTIMAL
-@assert st_sa < st
+@assert no_symmetry.status == wedderburn_dec.status == MOI.OPTIMAL
+@assert isapprox(no_symmetry.objective, wedderburn_dec.objective, atol = 1e-6)
+@assert no_symmetry.solve_t > wedderburn_dec.solve_t
+
+@info "Summary for motzkin example:" no_symmetry wedderburn_dec
