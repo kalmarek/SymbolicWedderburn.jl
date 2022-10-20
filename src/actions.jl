@@ -1,5 +1,4 @@
 # abstract type Action is defined in ext_homomorphisms
-# should move PermutationGroups here
 
 """
     ByPermutations <: Action
@@ -24,7 +23,7 @@ then computing `x^h`, the action of the result on `x`.
 function action(
     hom::InducedActionHomomorphism{<:ByPermutations},
     g::GroupElement,
-    v::AbstractVector,# can this type be dropped?
+    v::AbstractVector,
 )
     return v^induce(hom, g)
 end
@@ -43,7 +42,7 @@ A type of action where a group acts through linear transformations on an
 
 That means that for every group element `g ∈ G` and every `eₖ ∈ B`
 ```
-action(act::ByPermutations, g, eₖ) = v
+action(act::ByLinearTransformation, g, eₖ) = v
 ```
 where `v = a₁e₁ + ⋯ + aₙeₙ`. Additionally [`decompose`](@ref) must be
 implemented to return a (possibly sparse) decomposition of `v` in `B`.
@@ -116,10 +115,8 @@ decompose(x, hom::InducedActionHomomorphism) =
     throw("""No fallback is provided for $(typeof(x)). You need to implement
           `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
 
-#  HOW DO WE DEFINE THE GROUP?
-
 """
-    BySignedPermutations
+    BySignedPermutations <: ByLinearTransformation
 A type of action where a group acts through permutations _with sign_ on an
 (implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, …, eₙ)`.
 
@@ -159,11 +156,9 @@ function induce(
     return sparse(I, J, V)
 end
 
-
-
 # disabmiguation
 induce(
     ac::BySignedPermutations,
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
-) = _induce(ac, hom, g) # this function is copied many times for each new action..
+) = _induce(ac, hom, g)

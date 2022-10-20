@@ -1,36 +1,17 @@
 """
-    An abstract type representing a group G acting on some object Ω, aiding dispatch.
-    that is a map A:Ω×G->Ω satisfying action axioms...somehow not quite right...
-    The domain implies we work with RIGHT action, but instance of this type depends on user def
-"""# should follow GAP and urge developer to use right action?
-"""
-    Top of the group action type hierarchy containing both left and right actions
-"""
-abstract type Action end # not parametric
+    Top of the type hierarchy representing a group G acting on some object Ω.
+    That is A:Ω×G->Ω or A:G×Ω->Ω (right/left actions) satisfying usual axioms.
+    This induces the group homomorphism φ:G->Aut(Ω) called action homomorphism.
+    SymbolicWedderburn is agnostic to right/left actions even though the method
+    action(a::Action, g::GroupElement, ω) appears to imply a left action g⋅ω.
+    Warning: no check on action(...) is performed!
+""" 
+abstract type Action end
+abstract type InducedActionHomomorphism{A,T} end
 
-"""
-    An abstract type representing the induced homomorphism of a given Action
-    that is the (group) homomorphism G->End(O)
-"""
-abstract type InducedActionHomomorphism{A,T} end # declares a family of parametric types
-#=
-    effectively? abstract type InducedActionHomomorphism end with all children
-    abstract type InducedActionHomomorphism{A,T} end for all A and all T
-    Do we declare InducedActionHomomorphism type?
-=# 
-
-"""
-    Terminology from Hulpke: right action, notation exponential ω^g
-    If G acts on set Ω, the action homomorphism is φ:G->SymmetricGroup(Ω), a group homomorphism
-    In theory, two ways to specify: either give φ or give actfun below.
-    In GAP, ω^g = actfun(ω, g) defines an action, i.e. actfun:Ω×G->G.
-    In GAP, ActionHomomorphism returns a homomorphism G -> End(Ω), that is φ
-"""
-
-
-Base.getindex(hom::InducedActionHomomorphism, i::Integer) = basis(hom)[i] # why?
+Base.getindex(hom::InducedActionHomomorphism, i::Integer) = basis(hom)[i]
 Base.getindex(hom::InducedActionHomomorphism{A,T}, f::T) where {A,T} =
-    basis(hom)[f] # this covers L13
+    basis(hom)[f]
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
 _int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I
@@ -41,8 +22,8 @@ _int_type(hom::InducedActionHomomorphism) = _int_type(typeof(basis(hom)))
 _int_type(::Type{<:InducedActionHomomorphism}) = UInt16
 
 """
-    Computes the induced action homomorphism at the group element g, providing
-    the image of G->End(Ω) at the point g, i.e. an endomorphism of Ω
+    induce(hom::InducedActionHomomorphism, g::GroupElement)
+Returns the induced action homomorphism at the group element g, i.e. φ(g).
 """
 induce(hom::InducedActionHomomorphism, g::GroupElement) =
     induce(action(hom), hom, g)
@@ -55,12 +36,6 @@ function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     )
 end
 
-
-"""
-    Concrete type for actions on modules (implemented in Julia as a StarAlgebra).
-    Here for each g ∈ G, this reduces to a map of basis of the StarAlgebra.
-        ? extend action to basis ?
-"""
 struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
@@ -77,10 +52,7 @@ ExtensionHomomorphism(::Type{I}, action::Action, basis) where {I<:Integer} =
 StarAlgebras.basis(hom::ExtensionHomomorphism) = hom.basis
 action(hom::ExtensionHomomorphism) = hom.action
 
-"""
-    Cache versions use a dictionary with keys g ∈ G and store all images of
-    of the map G -> End(Ω) in the field cache
-"""
+# Cache version: store the map φ in a dictionary with keys g ∈ G
 struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
        InducedActionHomomorphism{A,T}
     ehom::E
@@ -91,12 +63,11 @@ end
 CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
     CachedExtensionHomomorphism(hom, Dict{G,H}(), Threads.SpinLock())
 
+# interface:
 StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
 
-"""
-    External constructor compute and cache G->End(M) of module M in ehom field
-"""
+# main constructor, default to lazy
 function CachedExtensionHomomorphism(
     G::Group,
     action::Action,
