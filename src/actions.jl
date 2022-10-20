@@ -1,4 +1,5 @@
 # abstract type Action is defined in ext_homomorphisms
+# should move PermutationGroups here
 
 """
     ByPermutations <: Action
@@ -23,7 +24,7 @@ then computing `x^h`, the action of the result on `x`.
 function action(
     hom::InducedActionHomomorphism{<:ByPermutations},
     g::GroupElement,
-    v::AbstractVector,
+    v::AbstractVector,# can this type be dropped?
 )
     return v^induce(hom, g)
 end
@@ -38,7 +39,7 @@ end
 """
     ByLinearTransformation <: Action
 A type of action where a group acts through linear transformations on an
-(implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, … eₙ)`.
+(implicit) linear space `ℝᴮ` with basis `B = (e₁, … eₙ)`.
 
 That means that for every group element `g ∈ G` and every `eₖ ∈ B`
 ```
@@ -61,6 +62,10 @@ coeff_type(ac::ByLinearTransformation) =
     throw("No fallback is provided for $(typeof(ac)). You need to implement
           `coeff_type(::$(typeof(ac)))`.")
 
+"""
+    induce(ac::ByLinearTransformation, hom::InducedActionHomomorphism, g::GroupElement)
+Return a sparse matrix representation of the action by `g`` in the basis provided by `hom`
+"""
 function induce(
     ac::ByLinearTransformation,
     hom::InducedActionHomomorphism,
@@ -111,6 +116,8 @@ decompose(x, hom::InducedActionHomomorphism) =
     throw("""No fallback is provided for $(typeof(x)). You need to implement
           `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
 
+#  HOW DO WE DEFINE THE GROUP?
+
 """
     BySignedPermutations
 A type of action where a group acts through permutations _with sign_ on an
@@ -134,7 +141,7 @@ coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
 function induce(
     ac::BySignedPermutations,
     hom::InducedActionHomomorphism,
-    g::GroupElement, # need to be signed permutation group element
+    g::GroupElement,
 )
     bs = basis(hom)
     n = length(bs)
@@ -144,17 +151,19 @@ function induce(
     V = coeff_type(ac)[]
 
     for (i, f) in enumerate(bs)
-        k, s = action(action(hom), g, f) # k::MonoidElement
+        k, s = action(action(hom), g, f) # act and decompose
         push!(I, i)
-        push!(J, bs[k]) # refactor into decompose(::MonoidElement, hom)?
+        push!(J, bs[k])
         push!(V, s)
     end
     return sparse(I, J, V)
 end
+
+
 
 # disabmiguation
 induce(
     ac::BySignedPermutations,
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
-) = _induce(ac, hom, g)
+) = _induce(ac, hom, g) # this function is copied many times for each new action..
