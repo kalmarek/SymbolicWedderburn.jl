@@ -12,7 +12,7 @@ function StarAlgebras.AlgebraElement(
     ord = order(Int, G)
     c = dim // ord
 
-    T = Base._return_type(*, Tuple{typeof(c), eltype(χ)})
+    T = Base._return_type(*, Tuple{typeof(c),eltype(χ)})
 
     x = AlgebraElement(zeros(T, length(b)), RG)
 
@@ -30,16 +30,22 @@ function algebra_elt_from_support(support, RG::StarAlgebra)
     V = fill(1, length(support))
     return AlgebraElement(sparsevec(I, V, length(b)), RG)
 end
-struct CyclicSubgroups{Gr, GEl}
+struct CyclicSubgroups{Gr,GEl}
     group::Gr
     seen::Dict{Int,Set{GEl}}
     min_order::Int
     max_order::Int
+end
 
-    function CyclicSubgroups(G::Group; min_order=1, max_order=order(Int, G))
-        seen = Dict{Int, Set{eltype(G)}}()
-        return new{typeof(G), eltype(G)}(G, seen, min_order, max_order)
-    end
+function CyclicSubgroups(G::Group; min_order=1, max_order=order(Int, G))
+    seen = Dict{Int,Set{eltype(G)}}()
+    return CyclicSubgroups{typeof(G),eltype(G)}(G, seen, min_order, max_order)
+end
+
+function Base.deepcopy_internal(citr::CyclicSubgroups{Gr,E}, iddict::IdDict) where {Gr,E}
+    G = citr.group
+    seen = Base.deepcopy_internal(citr.seen, iddict)
+    return CyclicSubgroups{Gr,E}(G, seen, citr.min_order, citr.max_order)
 end
 
 Base.eltype(citr::CyclicSubgroups) = valtype(citr.seen)
@@ -57,7 +63,11 @@ end
 
 function Base.iterate(citr::CyclicSubgroups, state)
     k = iterate(citr.group, state)
-    k === nothing && return nothing
+    if k === nothing
+        # reset the iterator to the initial state
+        empty!(citr.seen)
+        return nothing
+    end
     g, state = k
     ord = order(Int, g)
     if citr.min_order ≤ ord ≤ citr.max_order
@@ -78,19 +88,19 @@ end
 
 function small_idempotents(
     RG::StarAlgebra{<:Group},
-    subgroups = CyclicSubgroups(parent(RG), min_order = 2),
+    subgroups=CyclicSubgroups(parent(RG), min_order=2),
 )
     return (algebra_elt_from_support(H, RG) // length(H) for H in subgroups)
 end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    iszero(α) && return zero(eltype(StarAlgebras.coeffs(α)))*zero(eltype(χ))
+    iszero(α) && return zero(eltype(StarAlgebras.coeffs(α))) * zero(eltype(χ))
     return sum(α(g) * χ(g) for g in supp(α))
 end
 
 function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
-    idems = small_idempotents(RG), # idems are AlgebraElements over Rational{Int}
+    subgroups=CyclicSubgroups(parent(RG), min_order=2),
     iters=3
 )
     degree(χ) == 1 && return one(RG, Rational{Int}), true
@@ -99,9 +109,11 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
         isone(χ(µ)) && µ^2 == µ && return µ, true
     end
 
+    _id = [deepcopy(subgroups), deepcopy(subgroups)]
+
     for n in 2:iters
-        for (i, elts) in enumerate(Iterators.product(fill(idems, n)...))
-            µ = *(elts...)
+        for sbgrps in Iterators.product(_id...)
+            µ = *((_small_idem(RG, H) for H in sbgrps)...)
             isone(χ(µ)) && µ^2 == µ && return µ, true
         end
     end
@@ -117,8 +129,8 @@ function minimal_projection_system(
 
     r1p, simple = first.(res), last.(res) # rp1 are sparse storage
 
-    mps = [isone(µ) ? AlgebraElement(χ, RG) : µ*AlgebraElement(χ, RG)
-        for (µ,χ) in zip(r1p, chars)] # dense storage
+    mps = [isone(µ) ? AlgebraElement(χ, RG) : µ * AlgebraElement(χ, RG)
+           for (µ, χ) in zip(r1p, chars)] # dense storage
 
     return mps, simple
 end
