@@ -24,12 +24,14 @@ function StarAlgebras.AlgebraElement(
     return x
 end
 
-function algebra_elt_from_support(support, RG::StarAlgebra)
+function algebra_elt_from_support(support, RG::StarAlgebra; val=1 // length(support))
     b = basis(RG)
     I = [b[s] for s in support]
-    V = fill(1, length(support))
+    V = fill(val, length(support))
     return AlgebraElement(sparsevec(I, V, length(b)), RG)
 end
+_small_idem(RG::StarAlgebra{<:Group}, H) = algebra_elt_from_support(H, RG, val=1 // length(H))
+
 struct CyclicSubgroups{Gr,GEl}
     group::Gr
     seen::Dict{Int,Set{GEl}}
@@ -84,13 +86,6 @@ function Base.iterate(citr::CyclicSubgroups, state)
         end
     end
     return iterate(citr, state)
-end
-
-function small_idempotents(
-    RG::StarAlgebra{<:Group},
-    subgroups=CyclicSubgroups(parent(RG), min_order=2),
-)
-    return (algebra_elt_from_support(H, RG) // length(H) for H in subgroups)
 end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
