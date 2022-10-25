@@ -100,17 +100,19 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
 )
     degree(χ) == 1 && return one(RG, Rational{Int}), true
 
-    for µ in idems
+    for H in subgroups
+        µ = _small_idem(RG, H)
         isone(χ(µ)) && µ^2 == µ && return µ, true
     end
 
     _id = [deepcopy(subgroups), deepcopy(subgroups)]
 
-    for n in 2:iters
+    for _ in 2:iters
         for sbgrps in Iterators.product(_id...)
             µ = *((_small_idem(RG, H) for H in sbgrps)...)
             isone(χ(µ)) && µ^2 == µ && return µ, true
         end
+        push!(_id, deepcopy(subgroups))
     end
     @debug "Could not find minimal projection for $χ"
     return one(RG, Rational{Int}), false
