@@ -13,13 +13,13 @@ using SymbolicWedderburn.StarAlgebras
 
     charsR, _ = SymbolicWedderburn.affordable_real(chars)
     @test SymbolicWedderburn.degree.(charsR) ==
-        [dot(χ, χ) for χ in charsR] ==
-        [1,1,2,2,2,2]
+          [dot(χ, χ) for χ in charsR] ==
+          [1, 1, 2, 2, 2, 2]
     charsR_fl = SymbolicWedderburn.Character{Float64}.(charsR)
-    @test all([1,1,2,2,2,2] .==
-        SymbolicWedderburn.degree.(charsR_fl) .≈
-        [dot(χ, χ) for χ in charsR_fl]
-        )
+    @test all([1, 1, 2, 2, 2, 2] .==
+              SymbolicWedderburn.degree.(charsR_fl) .≈
+              [dot(χ, χ) for χ in charsR_fl]
+    )
 end
 
 @testset "Symmetry adapted basis" begin
@@ -27,7 +27,7 @@ end
         G = PermGroup(perm"(1,2)", perm"(1,2,3)")
         irr = SymbolicWedderburn.irreducible_characters(G)
         @test irr isa AbstractVector{<:SymbolicWedderburn.Character{<:Cyclotomic}}
-        @test SymbolicWedderburn.degree.(irr) == [2,1,1]
+        @test SymbolicWedderburn.degree.(irr) == [2, 1, 1]
 
         RG = let G = G
             b = StarAlgebras.Basis{UInt16}(collect(G))
@@ -39,7 +39,7 @@ end
         @test s
 
         @test SymbolicWedderburn.Character{Rational{Int}}(irr[1]) isa
-        SymbolicWedderburn.Character{Rational{Int}}
+              SymbolicWedderburn.Character{Rational{Int}}
         @test collect(values(SymbolicWedderburn.Character{Float64}(irr[1]))) isa Vector{Float64}
 
         mps, simple = SymbolicWedderburn.minimal_projection_system(irr, RG)
@@ -59,7 +59,7 @@ end
 
         sa_basis = symmetry_adapted_basis(Rational{Int}, G, Rational{Int}, semisimple=false)
         @test all(issimple.(sa_basis))
-        @test rank.(convert.(Matrix{Float64}, sa_basis)) == [1,1]
+        @test rank.(convert.(Matrix{Float64}, sa_basis)) == [1, 1]
     end
 
     C₄ = PermGroup([perm"(1,2,3,4)"])
@@ -99,11 +99,11 @@ end
                     sa_basis = symmetry_adapted_basis(G, S, semisimple=true)
 
                     @test dot(SymbolicWedderburn.degree.(sa_basis), multiplicity.(sa_basis)) ==
-                        PermutationGroups.degree(G)
+                          PermutationGroups.degree(G)
 
                     @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(G)
 
-                    S = if (ord, n) in ((26,1),)
+                    S = if (ord, n) in ((26, 1),)
                         Rational{BigInt}
                     else
                         Rational{Int}
@@ -111,9 +111,9 @@ end
                     sa_basis = symmetry_adapted_basis(G, S, semisimple=false)
                     for b in sa_basis
                         if issimple(b)
-                            @test multiplicity(b) == size(b, 1)
+                            @test multiplicity(b) == size(b, 1) || 2 * multiplicity(b) == size(b, 1)
                         else
-                            @test multiplicity(b)*SymbolicWedderburn.degree(b) == size(b, 1)
+                            @test multiplicity(b) * SymbolicWedderburn.degree(b) == size(b, 1)
                         end
                     end
                 end
@@ -123,16 +123,16 @@ end
 
                     sa_basisR = symmetry_adapted_basis(Float64, G, S, semisimple=true)
                     @test dot(SymbolicWedderburn.degree.(sa_basisR), multiplicity.(sa_basisR)) ==
-                        PermutationGroups.degree(G)
+                          PermutationGroups.degree(G)
                     @test sum(first ∘ size, sa_basisR) == PermutationGroups.degree(G)
 
                     sa_basisR = symmetry_adapted_basis(Float64, G, S, semisimple=false)
                     for b in sa_basisR
                         if issimple(b)
-                            @test multiplicity(b) == size(b, 1) || 2*multiplicity(b) == size(b, 1)
+                            @test multiplicity(b) == size(b, 1) || 2 * multiplicity(b) == size(b, 1)
                             # the first condiditon doesn't hold for realified characters;
                         else
-                            @test multiplicity(b)*SymbolicWedderburn.degree(b) == size(b, 1)
+                            @test multiplicity(b) * SymbolicWedderburn.degree(b) == size(b, 1)
                         end
                     end
                 end

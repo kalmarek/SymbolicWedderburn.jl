@@ -1,7 +1,7 @@
 name = "SymbolicWedderburn"
 uuid = "858aa9a9-4c7c-4c62-b466-2421203962a2"
 authors = ["Marek Kaluba <kalmar@amu.edu.pl>", "tweisser <tillmann.weisser@web.de>"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Cyclotomics = "da8f5974-afbb-4dc8-91d8-516d5257c83b"

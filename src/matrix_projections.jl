@@ -165,7 +165,7 @@ function matrix_projection_irr_acc!(
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
     weight,
-) where {T}
+)
     iszero(weight) && return result
     for (val, cc) in zip(vals, ccls)
         iszero(val) && continue
