@@ -30,13 +30,13 @@ function WedderburnDecomposition(
     action::Action,
     basis_full,
     basis_half,
-    S = Rational{Int};
-    semisimple = false,
+    S=Rational{Int};
+    semisimple=false
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute = true)
+    ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute=true)
 
-    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
+    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple=semisimple)
 
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(tbl, action, basis)
@@ -62,48 +62,40 @@ direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
 Base.eltype(wbdec::WedderburnDecomposition) =
     eltype(eltype(direct_summands(wbdec)))
 
-_tmps(wbdec::WedderburnDecomposition) =
-    zeros.(eltype(wbdec), size.(direct_summands(wbdec)))
-
-_fillfactor(M::AbstractMatrix) = count(!iszero, M) / length(M)
-_fillfactor(M::AbstractSparseMatrix) = nnz(M) / length(M)
-
-function diagonalize(
-    M::AbstractMatrix,
-    wbdec::WedderburnDecomposition,
-    tmps = _tmps(wbdec),
-)# or AbstractMatrix{T} where T
-    # return [degree(Uπ).*(Uπ*(M*Uπ')) for Uπ in summands(wbdec)]
-    T = promote_type(eltype(M),eltype(eltype(direct_summands(wbdec))))
-    Mπs = [(d = size(Uπ, 1); zeros(T, d, d)) for Uπ in direct_summands(wbdec)]
-    return diagonalize!(Mπs, M, direct_summands(wbdec), tmps)
+function diagonalize(M::AbstractMatrix, wbdec::WedderburnDecomposition)
+    T = promote_type(eltype(M), eltype(eltype(direct_summands(wbdec))))
+    Mπs = [(d = size(Uπ, 1); similar(M, T, d, d)) for Uπ in direct_summands(wbdec)]
+    return diagonalize!(Mπs, M, wbdec)
 end
 
 function diagonalize!(
-    Mπs,
+    Ms::AbstractVector{<:AbstractMatrix},
     M::AbstractMatrix,
-    wbdec::WedderburnDecomposition,
-    tmps = _tmps(wbdec),
+    wbdec::WedderburnDecomposition
 )
-    return diagonalize!(Mπs, M, direct_summands(wbdec), tmps)
+    return diagonalize!(Ms, M, direct_summands(wbdec))
 end
 
 function diagonalize!(
-    Mπs::AbstractVector{<:AbstractMatrix},
-    M::AbstractMatrix,
-    Uπs::AbstractVector{<:DirectSummand},
-    tmps,
+    Ms::AbstractVector{<:AbstractMatrix},
+    A::AbstractMatrix,
+    dsummands::AbstractVector{<:DirectSummand},
 )
-    @assert length(Mπs) == length(Uπs)
+    @assert axes(Ms) == axes(dsummands)
+    @assert all(size(ds, 1) == size(M, 1) for (ds, M) in zip(dsummands, Ms))
+    @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
+    @assert all(==(size(M)...) for M in Ms)
 
-    for (π, Uπ) in enumerate(Uπs)
-        imUπ = convert(Matrix, image_basis(Uπ)) # Base.Matrix to allow BLAS paths below
-        LinearAlgebra.mul!(tmps[π], imUπ, M)
-        LinearAlgebra.mul!(Mπs[π], tmps[π], imUπ')
-        zerotol!(Mπs[π], atol = eps(eltype(imUπ)) * max(size(imUπ)...))
-        Mπs[π] .*= degree(Uπ)
+    @sync for (ds, M) in zip(dsummands, Ms)
+        Threads.@spawn begin
+            U = image_basis(ds)
+            d = degree(ds)
+            # this is the faster version when U are row-based
+            # re-test when U move to column-based
+            @inbounds M .= (U * (A * U')) .* d
+        end
     end
-    return Mπs
+    return Ms
 end
 
 function invariant_vectors(
@@ -113,7 +105,7 @@ function invariant_vectors(
 )
     triv_χ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
     ehom =
-        CachedExtensionHomomorphism(parent(tbl), act, basis, precompute = true)
+        CachedExtensionHomomorphism(parent(tbl), act, basis, precompute=true)
     # ehom = ExtensionHomomorphism(act, basis)
 
     mpr = matrix_projection_irr(ehom, triv_χ)
@@ -160,7 +152,7 @@ function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::BySignedPermutations,
     basis::StarAlgebras.Basis{T,I},
-) where {T, I}
+) where {T,I}
 
     G = parent(tbl)
     ordG = order(Int, G)
@@ -169,9 +161,9 @@ function invariant_vectors(
     CT = promote_type(coeff_type(act), Rational{Int}) # output coeff type
     coeffs = Vector{CT}(undef, ordG)
     tovisit = trues(length(basis))
-    invariant_vs = Vector{SparseVector{CT, Int}}()
+    invariant_vs = Vector{SparseVector{CT,Int}}()
 
-    sizehint!(invariant_vs, length(basis)÷ordG)
+    sizehint!(invariant_vs, length(basis) ÷ ordG)
 
     for (i, b) in enumerate(basis)
         if tovisit[i]
@@ -182,10 +174,10 @@ function invariant_vectors(
                 coeffs[j] = c
             end
             @view(tovisit[orbit]) .= false
-            v = sparsevec(orbit, 1//ordG.*coeffs, length(basis))
-            if (VT = eltype(v)) <: Union{AbstractFloat, Complex}
+            v = sparsevec(orbit, 1 // ordG .* coeffs, length(basis))
+            if (VT = eltype(v)) <: Union{AbstractFloat,Complex}
                 # fix error in earlier version
-                droptol!(v, eps(real(eltype(v)))*length(v)) # Marek, check this!
+                droptol!(v, eps(real(eltype(v))) * length(v)) # Marek, check this!
             end
             if !iszero(v)
                 push!(invariant_vs, v)
