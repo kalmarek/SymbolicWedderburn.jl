@@ -104,14 +104,13 @@ function invariant_vectors(
     basis::StarAlgebras.Basis,
 )
     triv_χ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
-    ehom =
-        CachedExtensionHomomorphism(parent(tbl), act, basis, precompute=true)
-    # ehom = ExtensionHomomorphism(act, basis)
+    ehom = ExtensionHomomorphism(act, basis)
 
     mpr = matrix_projection_irr(ehom, triv_χ)
     mpr, pivots = row_echelon_form!(mpr)
     img = mpr[1:length(pivots), :]
 
+    # TODO:
     # change the format of invariant_vectors to image_basis(ehom, trχ)
     return sparsevec.(eachrow(img))
 end
@@ -145,9 +144,6 @@ function invariant_vectors(
     return invariant_vs
 end
 
-"""
-Compute a basis of invariant vectors for signed permutation actions.
-"""
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::BySignedPermutations,
@@ -176,8 +172,7 @@ function invariant_vectors(
             @view(tovisit[orbit]) .= false
             v = sparsevec(orbit, 1 // ordG .* coeffs, length(basis))
             if (VT = eltype(v)) <: Union{AbstractFloat,Complex}
-                # fix error in earlier version
-                droptol!(v, eps(real(eltype(v))) * length(v)) # Marek, check this!
+                droptol!(v, eps(real(VT)) * length(v))
             end
             if !iszero(v)
                 push!(invariant_vs, v)
