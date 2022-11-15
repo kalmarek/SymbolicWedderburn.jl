@@ -63,7 +63,7 @@ Base.eltype(wbdec::WedderburnDecomposition) =
     eltype(eltype(direct_summands(wbdec)))
 
 function diagonalize(M::AbstractMatrix, wbdec::WedderburnDecomposition)
-    T = promote_type(eltype(M), eltype(eltype(direct_summands(wbdec))))
+    T = promote_type(eltype(M), eltype(wbdec))
     Mπs = [(d = size(Uπ, 1); similar(M, T, d, d)) for Uπ in direct_summands(wbdec)]
     return diagonalize!(Mπs, M, wbdec)
 end
