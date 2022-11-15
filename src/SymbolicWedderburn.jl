@@ -23,7 +23,6 @@ using .Characters
 import .Characters: row_echelon_form!
 import .Characters.FiniteFields
 
-include("util.jl")
 include("ext_homomorphisms.jl")
 include("actions.jl")
 include("action_characters.jl")

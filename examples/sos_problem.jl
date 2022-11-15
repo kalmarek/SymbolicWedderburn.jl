@@ -61,7 +61,7 @@ function sos_problem(
     invariant_vs::AbstractVector,
     basis_constraints::StarAlgebras.AbstractBasis,
     basis_psd,
-    T = Float64,
+    T=Float64,
 )
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
 
@@ -108,9 +108,8 @@ function sos_problem(
     end
 
     # preallocating
-    Mπs = zeros.(eltype(wedderburn), size.(psds))
+    # Mπs = zeros.(eltype(wedderburn), size.(psds))
     M_orb = similar(M, eltype(wedderburn))
-    tmps = SymbolicWedderburn._tmps(wedderburn)
 
     C = DynamicPolynomials.coefficients(
         poly - t,
@@ -119,7 +118,8 @@ function sos_problem(
     for iv in invariant_vectors(wedderburn)
         c = dot(C, iv)
         M_orb = invariant_constraint!(M_orb, M, iv)
-        Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn, tmps)
+        # Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn)
+        Mπs = SymbolicWedderburn.diagonalize(M_orb, wedderburn)
 
         JuMP.@constraint m sum(
             dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
@@ -132,9 +132,9 @@ function sos_problem(
     poly::AbstractPolynomial,
     G::Group,
     action::SymbolicWedderburn.Action,
-    T = Float64;
-    decompose_psd = true,
-    semisimple = false,
+    T=Float64;
+    decompose_psd=true,
+    semisimple=false
 )
     max_deg = DynamicPolynomials.maxdegree(poly)
     vars = DynamicPolynomials.variables(poly)
@@ -148,7 +148,7 @@ function sos_problem(
             action,
             basis_constraints,
             basis_psd,
-            semisimple = semisimple,
+            semisimple=semisimple,
         )
 
         model, model_creation_time =
