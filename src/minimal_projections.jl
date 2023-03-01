@@ -1,4 +1,17 @@
+function _group_algebra(G::Group)
+    @assert isfinite(G)
+    b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
+    RG = if order(Int, G) <= (typemax(UInt16) >> 1) # 32767
+        StarAlgebra(G, b, (length(b), length(b)); precompute = true)
+        # cache is about ~ 1Gb
+    else
+        StarAlgebra(G, b)
+    end
+    return RG
+end
+
 Base.parent(A::StarAlgebra{<:Group}) = A.object
+StarAlgebras.star(g::GroupElement) = inv(g)
 
 function StarAlgebras.AlgebraElement(
     χ::AbstractClassFunction,
@@ -98,7 +111,7 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     subgroups=CyclicSubgroups(parent(RG), min_order=2),
     iters=3
 )
-    degree(χ) == 1 && return one(RG, Rational{Int}), true
+    degree(χ) == 1 && return one(Rational{Int}, RG), true
 
     for H in subgroups
         µ = _small_idem(RG, H)
@@ -115,7 +128,7 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
         push!(_id, deepcopy(subgroups))
     end
     @debug "Could not find minimal projection for $χ"
-    return one(RG, Rational{Int}), false
+    return one(Rational{Int}, RG), false
 end
 
 function minimal_projection_system(

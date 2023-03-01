@@ -187,18 +187,6 @@ function _constituents_decomposition(ψ::Character, tbl::CharacterTable)
     return irr[present_irreps], multiplicities[present_irreps]
 end
 
-function _group_algebra(G::Group)
-    @assert isfinite(G)
-    b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
-    RG = if order(Int, G) <= (typemax(UInt16)>>2)
-        StarAlgebra(G, b, (length(b), length(b)), precompute=true)
-        # cache is about ~ 1Gb
-    else
-        StarAlgebra(G, b)
-    end
-    return RG
-end
-
 function _symmetry_adapted_basis(
     T::Type,
     irr::AbstractVector{<:Character},
