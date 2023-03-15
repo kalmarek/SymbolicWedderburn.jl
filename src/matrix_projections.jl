@@ -336,6 +336,16 @@ function matrix_representation_acc!(
     return result
 end
 
+# convenience for uniform calls below
+function matrix_representation(χ::Character)
+    return isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
+end
+
+function matrix_representation(hom::InducedActionHomomorphism, χ::Character)
+    return isirreducible(χ) ? matrix_projection_irr(hom, χ) :
+           matrix_projection(hom, χ)
+end
+
 ## Finding basis of the row-space (right image) of an AbstractMatrix
 
 """
