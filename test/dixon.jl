@@ -1,7 +1,7 @@
 function generictest_dixon_Fp(G, p = Characters.dixon_prime(G))
     F = Characters.FiniteFields.GF{p}
     ccG = Characters.conjugacy_classes(G)
-    Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+    Ns = [Characters.CMMatrix(ccG, i) for i in 1:length(ccG)]
     @test isdiag(Characters.common_esd(Ns, F))
     esd = Characters.common_esd(Ns, F)
 
@@ -38,12 +38,12 @@ function generictest_dixon_C(G, p = Characters.dixon_prime(G))
     degrees = SymbolicWedderburn.degree.(chars_Fp)
 
     m = Characters._multiplicities(chars_Fp)
-    for i = 1:size(m, 1)
+    for i in 1:size(m, 1)
         @test all(Int.(m[i, :, :]) .<= degrees[i])
     end
 
     @test Characters.complex_character_table(Rational{Int}, tbl) isa
-          Characters.CharacterTable{<:Group, <:Cyclotomic{Rational{Int}}}
+          Characters.CharacterTable{<:Group,<:Cyclotomic{Rational{Int}}}
 
     tblCC = Characters.complex_character_table(Rational{Int}, tbl)
     chars_CC = Characters.irreducible_characters(tblCC)
@@ -76,8 +76,7 @@ end
             ccG = Characters.conjugacy_classes(G)
             @test exponent(G) == 12
             @test exponent(ccG) == 12
-            @test Characters.dixon_prime(G) ==
-                  Characters.dixon_prime(ccG)
+            @test Characters.dixon_prime(G) == Characters.dixon_prime(ccG)
         end
     end
 
@@ -95,13 +94,13 @@ end
 
             let ccG = ccG, p = 29
                 F = Characters.FiniteFields.GF{p}
-                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                Ns = [Characters.CMMatrix(ccG, i) for i in 1:length(ccG)]
                 @test_throws AssertionError Characters.common_esd(Ns, F)
             end
 
             let ccG = ccG, p = 31
                 F = Characters.FiniteFields.GF{p}
-                Ns = [Characters.CMMatrix(ccG, i) for i = 1:length(ccG)]
+                Ns = [Characters.CMMatrix(ccG, i) for i in 1:length(ccG)]
                 esd = Characters.EigenSpaceDecomposition(F.(Ns[1]))
                 esd = Characters.refine(esd, F.(Ns[2]))
                 esd = Characters.refine(esd, F.(Ns[3]))
@@ -124,7 +123,6 @@ end
 
             @test Set(Int.(values(χ)) for χ in chars) ==
                   Set([[3, 0, 0, 6], [1, 4, 2, 1], [1, 2, 4, 1], [1, 1, 1, 1]])
-
         end
     end
 
@@ -223,9 +221,9 @@ end
     @testset "Different base rings for characters_dixon" begin
         G = PermGroup(perm"(1,2,3,4)")
         @test eltype(Characters.irreducible_characters(Rational{Int}, G)) <:
-            Characters.Character{<:Cyclotomic{Rational{Int}}}
+              Characters.Character{<:Cyclotomic{Rational{Int}}}
         @test eltype(Characters.irreducible_characters(Rational{BigInt}, G)) <:
-            Characters.Character{<:Cyclotomic{Rational{BigInt}}}
+              Characters.Character{<:Cyclotomic{Rational{BigInt}}}
     end
 
     @time @testset "SmallPermGroups" begin

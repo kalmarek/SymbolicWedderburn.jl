@@ -10,10 +10,12 @@ struct Word{T}
 end
 Base.show(io::IO, w::Word) = join(io, w.alphabet[w.letters], "·")
 
-Base.:(==)(w::Word, v::Word) =
-    w.alphabet == v.alphabet && w.letters == v.letters
-Base.hash(w::Word, h::UInt = UInt(0)) =
-    hash(w.alphabet, hash(w.letters, hash(Word, h)))
+function Base.:(==)(w::Word, v::Word)
+    return w.alphabet == v.alphabet && w.letters == v.letters
+end
+function Base.hash(w::Word, h::UInt = UInt(0))
+    return hash(w.alphabet, hash(w.letters, hash(Word, h)))
+end
 
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
@@ -24,6 +26,17 @@ function SymbolicWedderburn.action(
     return Word(w.alphabet, [l^p for l in w.letters])
 end
 
+function allwords(A, radius)
+    words = [Word(A, [i]) for i in 1:length(A)]
+    for r in 2:radius
+        append!(
+            words,
+            [Word(A, collect(w)) for w in Iterators.product(fill(1:3, r)...)],
+        )
+    end
+    return words
+end
+
 @testset "Extending homomorphism" begin
     words = let A = [:a, :b, :c], radius = 4
         w = Word(A, [1, 2, 3, 2, 1])
@@ -32,17 +45,7 @@ end
         @test SymbolicWedderburn.action(OnLetters(), perm"(2,3)", w) ==
               Word(A, [1, 3, 2, 3, 1])
 
-        words = [Word(A, [1]), Word(A, [2]), Word(A, [3])]
-        for r in 2:radius
-            append!(
-                words,
-                [
-                    Word(A, collect(w)) for
-                    w in Iterators.product(fill(1:3, r)...)
-                ],
-            )
-        end
-        words
+        words = allwords(A, radius)
     end
 
     G = PermGroup(perm"(1,2,3)", perm"(1,2)") # G acts on words permuting letters
@@ -51,7 +54,7 @@ end
     ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
         G,
         action,
-        words,
+        words;
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
@@ -91,7 +94,7 @@ end
             @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 18
         end
 
-        @test symmetry_adapted_basis(G, action, words, semisimple = true) isa
+        @test symmetry_adapted_basis(G, action, words; semisimple = true) isa
               Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
@@ -99,18 +102,18 @@ end
             Rational{Int},
             G,
             action,
-            words,
+            words;
             semisimple = true,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
         @test symmetry_adapted_basis(
             Float64,
             G,
             action,
-            words,
+            words;
             semisimple = true,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
-        sa_basis = symmetry_adapted_basis(G, action, words, semisimple = true)
+        sa_basis = symmetry_adapted_basis(G, action, words; semisimple = true)
 
         @test [convert(Matrix{Rational{Int}}, b) for b in sa_basis] isa Vector{Matrix{Rational{Int}}}
         @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
@@ -170,7 +173,7 @@ end
             @test size(mpr, 1) == m
         end
 
-        @test symmetry_adapted_basis(G, action, words, semisimple = false) isa
+        @test symmetry_adapted_basis(G, action, words; semisimple = false) isa
               Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
@@ -178,14 +181,14 @@ end
             Rational{Int},
             G,
             action,
-            words,
+            words;
             semisimple = false,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
         @test symmetry_adapted_basis(
             Float64,
             G,
             action,
-            words,
+            words;
             semisimple = false,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
