@@ -37,13 +37,19 @@ function StarAlgebras.AlgebraElement(
     return x
 end
 
-function algebra_elt_from_support(support, RG::StarAlgebra; val=1 // length(support))
+function algebra_elt_from_support(
+    support,
+    RG::StarAlgebra;
+    val = 1 // length(support),
+)
     b = basis(RG)
     I = [b[s] for s in support]
     V = fill(val, length(support))
     return AlgebraElement(sparsevec(I, V, length(b)), RG)
 end
-_small_idem(RG::StarAlgebra{<:Group}, H) = algebra_elt_from_support(H, RG, val=1 // length(H))
+function _small_idem(RG::StarAlgebra{<:Group}, H)
+    return algebra_elt_from_support(H, RG; val = 1 // length(H))
+end
 
 struct CyclicSubgroups{Gr,GEl}
     group::Gr
@@ -52,12 +58,15 @@ struct CyclicSubgroups{Gr,GEl}
     max_order::Int
 end
 
-function CyclicSubgroups(G::Group; min_order=1, max_order=order(Int, G))
+function CyclicSubgroups(G::Group; min_order = 1, max_order = order(Int, G))
     seen = Dict{Int,Set{eltype(G)}}()
     return CyclicSubgroups{typeof(G),eltype(G)}(G, seen, min_order, max_order)
 end
 
-function Base.deepcopy_internal(citr::CyclicSubgroups{Gr,E}, iddict::IdDict) where {Gr,E}
+function Base.deepcopy_internal(
+    citr::CyclicSubgroups{Gr,E},
+    iddict::IdDict,
+) where {Gr,E}
     G = citr.group
     seen = Base.deepcopy_internal(citr.seen, iddict)
     return CyclicSubgroups{Gr,E}(G, seen, citr.min_order, citr.max_order)

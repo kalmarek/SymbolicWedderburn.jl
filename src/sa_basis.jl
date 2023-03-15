@@ -1,6 +1,6 @@
 function affordable_real(
     irreducible_characters,
-    multiplicities=fill(1, length(irreducible_characters)),
+    multiplicities = fill(1, length(irreducible_characters)),
 )
     irr_real = similar(irreducible_characters, 0)
     mls_real = similar(multiplicities, 0)
@@ -14,7 +14,7 @@ function affordable_real(
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
             @assert k !== nothing
-            @debug "complex" χ conj(χ)=irreducible_characters[k]
+            @debug "complex" χ conj(χ) = irreducible_characters[k]
             if k > i # ... we haven't already observed a conjugate of
                 @assert multiplicities[i] == multiplicities[k]
                 push!(irr_real, χ + cχ)
@@ -32,7 +32,7 @@ function symmetry_adapted_basis(
     semisimple::Bool = false,
 )
     tbl = CharacterTable(S, G)
-    return symmetry_adapted_basis(eltype(tbl), tbl, semisimple = semisimple)
+    return symmetry_adapted_basis(eltype(tbl), tbl; semisimple = semisimple)
 end
 
 """
@@ -77,12 +77,18 @@ overflow occurs during the computation of characters) specifying
   effort to find _minimal projection system_ is made, i.e all, some (or none!)
   of the returned blocks corresponds to a **projection** `V → Wₖ ≅ mₖVₖ → Vₖ` for a single irreducible subspace `Vₖ`. This means that some blocks can not be further decomposed into nontrivial `G`-invariant subspaces.
 """
-symmetry_adapted_basis(
+function symmetry_adapted_basis(
     T::Type,
     G::PermutationGroups.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
-) = symmetry_adapted_basis(T, CharacterTable(S, G), semisimple = semisimple)
+)
+    return symmetry_adapted_basis(
+        T,
+        CharacterTable(S, G);
+        semisimple = semisimple,
+    )
+end
 
 function symmetry_adapted_basis(
     T::Type,
@@ -125,11 +131,21 @@ function symmetry_adapted_basis(
     action::Action,
     basis,
     S::Type = Rational{Int};
-    semisimple=false,
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
-    return symmetry_adapted_basis(eltype(tbl), tbl, ehom, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(
+        parent(tbl),
+        action,
+        basis;
+        precompute = true,
+    )
+    return symmetry_adapted_basis(
+        eltype(tbl),
+        tbl,
+        ehom;
+        semisimple = semisimple,
+    )
 end
 
 function symmetry_adapted_basis(
@@ -138,18 +154,23 @@ function symmetry_adapted_basis(
     action::Action,
     basis,
     S::Type = Rational{Int};
-    semisimple=false,
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
-    return symmetry_adapted_basis(T, tbl, ehom, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(
+        parent(tbl),
+        action,
+        basis;
+        precompute = true,
+    )
+    return symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 end
 
 function symmetry_adapted_basis(
     T::Type,
     tbl::CharacterTable,
     ehom::InducedActionHomomorphism;
-    semisimple=false,
+    semisimple = false,
 )
     ψ = action_character(ehom, tbl)
 
@@ -159,7 +180,6 @@ function symmetry_adapted_basis(
         @debug "Decomposition into real character spaces:
         degrees:        $(join([lpad(d, 6) for d in degree.(irr)], ""))
         multiplicities: $(join([lpad(m, 6) for m in multips], ""))"
-
     end
 
     if semisimple || all(isone ∘ degree, irr)

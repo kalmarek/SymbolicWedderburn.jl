@@ -2,8 +2,9 @@
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl <: AbstractOrbit{<:PermutationGroups.AbstractPerm}}
-    vals = Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
+) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPerm}}
+    vals =
+        Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
@@ -11,16 +12,19 @@ end
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl <: AbstractOrbit{<:AbstractMatrix}}
+) where {CCl<:AbstractOrbit{<:AbstractMatrix}}
     vals = [tr(first(cc)) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
 end
 
 function _action_class_fun(
     hom::InducedActionHomomorphism{<:ByPermutations},
-    conjugacy_cls
+    conjugacy_cls,
 )
-    vals = Int[PermutationGroups.nfixedpoints(induce(hom, first(cc))) for cc in conjugacy_cls]
+    vals = Int[
+        PermutationGroups.nfixedpoints(induce(hom, first(cc))) for
+        cc in conjugacy_cls
+    ]
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
@@ -42,22 +46,31 @@ conjugacy classes `conjugacy_cls`.
 This corresponds to the classical definition of characters as a traces of the
 representation matrices.
 """
-action_character(conjugacy_clss, tbl::CharacterTable) =
-    action_character(eltype(tbl), conjugacy_clss, tbl)
+function action_character(conjugacy_clss, tbl::CharacterTable)
+    return action_character(eltype(tbl), conjugacy_clss, tbl)
+end
 
-function action_character(::Type{T}, conjugacy_clss, tbl::CharacterTable) where T
+function action_character(
+    ::Type{T},
+    conjugacy_clss,
+    tbl::CharacterTable,
+) where {T}
     ac_char = _action_class_fun(conjugacy_clss)
     constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(tbl)]
     return Character{T}(tbl, constituents)
 end
 
-function action_character(::Type{T}, conjugacy_cls, tbl::CharacterTable) where T <: Union{AbstractFloat, ComplexF64}
+function action_character(
+    ::Type{T},
+    conjugacy_cls,
+    tbl::CharacterTable,
+) where {T<:Union{AbstractFloat,ComplexF64}}
     ac_char = _action_class_fun(conjugacy_cls)
 
     constituents = [dot(ac_char, χ) for χ in irreducible_characters(tbl)]
     all(constituents) do c
         ac = abs(c)
-        abs(ac - round(ac)) < eps(real(T))*length(conjugacy_cls)
+        return abs(ac - round(ac)) < eps(real(T)) * length(conjugacy_cls)
     end
 
     return Character{T}(tbl, round.(Int, abs.(constituents)))
@@ -71,14 +84,15 @@ elements in `conjugacy_classes(tbl)`.
 This corresponds to the classical definition of characters as a traces of the
 representation matrices.
 """
-action_character(hom::InducedActionHomomorphism, tbl::CharacterTable) =
-    action_character(eltype(tbl), hom, tbl)
+function action_character(hom::InducedActionHomomorphism, tbl::CharacterTable)
+    return action_character(eltype(tbl), hom, tbl)
+end
 
 function action_character(
     ::Type{T},
     hom::InducedActionHomomorphism,
-    tbl::CharacterTable
-) where T
+    tbl::CharacterTable,
+) where {T}
     ac_char = _action_class_fun(hom, conjugacy_classes(tbl))
     constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
     return Character{T}(tbl, constituents)

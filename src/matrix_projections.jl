@@ -17,16 +17,19 @@ _projection_size(m::AbstractMatrix) = size(m)
 
 _projection_size(::Nothing, χ::Character) = _projection_size(__an_elt(χ))
 _projection_size(::Nothing, α::AlgebraElement) = _projection_size(__an_elt(α))
-_projection_size(hom::InducedActionHomomorphism, χ::Character) =
-    _projection_size(induce(hom, __an_elt(χ)))
-_projection_size(hom::InducedActionHomomorphism, α::AlgebraElement) =
-    _projection_size(induce(hom, __an_elt(α)))
+function _projection_size(hom::InducedActionHomomorphism, χ::Character)
+    return _projection_size(induce(hom, __an_elt(χ)))
+end
+function _projection_size(hom::InducedActionHomomorphism, α::AlgebraElement)
+    return _projection_size(induce(hom, __an_elt(α)))
+end
 
 _hint(χ::Character) = length(conjugacy_classes(χ))
 _hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
 
-preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T} =
-    preallocate(T, nothing, χ)
+function preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T}
+    return preallocate(T, nothing, χ)
+end
 
 function preallocate(
     hom::InducedActionHomomorphism,
@@ -62,8 +65,9 @@ The precise type of `M` can be altered by overloading
 preallocate(::Type{T}, [hom::InducedActionHomomorphism, ]χ::Character)
 ```
 """
-matrix_projection(χ::Character{T}) where {T} =
-    _mproj_outsT!(preallocate(T, χ), χ)
+function matrix_projection(χ::Character{T}) where {T}
+    return _mproj_outsT!(preallocate(T, χ), χ)
+end
 
 function matrix_projection(
     hom::InducedActionHomomorphism,
@@ -80,8 +84,9 @@ function matrix_projection(χ::Character{T}) where {T<:Rational}
     end
 end
 
-matrix_projection(χ::Character{T}) where {T<:Union{Cyclotomic,Complex}} =
-    _mproj_fitsT!(preallocate(T, χ), χ)
+function matrix_projection(χ::Character{T}) where {T<:Union{Cyclotomic,Complex}}
+    return _mproj_fitsT!(preallocate(T, χ), χ)
+end
 function matrix_projection(
     hom::InducedActionHomomorphism,
     χ::Character{T},
@@ -140,11 +145,13 @@ The returned matrix defines so called *isotypical* projection.
 See also [matrix_projection](@ref).
 """
 matrix_projection_irr(χ::Character{T}) where {T} = matrix_projection_irr(T, χ)
-matrix_projection_irr(::Type{T}, χ::Character) where {T} =
-    matrix_projection_irr_acc!(preallocate(T, χ), χ, 1)
+function matrix_projection_irr(::Type{T}, χ::Character) where {T}
+    return matrix_projection_irr_acc!(preallocate(T, χ), χ, 1)
+end
 
-matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character) =
-    matrix_projection_irr_acc!(preallocate(hom, χ), hom, χ, 1)
+function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character)
+    return matrix_projection_irr_acc!(preallocate(hom, χ), hom, χ, 1)
+end
 
 function matrix_projection_irr_acc!(
     result::AbstractMatrix,
@@ -181,7 +188,7 @@ function matrix_projection_irr_acc!(
 end
 
 function matrix_projection_irr_acc!(
-    result::AbstractMatrix,
+    res::AbstractMatrix,
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
     weight,
@@ -268,11 +275,16 @@ representation given either by
 See also [matrix_projection](@ref).
 """
 matrix_representation(α::AlgebraElement) = matrix_representation(eltype(α), α)
-matrix_representation(::Type{T}, α::AlgebraElement) where {T} =
-    matrix_representation_acc!(preallocate(T, α), α)
+function matrix_representation(::Type{T}, α::AlgebraElement) where {T}
+    return matrix_representation_acc!(preallocate(T, α), α)
+end
 
-matrix_representation(hom::InducedActionHomomorphism, α::AlgebraElement) =
-    matrix_representation_acc!(preallocate(hom, α), hom, α)
+function matrix_representation(
+    hom::InducedActionHomomorphism,
+    α::AlgebraElement,
+)
+    return matrix_representation_acc!(preallocate(hom, α), hom, α)
+end
 
 function matrix_representation_acc!(
     result::AbstractMatrix,

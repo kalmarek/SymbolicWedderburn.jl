@@ -30,13 +30,13 @@ function WedderburnDecomposition(
     action::Action,
     basis_full,
     basis_half,
-    S=Rational{Int};
-    semisimple=false
+    S = Rational{Int};
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute=true)
+    ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
 
-    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple=semisimple)
+    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(tbl, action, basis)
@@ -103,7 +103,8 @@ function invariant_vectors(
     act::Action,
     basis::StarAlgebras.Basis,
 )
-    triv_χ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
+    triv_χ =
+        Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
     ehom = ExtensionHomomorphism(act, basis)
 
     mpr = matrix_projection_irr(ehom, triv_χ)
@@ -149,7 +150,6 @@ function invariant_vectors(
     act::BySignedPermutations,
     basis::StarAlgebras.Basis{T,I},
 ) where {T,I}
-
     G = parent(tbl)
     ordG = order(Int, G)
     elts = collect(G)

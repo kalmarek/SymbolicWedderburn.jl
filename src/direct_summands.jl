@@ -1,4 +1,4 @@
-struct DirectSummand{T, M<:AbstractMatrix{T}} <: AbstractMatrix{T}
+struct DirectSummand{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
     basis::M
     multiplicity::Int
     degree::Int
@@ -11,8 +11,9 @@ PermutationGroups.degree(ds::DirectSummand) = ds.degree
 multiplicity(ds::DirectSummand) = ds.multiplicity
 
 Base.size(ds::DirectSummand) = size(ds.basis)
-Base.@propagate_inbounds Base.getindex(ds::DirectSummand, i...) =
-    image_basis(ds)[i...]
+Base.@propagate_inbounds function Base.getindex(ds::DirectSummand, i...)
+    return image_basis(ds)[i...]
+end
 
 function SparseArrays.sparse(ds::DirectSummand)
     sp = sparse(image_basis(ds))
@@ -20,9 +21,9 @@ function SparseArrays.sparse(ds::DirectSummand)
 end
 
 function SparseArrays.droptol!(
-    ds::DirectSummand{T, <:AbstractSparseArray},
-    tol
-) where T
+    ds::DirectSummand{T,<:AbstractSparseArray},
+    tol,
+) where {T}
     droptol!(image_basis(ds), tol)
     return ds
 end
