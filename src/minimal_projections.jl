@@ -112,19 +112,31 @@ end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    iszero(α) && return zero(eltype(StarAlgebras.coeffs(α))) * zero(eltype(χ))
     return sum(α(g) * χ(g) for g in supp(α))
 end
 
-function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
-    subgroups=CyclicSubgroups(parent(RG), min_order=2),
-    iters=3
+function minimal_rank_projection(
+    χ::Character,
+    RG::StarAlgebra{<:Group};
+    subgroups = CyclicSubgroups(parent(RG); min_order = 2),
+    iters = 3,
 )
-    degree(χ) == 1 && return one(Rational{Int}, RG), true
+    degree(χ) == 1 && return one(Rational{Int}, RG), 1
+
+    π = one(Rational{Int}, RG)
+    rank = degree(χ)
 
     for H in subgroups
         µ = _small_idem(RG, H)
-        isone(χ(µ)) && µ^2 == µ && return µ, true
+        d = χ(µ)
+        isreal(d) || continue
+        rd = float(d)
+        isinteger(rd) || continue
+        if 0 < rd < rank
+            π = µ
+            rank = Int(rd)
+            isone(rank) && return (π, rank)
+        end
     end
 
     _id = [deepcopy(subgroups), deepcopy(subgroups)]
@@ -132,24 +144,35 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     for _ in 2:iters
         for sbgrps in Iterators.product(_id...)
             µ = *((_small_idem(RG, H) for H in sbgrps)...)
-            isone(χ(µ)) && µ^2 == µ && return µ, true
+            π^2 == π || continue
+            d = χ(µ)
+            isreal(d) || continue
+            rd = float(d)
+            isinteger(rd) || continue
+            if 0 < rd < rank
+                π = µ
+                rank = Int(rd)
+                isone(rank) && return (π, rank)
+            end
         end
         push!(_id, deepcopy(subgroups))
     end
     @debug "Could not find minimal projection for $χ"
-    return one(Rational{Int}, RG), false
+    return (π, rank)
 end
 
 function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
-    RG::StarAlgebra{<:Group}
+    RG::StarAlgebra{<:Group},
 )
     res = fetch.([Threads.@spawn minimal_rank_projection(χ, RG) for χ in chars])
 
-    r1p, simple = first.(res), last.(res) # rp1 are sparse storage
+    r1p, ranks = first.(res), last.(res) # rp1 are sparse storage
 
-    mps = [isone(µ) ? AlgebraElement(χ, RG) : µ * AlgebraElement(χ, RG)
-           for (µ, χ) in zip(r1p, chars)] # dense storage
+    mps = [
+        isone(µ) ? AlgebraElement(χ, RG) : µ * AlgebraElement(χ, RG) for
+        (µ, χ) in zip(r1p, chars)
+    ] # dense storage
 
-    return mps, simple
+    return mps, ranks
 end
