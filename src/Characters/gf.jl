@@ -26,8 +26,9 @@ characteristic(::GF{q}) where {q} = q
 
 Base.:(==)(n::GF{q}, m::GF{q}) where {q} = Int(n) == Int(m)
 # hash(GF) == 0x04fd9e474909f8bf
-Base.hash(n::GF{q}, h::UInt) where {q} =
-    xor(0x04fd9e474909f8bf, hash(q, hash(Int(n), h)))
+function Base.hash(n::GF{q}, h::UInt) where {q}
+    return xor(0x04fd9e474909f8bf, hash(q, hash(Int(n), h)))
+end
 
 Base.:+(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) + Int(m), false)
 Base.:-(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) - Int(m), false)
@@ -49,12 +50,14 @@ Base.iszero(n::GF) = iszero(Int(n))
 Base.isone(n::GF) = isone(Int(n))
 
 Base.promote_rule(::Type{GF{q}}, ::Type{I}) where {q,I<:Integer} = GF{q}
-Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q} = throw(
-    DomainError(
-        (GF{p}, GF{q}),
-        "Cannot perform arithmetic on elements from different fields",
-    ),
-)
+function Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q}
+    throw(
+        DomainError(
+            (GF{p}, GF{q}),
+            "Cannot perform arithmetic on elements from different fields",
+        ),
+    )
+end
 
 Base.div(n::GF{q}, m::Integer) where {q} = n / GF{q}(m, false)
 Base.div(m::Integer, n::GF{q}) where {q} = GF{q}(m, false) / n
@@ -84,10 +87,10 @@ function rootofunity(::Type{GF{q}}, ord::Integer) where {q}
     d, r = divrem(q - 1, ord)
     !iszero(r) &&
         throw(DomainError(GF{q}, "No root of unity of order $ord in $(GF{q})."))
-    for i = 2:q-1
+    for i in 2:q-1
         g = GF{q}(i, false)
         acc = g
-        for j = 2:ord-1
+        for j in 2:ord-1
             acc *= g
             isone(acc) && @goto next_elt
         end
@@ -104,15 +107,16 @@ function sqrtmod(n::Integer, q::Integer)
     l = legendresymbol(n, q)
     l == 0 && return zero(n)
     l == -1 && throw(DomainError(n, "$n is not a square modulo $q"))
-    for i = 1:q # bruteforce loop
+    for i in 1:q # bruteforce loop
         y = powermod(i, 2, q)
         y == n && return oftype(n, i)
     end
     return zero(n) # never hit, to keep compiler happy
 end
 
-Base.iterate(::Type{GF{q}}, s = 0) where {q} =
-    s >= q ? nothing : (GF{q}(s, false), s + 1)
+function Base.iterate(::Type{GF{q}}, s = 0) where {q}
+    return s >= q ? nothing : (GF{q}(s, false), s + 1)
+end
 Base.eltype(::Type{GF{q}}) where {q} = GF{q}
 Base.size(gf::Type{<:GF}) = (characteristic(gf),)
 

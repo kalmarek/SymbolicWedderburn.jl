@@ -37,7 +37,7 @@ end
 function _find_l(M::AbstractMatrix)
     # this function should be redundant when defining a better structure for echelonized subspaces
     l = Int[]
-    for i = 1:size(M, 2)
+    for i in 1:size(M, 2)
         j = findfirst(isone, @view M[length(l)+1:end, i])
         if j !== nothing
             push!(l, i)
@@ -73,15 +73,15 @@ mutable struct EigenSpaceDecomposition{T<:FiniteFields.GF}
         basis::Matrix{T},
         eigspace_ptrs::AbstractVector{<:Integer},
     ) where {T<:FiniteFields.GF}
-
         @assert eigspace_ptrs[1] == 1
         @assert eigspace_ptrs[end] == size(basis, 1) + 1
         return new{T}(basis, eigspace_ptrs)
     end
 end
 
-EigenSpaceDecomposition(M::Matrix{T}) where {T<:FiniteFields.GF} =
-    EigenSpaceDecomposition(eigen_decomposition!(deepcopy(M))...)
+function EigenSpaceDecomposition(M::Matrix{T}) where {T<:FiniteFields.GF}
+    return EigenSpaceDecomposition(eigen_decomposition!(deepcopy(M))...)
+end
 
 function Base.show(
     io::IO,
@@ -89,11 +89,11 @@ function Base.show(
     esd::EigenSpaceDecomposition{T},
 ) where {T}
     println(io, tuple(diff(esd.eigspace_ptrs)...), "-splitting over ", T)
-    print(io, esd.basis)
+    return print(io, esd.basis)
 end
 
 function Base.show(io::IO, esd::EigenSpaceDecomposition{T}) where {T}
-    print(io, tuple(diff(esd.eigspace_ptrs)...), "-splitting over ", T)
+    return print(io, tuple(diff(esd.eigspace_ptrs)...), "-splitting over ", T)
 end
 
 Base.length(esd::EigenSpaceDecomposition) = length(esd.eigspace_ptrs) - 1
@@ -111,19 +111,21 @@ end
 
 Base.eltype(esd::EigenSpaceDecomposition{T}) where {T} = Matrix{T}
 
-LinearAlgebra.isdiag(esd::EigenSpaceDecomposition) =
-    esd.eigspace_ptrs == 1:length(esd)+1
+function LinearAlgebra.isdiag(esd::EigenSpaceDecomposition)
+    return esd.eigspace_ptrs == 1:length(esd)+1
+end
 
 function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where {T}
     nbasis = Array{T}(undef, 0, size(first(esd), 2))
     nptrs = [1]
-    for (i, e) in enumerate(esd)
-        if size(e, 1) > 1
-            esd2, ptrs = eigen_decomposition!(e * @view M[:, _find_l(e)])
-            nbasis = vcat(nbasis, esd2 * e)
+    for eigspace in esd
+        if size(eigspace, 1) > 1
+            esd2, ptrs =
+                eigen_decomposition!(eigspace * @view M[:, _find_l(eigspace)])
+            nbasis = vcat(nbasis, esd2 * eigspace)
             append!(nptrs, ptrs .+ (pop!(nptrs) - 1))
         else
-            nbasis = vcat(nbasis, e)
+            nbasis = vcat(nbasis, eigspace)
             push!(nptrs, nptrs[end] + 1)
         end
     end

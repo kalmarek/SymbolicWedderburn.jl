@@ -20,7 +20,7 @@ function dixon_prime(ordG::Integer, exponent::Integer)
     return p
 end
 
-function common_esd(Ns, F::Type{FiniteFields.GF{q}}) where q
+function common_esd(Ns, F::Type{FiniteFields.GF{q}}) where {q}
     @assert isprime(q)
     itr = iterate(Ns)
     @assert itr !== nothing
@@ -37,7 +37,6 @@ function _multiplicities(
     chars::AbstractVector{<:Character{F}},
     cclasses = conjugacy_classes(first(chars)),
 ) where {F<:FiniteFields.GF}
-
     e = Int(exponent(cclasses))
     ie = inv(F(e))
 
@@ -57,9 +56,9 @@ function _multiplicities(
     collect(pmap)
 
     for (i, χ) in enumerate(chars)
-        Threads.@threads for j = 1:length(cclasses)
-            for k = 0:e-1
-                val = Int(ie * sum(χ[pmap[j, l]] * ωs[l+1, k+1] for l = 0:e-1))
+        Threads.@threads for j in 1:length(cclasses)
+            for k in 0:e-1
+                val = Int(ie * sum(χ[pmap[j, l]] * ωs[l+1, k+1] for l in 0:e-1))
                 multiplicities[i, j, k+1] = val
             end
         end
