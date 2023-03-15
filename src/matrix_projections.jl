@@ -350,8 +350,8 @@ end
 
 """
     image_basis(A::AbstractMatrix)
-    image_basis([hom::InducedActionHomomorphism, ]χ::Character)
-    image_basis([hom::InducedActionHomomorphism, ]α::AlgebraElement)
+    image_basis([hom::InducedActionHomomorphism, ]χ::Character[, rank])
+    image_basis([hom::InducedActionHomomorphism, ]α::AlgebraElement[, rank])
 Return basis of the row-space of a matrix.
 
 For characters or algebra elements return a basis of the row-space of
@@ -360,9 +360,12 @@ For characters or algebra elements return a basis of the row-space of
 Two methods are employed to achieve the goal.
 * By default (symbolic, exact) row echelon form is produced, and therefore there
 is no guarantee on the orthogonality of the returned basis vectors (rows).
-* If `eltype(A) <: AbstractFloat` this is followed by a call to `svd` (or
-`qr` in the sparse case) and the appropriate rows of its orthogonal factor are
+* If `eltype(A) <: AbstractFloat` a thin `svd` (or `qr` in the sparse case)
+decomposition is computed and the appropriate rows of its orthogonal factor are
 returned, thus the basis is (numerically) orthonormal.
+
+If the dimension (`=rank` of the matrix) is known beforehand (because of e.g.
+algebra) it can be passed to `image_basis` to use more efficient methods.
 
 # Examples:
 ```julia
@@ -386,76 +389,87 @@ julia> ibf = SymbolicWedderburn.image_basis(float.(a))
 
 ```
 """
-image_basis(A::AbstractMatrix) =
-    ((m, p) = image_basis!(deepcopy(A)); m[1:length(p), :])
+image_basis(A::AbstractMatrix, rank = nothing) = image_basis!(deepcopy(A), rank)
 
-function image_basis(χ::Character)
-    mpr = isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
-    image, pivots = image_basis!(mpr)
-    return image[1:length(pivots), :]
+function image_basis(α::Union{Character,AlgebraElement}, rank = nothing)
+    mpr = matrix_representation(α)
+    return image_basis!(mpr, rank)
 end
 
-function image_basis(hom::InducedActionHomomorphism, χ::Character)
-    mpr =
-        isirreducible(χ) ? matrix_projection_irr(hom, χ) :
-        matrix_projection(hom, χ)
-    image, pivots = image_basis!(mpr)
-    return image[1:length(pivots), :]
+function image_basis(
+    hom::InducedActionHomomorphism,
+    α::Union{Character,AlgebraElement},
+    rank = nothing,
+)
+    mpr = matrix_representation(hom, α)
+    return image_basis!(mpr, rank)
 end
 
-function image_basis(α::AlgebraElement)
-    image, pivots = image_basis!(matrix_representation(α))
-    return image[1:length(pivots), :]
-end
+##
+# the internal, (possibly) modifying versions
 
-function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
-    image, pivots = image_basis!(matrix_representation(hom, α))
-    return image[1:length(pivots), :]
-end
+_eps(T::Type{<:AbstractFloat}) = eps(T)
+_eps(::Type{Complex{T}}) where {T} = 2 * _eps(real(T))
+_eps(::Type{<:Cyclotomic{T}}) where {T} = 2_eps(T)
+_eps(::Any) = 0.0
 
-image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
-function image_basis!(A::AbstractSparseMatrix)
-    A, p = row_echelon_form!(A)
-    dropzeros!(A)
-    return A, p
-end
-
-_eps(::Type{T}) where {T} = T <: Complex ? 2eps(real(T)) : eps(T)
-
-function _orth!(M::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
-    F = svd!(convert(Matrix{T}, M))
-    M_rank = count(>(maximum(size(M)) * _eps(T)), F.S)
-    return F.Vt, M_rank
-end
-
-function _orth!(
-    M::AbstractSparseMatrix{T},
-) where {T<:Union{AbstractFloat,Complex}}
-    F = qr(M)
-    M_rank = rank(F)
-    result = let tmp = F.Q * Matrix(I, size(F.Q, 2), M_rank)
-        sparse(tmp[invperm(F.prow), :]')
+function image_basis!(A::AbstractMatrix, rank = nothing)
+    img, pivots = row_echelon_form!(A)
+    if img isa AbstractSparseArray
+        ε = _eps(eltype(img))
+        if iszero(ε)
+            dropzeros!(img)
+        else
+            droptol!(img, _eps(eltype(img)) * max(size(img)...))
+        end
     end
-    result = droptol!(result, maximum(size(result)) * _eps(T))
-    return result, M_rank
+    # TODO: orthogonalize the result
+    return img[pivots, :]
 end
 
 function image_basis!(
     A::AbstractMatrix{T},
+    ::Nothing,
 ) where {T<:Union{AbstractFloat,Complex}}
-    A, p = row_echelon_form!(A)
-    A_orth, A_rank = _orth!(@view A[1:length(p), :])
-    @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
-    return A_orth, 1:A_rank
+    F = svd!(A)
+    tol = _eps(T) * first(F.S)
+    rk = count(x -> x > tol, F.S)
+    return Matrix((@view F.U[1:rk, :])')
 end
 
 function image_basis!(
     A::AbstractSparseMatrix{T},
+    ::Nothing,
 ) where {T<:Union{AbstractFloat,Complex}}
-    N = LinearAlgebra.checksquare(A)
-    droptol!(A, N * _eps(T))
-    # A, p = row_echelon_form!(A)
-    A_orth, A_rank = _orth!(A)
-    # @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
-    return A_orth, 1:A_rank
+    F = qr(A)
+    rk = rank(F)
+    img = let tmp = F.Q * Matrix(I, size(A, 1), rk)
+        pinv = getfield(F, :rpivinv)
+        sparse((@view tmp[pinv, :])')
+    end
+    return droptol!(img, _eps(T) * max(size(img)...))
+end
+
+# to disambiguate
+function image_basis!(
+    M::AbstractMatrix{T},
+    rank::Integer,
+) where {T<:Union{AbstractFloat,Complex}}
+    img = image_basis!(M, nothing)
+    if size(img, 1) ≠ rank
+        @warn "Possibly wrong numerical rank: (numerical) $(size(img, 1)) ≠ $rank (expected)"
+    end
+    return img
+end
+
+function image_basis!(
+    M::AbstractSparseMatrix{T},
+    rank::Integer,
+) where {T<:Union{AbstractFloat,Complex}}
+    # return _image_basis!(M, rank)
+    img = image_basis!(M, nothing)
+    if size(img, 1) ≠ rank
+        @warn "Possibly wrong rank estimate? (numerical) $(size(img, 1)) ≠ $rank (expected)"
+    end
+    return img
 end
