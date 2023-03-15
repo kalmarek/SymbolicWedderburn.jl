@@ -59,43 +59,52 @@ end
 invariant_vectors(wbdec::WedderburnDecomposition) = wbdec.invariants
 StarAlgebras.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
-Base.eltype(wbdec::WedderburnDecomposition) =
-    eltype(eltype(direct_summands(wbdec)))
-
-function diagonalize(M::AbstractMatrix, wbdec::WedderburnDecomposition)
-    T = promote_type(eltype(M), eltype(wbdec))
-    Mπs = [(d = size(Uπ, 1); similar(M, T, d, d)) for Uπ in direct_summands(wbdec)]
-    return diagonalize!(Mπs, M, wbdec)
+function Base.eltype(wbdec::WedderburnDecomposition)
+    return eltype(eltype(direct_summands(wbdec)))
 end
 
-function diagonalize!(
-    Ms::AbstractVector{<:AbstractMatrix},
-    M::AbstractMatrix,
-    wbdec::WedderburnDecomposition
-)
-    return diagonalize!(Ms, M, direct_summands(wbdec))
-end
-
-function diagonalize!(
-    Ms::AbstractVector{<:AbstractMatrix},
+function diagonalize(
     A::AbstractMatrix,
-    dsummands::AbstractVector{<:DirectSummand},
+    wbdec::WedderburnDecomposition;
+    trace_preserving::Bool = true,
 )
-    @assert axes(Ms) == axes(dsummands)
-    @assert all(size(ds, 1) == size(M, 1) for (ds, M) in zip(dsummands, Ms))
-    @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
-    @assert all(==(size(M)...) for M in Ms)
+    T = promote_type(eltype(A), eltype(wbdec))
+    As = [
+        (d = size(Uπ, 1); similar(A, T, d, d)) for Uπ in direct_summands(wbdec)
+    ]
+    return diagonalize!(As, A, wbdec; trace_preserving = trace_preserving)
+end
 
-    @sync for (ds, M) in zip(dsummands, Ms)
+function diagonalize!(
+    As::AbstractVector{<:AbstractMatrix},
+    A::AbstractMatrix,
+    wbdec::WedderburnDecomposition;
+    trace_preserving::Bool = true,
+)
+    dsummands = direct_summands(wbdec)
+    @assert axes(As) == axes(dsummands)
+    @assert all(size(ds, 1) == size(M, 1) for (ds, M) in zip(dsummands, As))
+    @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
+    @assert all(==(size(M)...) for M in As)
+
+    @sync for (ds, M) in zip(dsummands, As)
         Threads.@spawn begin
             U = image_basis(ds)
-            d = degree(ds)
             # this is the faster version when U are row-based
             # re-test when U move to column-based
-            @inbounds M .= (U * (A * U')) .* d
+            M .= (U * (A * U'))
+            if trace_preserving
+                M .*= degree(ds)
+            end
         end
     end
-    return Ms
+    thr = length(dsummands) * size(A, 1) * eps(eltype(wbdec))
+    if trace_preserving && abs(tr(A) - sum(tr, As)) > thr
+        @warn "decomposition did not preserve the trace; check the invariance of A" tr(
+            A,
+        ) sum(tr, As)
+    end
+    return As
 end
 
 function invariant_vectors(
