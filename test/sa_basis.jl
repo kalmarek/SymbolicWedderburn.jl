@@ -161,8 +161,9 @@ end
                                   2 * multiplicity(b) == size(b, 1)
                             # the first condiditon doesn't hold for realified characters;
                         else
-                            @test multiplicity(b) *
-                                  SymbolicWedderburn.degree(b) == size(b, 1)
+                            rk, res = divrem(size(b, 1), multiplicity(b))
+                            @test res == 0
+                            @test 1 ≤ rk ≤ SymbolicWedderburn.degree(b)
                         end
                     end
                 end

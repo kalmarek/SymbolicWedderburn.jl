@@ -222,7 +222,7 @@ function _symmetry_adapted_basis(
             rk = m * deg
             image =
                 isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            DirectSummand(image, m, deg, isone(deg))
+            DirectSummand(image, m, deg)
         end
     end
     return fetch.(res)
@@ -246,7 +246,7 @@ function _symmetry_adapted_basis(
             rk = m * r
             image =
                 isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            return DirectSummand(image, m, deg, isone(r))
+            return DirectSummand(image, m, deg)
         end
     end
     direct_summands = fetch.(res)
