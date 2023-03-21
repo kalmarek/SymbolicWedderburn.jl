@@ -38,11 +38,11 @@ end
 """
     ByLinearTransformation <: Action
 A type of action where a group acts through linear transformations on an
-(implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, … eₙ)`.
+(implicit) linear space `ℝᴮ` with basis `B = (e₁, … eₙ)`.
 
 That means that for every group element `g ∈ G` and every `eₖ ∈ B`
 ```
-action(act::ByPermutations, g, eₖ) = v
+action(act::ByLinearTransformation, g, eₖ) = v
 ```
 where `v = a₁e₁ + ⋯ + aₙeₙ`. Additionally [`decompose`](@ref) must be
 implemented to return a (possibly sparse) decomposition of `v` in `B`.
@@ -61,6 +61,10 @@ coeff_type(ac::ByLinearTransformation) =
     throw("No fallback is provided for $(typeof(ac)). You need to implement
           `coeff_type(::$(typeof(ac)))`.")
 
+"""
+    induce(ac::ByLinearTransformation, hom::InducedActionHomomorphism, g::GroupElement)
+Return a sparse matrix representation of the action by `g`` in the basis provided by `hom`
+"""
 function induce(
     ac::ByLinearTransformation,
     hom::InducedActionHomomorphism,
@@ -112,7 +116,7 @@ decompose(x, hom::InducedActionHomomorphism) =
           `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
 
 """
-    BySignedPermutations
+    BySignedPermutations <: ByLinearTransformation
 A type of action where a group acts through permutations _with sign_ on an
 (implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, …, eₙ)`.
 
@@ -134,7 +138,7 @@ coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
 function induce(
     ac::BySignedPermutations,
     hom::InducedActionHomomorphism,
-    g::GroupElement, # need to be signed permutation group element
+    g::GroupElement,
 )
     bs = basis(hom)
     n = length(bs)
@@ -144,9 +148,9 @@ function induce(
     V = coeff_type(ac)[]
 
     for (i, f) in enumerate(bs)
-        k, s = action(action(hom), g, f) # k::MonoidElement
+        k, s = action(action(hom), g, f) # act and decompose
         push!(I, i)
-        push!(J, bs[k]) # refactor into decompose(::MonoidElement, hom)?
+        push!(J, bs[k])
         push!(V, s)
     end
     return sparse(I, J, V)
