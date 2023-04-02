@@ -1,9 +1,9 @@
 function _group_algebra(G::Group)
     @assert isfinite(G)
     b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
-    RG = if order(Int, G) <= (typemax(UInt16) >> 1) # 32767
+    RG = if order(Int, G) <= (typemax(UInt16) >> 2)
         StarAlgebra(G, b, (length(b), length(b)); precompute = true)
-        # cache is about ~ 1Gb
+        # the cache is ~ 0.5 GB
     else
         StarAlgebra(G, b)
     end
