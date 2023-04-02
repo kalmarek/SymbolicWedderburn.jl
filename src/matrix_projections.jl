@@ -1,6 +1,6 @@
 ## preallocation
 
-function _preallocate_spmatrix(::Type{T}, sizes::Tuple, sizehint) where {T}
+function _preallocate(::Type{T}, sizes::Tuple, sizehint) where {T}
     res = spzeros(T, sizes...)
     @static if VERSION >= v"1.7"
         sizehint!(res, first(sizes) * sizehint)
@@ -45,7 +45,7 @@ function preallocate(
     χ::Union{Character,AlgebraElement},
 ) where {T}
     sizes = _projection_size(a, χ)
-    return _preallocate_spmatrix(T, sizes, _hint(χ))
+    return _preallocate(T, sizes, _hint(χ))
 end
 
 ## matrix projection [irreducible]
@@ -163,7 +163,7 @@ function matrix_projection_irr_acc!(
     ccls = conjugacy_classes(χ)
     vals = collect(values(χ))
     weight *= degree(χ) // sum(length, ccls)
-    matrix_projection_irr_acc!(result, vals, ccls, weight)
+    result = matrix_projection_irr_acc!(result, vals, ccls, weight)
     return result
 end
 
@@ -174,16 +174,21 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (val, cc) in zip(vals, ccls)
         iszero(val) && continue
         w = weight * val
         for g in cc
             for i in 1:size(result, 1)
-                result[i, i^g] += w
+                push!(I, i)
+                push!(J, i^g)
+                push!(V, w)
             end
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
@@ -215,7 +220,7 @@ function matrix_projection_irr_acc!(
     vals = collect(values(χ))
     ccls = conjugacy_classes(χ)
     weight *= degree(χ) // sum(length, ccls)
-    matrix_projection_irr_acc!(result, hom, vals, ccls, weight)
+    result = matrix_projection_irr_acc!(result, hom, vals, ccls, weight)
     return result
 end
 
@@ -227,6 +232,9 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (val, ccl) in zip(class_values, conjugacy_cls)
         iszero(val) && continue
         w = weight * val
@@ -234,10 +242,13 @@ function matrix_projection_irr_acc!(
             h = induce(hom, g)
             @assert h isa PermutationGroups.Perm
             for i in 1:size(result, 1)
-                result[i, i^h] += w
+                push!(I, i)
+                push!(J, i^h)
+                push!(V, w)
             end
         end
     end
+    result += sparse(I, J, V)
     return result
 end
 
@@ -293,14 +304,19 @@ function matrix_representation_acc!(
     },
 )
     b = basis(parent(α))
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         g = b[idx]
         iszero(val) && continue
         for i in 1:size(result, 1)
-            result[i, i^g] += val
+            push!(I, i)
+            push!(J, i^g)
+            push!(V, val)
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
@@ -310,15 +326,20 @@ function matrix_representation_acc!(
     α::AlgebraElement,
 )
     b = basis(parent(α))
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
         g = induce(hom, b[idx])
         @assert g isa PermutationGroups.Perm
         for i in 1:size(result, 1)
-            result[i, i^g] += val
+            push!(I, i)
+            push!(J, i^g)
+            push!(V, val)
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
