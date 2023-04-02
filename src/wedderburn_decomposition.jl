@@ -87,22 +87,31 @@ function diagonalize!(
     @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
     @assert all(==(size(M)...) for M in As)
 
-    @sync for (ds, M) in zip(dsummands, As)
-        Threads.@spawn begin
-            U = image_basis(ds)
-            # this is the faster version when U are row-based
-            # re-test when U move to column-based
-            M .= (U * (A * U'))
-            if trace_preserving
-                M .*= degree(ds)
+    _eps = length(dsummands) * size(A, 1) * eps(eltype(wbdec))
+
+    Threads.@threads for i in eachindex(As)
+        ds = dsummands[i]
+        U = image_basis(ds)
+        # this is the faster version when U are row-based
+        # re-test when U move to column-based
+        As[i] .= (U * (A * U'))
+        if trace_preserving
+            As[i] .*= degree(ds)
+        end
+        if issparse(As[i])
+            if eltype(As[i]) <: AbstractFloat
+                SparseArrays.droptol!(As[i], _eps)
+            else
+                SparseArrays.dropzeros!(As[i])
             end
         end
     end
-    thr = length(dsummands) * size(A, 1) * eps(eltype(wbdec))
-    if trace_preserving && abs(tr(A) - sum(tr, As)) > thr
-        @warn "decomposition did not preserve the trace; check the invariance of A" tr(
-            A,
-        ) sum(tr, As)
+    if eltype(A) <: AbstractFloat
+        if trace_preserving && abs(tr(A) - sum(tr, As)) > _eps
+            @warn "decomposition did not preserve the trace; check the invariance of A" tr(
+                A,
+            ) sum(tr, As)
+        end
     end
     return As
 end
