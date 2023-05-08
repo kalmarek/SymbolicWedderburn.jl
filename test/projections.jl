@@ -8,9 +8,9 @@ function test_orthogonality(chars)
             p, q = projs[i], projs[j]
             if p == q
                 # p^2 == p
-                res[i,j] = all(x -> isapprox(0.0, x; atol = 1e-12), p*p - p)
+                res[i, j] = all(x -> isapprox(0.0, x; atol = 1e-12), p * p - p)
             else
-                res[i,j] = all(x -> isapprox(0.0, x; atol = 1e-12), p*q)
+                res[i, j] = all(x -> isapprox(0.0, x; atol = 1e-12), p * q)
             end
         end
     end
@@ -41,16 +41,14 @@ end
     @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
           PermutationGroups.degree(G)
 
-    @time for ord = 2:16
+    @time for ord in 2:16
         # @testset "SmallGroup($ord, $n)"
         for (n, G) in enumerate(SmallPermGroups[ord])
             chars = SymbolicWedderburn.irreducible_characters(Rational{Int}, G)
 
             @test test_orthogonality(chars)
-            @test sum(
-                first ∘ size,
-                SymbolicWedderburn.image_basis.(chars),
-            ) == PermutationGroups.degree(G)
+            @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
+                  PermutationGroups.degree(G)
         end
     end
 end

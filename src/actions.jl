@@ -42,7 +42,7 @@ A type of action where a group acts through linear transformations on an
 
 That means that for every group element `g ∈ G` and every `eₖ ∈ B`
 ```
-action(act::ByPermutations, g, eₖ) = v
+action(act::ByLinearTransformation, g, eₖ) = v
 ```
 where `v = a₁e₁ + ⋯ + aₙeₙ`. Additionally [`decompose`](@ref) must be
 implemented to return a (possibly sparse) decomposition of `v` in `B`.
@@ -57,9 +57,10 @@ function action(
     return induce(hom, g) * v
 end
 
-coeff_type(ac::ByLinearTransformation) =
+function coeff_type(ac::ByLinearTransformation)
     throw("No fallback is provided for $(typeof(ac)). You need to implement
           `coeff_type(::$(typeof(ac)))`.")
+end
 
 function induce(
     ac::ByLinearTransformation,
@@ -83,11 +84,13 @@ function induce(
 end
 
 # disabmiguation:
-induce(
+function induce(
     ac::ByLinearTransformation,
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
-) = _induce(ac, hom, g)
+)
+    return _induce(ac, hom, g)
+end
 
 """
     decompose(v, hom::InducedActionHomomorphism)
@@ -107,12 +110,13 @@ and a vector of coefficients `A` returned, so that
 
 See also [`ByLinearTransformation`](@ref).
 """
-decompose(x, hom::InducedActionHomomorphism) =
+function decompose(x, hom::InducedActionHomomorphism)
     throw("""No fallback is provided for $(typeof(x)). You need to implement
           `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
+end
 
 """
-    BySignedPermutations
+    BySignedPermutations <: ByLinearTransformation
 A type of action where a group acts through permutations _with sign_ on an
 (implicit) Euclidean space `ℝᴮ` with basis `B = (e₁, …, eₙ)`.
 
@@ -126,6 +130,7 @@ action(act::BySignedPermutations, g, eₖ) == (eₗ, u)
 !!! warning
     Only support for the real case (i.e. `u = ±1`) is implemented at the moment.
 
+    Please consult the docstring of [ByLinearTransformation](@ref) for the necessary methods.
 """
 abstract type BySignedPermutations <: ByLinearTransformation end
 
@@ -134,7 +139,7 @@ coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
 function induce(
     ac::BySignedPermutations,
     hom::InducedActionHomomorphism,
-    g::GroupElement, # need to be signed permutation group element
+    g::GroupElement,
 )
     bs = basis(hom)
     n = length(bs)
@@ -144,17 +149,19 @@ function induce(
     V = coeff_type(ac)[]
 
     for (i, f) in enumerate(bs)
-        k, s = action(action(hom), g, f) # k::MonoidElement
+        k, s = action(action(hom), g, f)
         push!(I, i)
-        push!(J, bs[k]) # refactor into decompose(::MonoidElement, hom)?
+        push!(J, bs[k])
         push!(V, s)
     end
     return sparse(I, J, V)
 end
 
 # disabmiguation
-induce(
+function induce(
     ac::BySignedPermutations,
     hom::CachedExtensionHomomorphism,
     g::GroupElement,
-) = _induce(ac, hom, g)
+)
+    return _induce(ac, hom, g)
+end

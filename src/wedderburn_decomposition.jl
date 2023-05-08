@@ -30,13 +30,13 @@ function WedderburnDecomposition(
     action::Action,
     basis_full,
     basis_half,
-    S=Rational{Int};
-    semisimple=false
+    S = Rational{Int};
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(G, action, basis_half, precompute=true)
+    ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
 
-    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple=semisimple)
+    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(tbl, action, basis)
@@ -59,43 +59,61 @@ end
 invariant_vectors(wbdec::WedderburnDecomposition) = wbdec.invariants
 StarAlgebras.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
-Base.eltype(wbdec::WedderburnDecomposition) =
-    eltype(eltype(direct_summands(wbdec)))
-
-function diagonalize(M::AbstractMatrix, wbdec::WedderburnDecomposition)
-    T = promote_type(eltype(M), eltype(wbdec))
-    Mπs = [(d = size(Uπ, 1); similar(M, T, d, d)) for Uπ in direct_summands(wbdec)]
-    return diagonalize!(Mπs, M, wbdec)
+function Base.eltype(wbdec::WedderburnDecomposition)
+    return eltype(eltype(direct_summands(wbdec)))
 end
 
-function diagonalize!(
-    Ms::AbstractVector{<:AbstractMatrix},
-    M::AbstractMatrix,
-    wbdec::WedderburnDecomposition
-)
-    return diagonalize!(Ms, M, direct_summands(wbdec))
-end
-
-function diagonalize!(
-    Ms::AbstractVector{<:AbstractMatrix},
+function diagonalize(
     A::AbstractMatrix,
-    dsummands::AbstractVector{<:DirectSummand},
+    wbdec::WedderburnDecomposition;
+    trace_preserving::Bool = true,
 )
-    @assert axes(Ms) == axes(dsummands)
-    @assert all(size(ds, 1) == size(M, 1) for (ds, M) in zip(dsummands, Ms))
-    @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
-    @assert all(==(size(M)...) for M in Ms)
+    T = promote_type(eltype(A), eltype(wbdec))
+    As = [
+        (d = size(Uπ, 1); similar(A, T, d, d)) for Uπ in direct_summands(wbdec)
+    ]
+    return diagonalize!(As, A, wbdec; trace_preserving = trace_preserving)
+end
 
-    @sync for (ds, M) in zip(dsummands, Ms)
-        Threads.@spawn begin
-            U = image_basis(ds)
-            d = degree(ds)
-            # this is the faster version when U are row-based
-            # re-test when U move to column-based
-            @inbounds M .= (U * (A * U')) .* d
+function diagonalize!(
+    As::AbstractVector{<:AbstractMatrix},
+    A::AbstractMatrix,
+    wbdec::WedderburnDecomposition;
+    trace_preserving::Bool = true,
+)
+    dsummands = direct_summands(wbdec)
+    @assert axes(As) == axes(dsummands)
+    @assert all(size(ds, 1) == size(M, 1) for (ds, M) in zip(dsummands, As))
+    @assert all(size(ds, 2) == size(A, 1) for ds in dsummands)
+    @assert all(==(size(M)...) for M in As)
+
+    _eps = length(dsummands) * size(A, 1) * eps(eltype(wbdec))
+
+    Threads.@threads for i in eachindex(As)
+        ds = dsummands[i]
+        U = image_basis(ds)
+        # this is the faster version when U are row-based
+        # re-test when U move to column-based
+        As[i] .= (U * (A * U'))
+        if trace_preserving
+            As[i] .*= degree(ds)
+        end
+        if issparse(As[i])
+            if eltype(As[i]) <: AbstractFloat
+                SparseArrays.droptol!(As[i], _eps)
+            else
+                SparseArrays.dropzeros!(As[i])
+            end
         end
     end
-    return Ms
+    if eltype(A) <: AbstractFloat
+        if trace_preserving && abs(tr(A) - sum(tr, As)) > _eps
+            @warn "decomposition did not preserve the trace; check the invariance of A" tr(
+                A,
+            ) sum(tr, As)
+        end
+    end
+    return As
 end
 
 function invariant_vectors(
@@ -103,7 +121,8 @@ function invariant_vectors(
     act::Action,
     basis::StarAlgebras.Basis,
 )
-    triv_χ = Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
+    triv_χ =
+        Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
     ehom = ExtensionHomomorphism(act, basis)
 
     mpr = matrix_projection_irr(ehom, triv_χ)
@@ -149,7 +168,6 @@ function invariant_vectors(
     act::BySignedPermutations,
     basis::StarAlgebras.Basis{T,I},
 ) where {T,I}
-
     G = parent(tbl)
     ordG = order(Int, G)
     elts = collect(G)

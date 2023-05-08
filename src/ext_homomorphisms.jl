@@ -9,8 +9,9 @@ implements:
 =#
 
 Base.getindex(hom::InducedActionHomomorphism, i::Integer) = basis(hom)[i]
-Base.getindex(hom::InducedActionHomomorphism{A,T}, f::T) where {A,T} =
-    basis(hom)[f]
+function Base.getindex(hom::InducedActionHomomorphism{A,T}, f::T) where {A,T}
+    return basis(hom)[f]
+end
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
 _int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I
@@ -20,8 +21,9 @@ _int_type(hom::InducedActionHomomorphism) = _int_type(typeof(basis(hom)))
 # an SDP constraint of size 65535×65535, which is highly unlikely ;)
 _int_type(::Type{<:InducedActionHomomorphism}) = UInt16
 
-induce(hom::InducedActionHomomorphism, g::GroupElement) =
-    induce(action(hom), hom, g)
+function induce(hom::InducedActionHomomorphism, g::GroupElement)
+    return induce(action(hom), hom, g)
+end
 
 function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     return throw(
@@ -37,11 +39,21 @@ struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
     basis::B
 end
 
-ExtensionHomomorphism(action::Action, basis) =
-    ExtensionHomomorphism(_int_type(ExtensionHomomorphism), action, basis)
+function ExtensionHomomorphism(action::Action, basis)
+    return ExtensionHomomorphism(
+        _int_type(ExtensionHomomorphism),
+        action,
+        basis,
+    )
+end
 
-ExtensionHomomorphism(::Type{I}, action::Action, basis) where {I<:Integer} =
-    ExtensionHomomorphism(action, StarAlgebras.Basis{I}(basis))
+function ExtensionHomomorphism(
+    ::Type{I},
+    action::Action,
+    basis,
+) where {I<:Integer}
+    return ExtensionHomomorphism(action, StarAlgebras.Basis{I}(basis))
+end
 
 # interface:
 StarAlgebras.basis(hom::ExtensionHomomorphism) = hom.basis
@@ -54,8 +66,11 @@ struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
     lock::Base.Threads.SpinLock
 end
 
-CachedExtensionHomomorphism{G,H}(hom::InducedActionHomomorphism) where {G,H} =
-    CachedExtensionHomomorphism(hom, Dict{G,H}(), Threads.SpinLock())
+function CachedExtensionHomomorphism{G,H}(
+    hom::InducedActionHomomorphism,
+) where {G,H}
+    return CachedExtensionHomomorphism(hom, Dict{G,H}(), Threads.SpinLock())
+end
 
 StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
@@ -79,8 +94,9 @@ function CachedExtensionHomomorphism(
     return chom
 end
 
-induce(ac::Action, chom::CachedExtensionHomomorphism, g::GroupElement) =
-    _induce(ac, chom, g)
+function induce(ac::Action, chom::CachedExtensionHomomorphism, g::GroupElement)
+    return _induce(ac, chom, g)
+end
 
 function _induce(
     action::Action,

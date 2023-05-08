@@ -1,6 +1,6 @@
 ## preallocation
 
-function _preallocate_spmatrix(::Type{T}, sizes::Tuple, sizehint) where {T}
+function _preallocate(::Type{T}, sizes::Tuple, sizehint) where {T}
     res = spzeros(T, sizes...)
     @static if VERSION >= v"1.7"
         sizehint!(res, first(sizes) * sizehint)
@@ -17,16 +17,19 @@ _projection_size(m::AbstractMatrix) = size(m)
 
 _projection_size(::Nothing, χ::Character) = _projection_size(__an_elt(χ))
 _projection_size(::Nothing, α::AlgebraElement) = _projection_size(__an_elt(α))
-_projection_size(hom::InducedActionHomomorphism, χ::Character) =
-    _projection_size(induce(hom, __an_elt(χ)))
-_projection_size(hom::InducedActionHomomorphism, α::AlgebraElement) =
-    _projection_size(induce(hom, __an_elt(α)))
+function _projection_size(hom::InducedActionHomomorphism, χ::Character)
+    return _projection_size(induce(hom, __an_elt(χ)))
+end
+function _projection_size(hom::InducedActionHomomorphism, α::AlgebraElement)
+    return _projection_size(induce(hom, __an_elt(α)))
+end
 
 _hint(χ::Character) = length(conjugacy_classes(χ))
 _hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
 
-preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T} =
-    preallocate(T, nothing, χ)
+function preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T}
+    return preallocate(T, nothing, χ)
+end
 
 function preallocate(
     hom::InducedActionHomomorphism,
@@ -42,7 +45,7 @@ function preallocate(
     χ::Union{Character,AlgebraElement},
 ) where {T}
     sizes = _projection_size(a, χ)
-    return _preallocate_spmatrix(T, sizes, _hint(χ))
+    return _preallocate(T, sizes, _hint(χ))
 end
 
 ## matrix projection [irreducible]
@@ -62,8 +65,9 @@ The precise type of `M` can be altered by overloading
 preallocate(::Type{T}, [hom::InducedActionHomomorphism, ]χ::Character)
 ```
 """
-matrix_projection(χ::Character{T}) where {T} =
-    _mproj_outsT!(preallocate(T, χ), χ)
+function matrix_projection(χ::Character{T}) where {T}
+    return _mproj_outsT!(preallocate(T, χ), χ)
+end
 
 function matrix_projection(
     hom::InducedActionHomomorphism,
@@ -80,8 +84,9 @@ function matrix_projection(χ::Character{T}) where {T<:Rational}
     end
 end
 
-matrix_projection(χ::Character{T}) where {T<:Union{Cyclotomic,Complex}} =
-    _mproj_fitsT!(preallocate(T, χ), χ)
+function matrix_projection(χ::Character{T}) where {T<:Union{Cyclotomic,Complex}}
+    return _mproj_fitsT!(preallocate(T, χ), χ)
+end
 function matrix_projection(
     hom::InducedActionHomomorphism,
     χ::Character{T},
@@ -140,11 +145,13 @@ The returned matrix defines so called *isotypical* projection.
 See also [matrix_projection](@ref).
 """
 matrix_projection_irr(χ::Character{T}) where {T} = matrix_projection_irr(T, χ)
-matrix_projection_irr(::Type{T}, χ::Character) where {T} =
-    matrix_projection_irr_acc!(preallocate(T, χ), χ, 1)
+function matrix_projection_irr(::Type{T}, χ::Character) where {T}
+    return matrix_projection_irr_acc!(preallocate(T, χ), χ, 1)
+end
 
-matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character) =
-    matrix_projection_irr_acc!(preallocate(hom, χ), hom, χ, 1)
+function matrix_projection_irr(hom::InducedActionHomomorphism, χ::Character)
+    return matrix_projection_irr_acc!(preallocate(hom, χ), hom, χ, 1)
+end
 
 function matrix_projection_irr_acc!(
     result::AbstractMatrix,
@@ -156,7 +163,7 @@ function matrix_projection_irr_acc!(
     ccls = conjugacy_classes(χ)
     vals = collect(values(χ))
     weight *= degree(χ) // sum(length, ccls)
-    matrix_projection_irr_acc!(result, vals, ccls, weight)
+    result = matrix_projection_irr_acc!(result, vals, ccls, weight)
     return result
 end
 
@@ -167,21 +174,26 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (val, cc) in zip(vals, ccls)
         iszero(val) && continue
         w = weight * val
         for g in cc
             for i in 1:size(result, 1)
-                result[i, i^g] += w
+                push!(I, i)
+                push!(J, i^g)
+                push!(V, w)
             end
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
 function matrix_projection_irr_acc!(
-    result::AbstractMatrix,
+    res::AbstractMatrix,
     vals,
     ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
     weight,
@@ -208,7 +220,7 @@ function matrix_projection_irr_acc!(
     vals = collect(values(χ))
     ccls = conjugacy_classes(χ)
     weight *= degree(χ) // sum(length, ccls)
-    matrix_projection_irr_acc!(result, hom, vals, ccls, weight)
+    result = matrix_projection_irr_acc!(result, hom, vals, ccls, weight)
     return result
 end
 
@@ -220,6 +232,9 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (val, ccl) in zip(class_values, conjugacy_cls)
         iszero(val) && continue
         w = weight * val
@@ -227,10 +242,13 @@ function matrix_projection_irr_acc!(
             h = induce(hom, g)
             @assert h isa PermutationGroups.Perm
             for i in 1:size(result, 1)
-                result[i, i^h] += w
+                push!(I, i)
+                push!(J, i^h)
+                push!(V, w)
             end
         end
     end
+    result += sparse(I, J, V)
     return result
 end
 
@@ -268,11 +286,16 @@ representation given either by
 See also [matrix_projection](@ref).
 """
 matrix_representation(α::AlgebraElement) = matrix_representation(eltype(α), α)
-matrix_representation(::Type{T}, α::AlgebraElement) where {T} =
-    matrix_representation_acc!(preallocate(T, α), α)
+function matrix_representation(::Type{T}, α::AlgebraElement) where {T}
+    return matrix_representation_acc!(preallocate(T, α), α)
+end
 
-matrix_representation(hom::InducedActionHomomorphism, α::AlgebraElement) =
-    matrix_representation_acc!(preallocate(hom, α), hom, α)
+function matrix_representation(
+    hom::InducedActionHomomorphism,
+    α::AlgebraElement,
+)
+    return matrix_representation_acc!(preallocate(hom, α), hom, α)
+end
 
 function matrix_representation_acc!(
     result::AbstractMatrix,
@@ -281,14 +304,19 @@ function matrix_representation_acc!(
     },
 )
     b = basis(parent(α))
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         g = b[idx]
         iszero(val) && continue
         for i in 1:size(result, 1)
-            result[i, i^g] += val
+            push!(I, i)
+            push!(J, i^g)
+            push!(V, val)
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
@@ -298,15 +326,20 @@ function matrix_representation_acc!(
     α::AlgebraElement,
 )
     b = basis(parent(α))
+    I = UInt32[]
+    J = UInt32[]
+    V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
         g = induce(hom, b[idx])
         @assert g isa PermutationGroups.Perm
         for i in 1:size(result, 1)
-            result[i, i^g] += val
+            push!(I, i)
+            push!(J, i^g)
+            push!(V, val)
         end
     end
-
+    result += sparse(I, J, V)
     return result
 end
 
@@ -324,12 +357,22 @@ function matrix_representation_acc!(
     return result
 end
 
+# convenience for uniform calls below
+function matrix_representation(χ::Character)
+    return isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
+end
+
+function matrix_representation(hom::InducedActionHomomorphism, χ::Character)
+    return isirreducible(χ) ? matrix_projection_irr(hom, χ) :
+           matrix_projection(hom, χ)
+end
+
 ## Finding basis of the row-space (right image) of an AbstractMatrix
 
 """
     image_basis(A::AbstractMatrix)
-    image_basis([hom::InducedActionHomomorphism, ]χ::Character)
-    image_basis([hom::InducedActionHomomorphism, ]α::AlgebraElement)
+    image_basis([hom::InducedActionHomomorphism, ]χ::Character[, rank])
+    image_basis([hom::InducedActionHomomorphism, ]α::AlgebraElement[, rank])
 Return basis of the row-space of a matrix.
 
 For characters or algebra elements return a basis of the row-space of
@@ -338,9 +381,12 @@ For characters or algebra elements return a basis of the row-space of
 Two methods are employed to achieve the goal.
 * By default (symbolic, exact) row echelon form is produced, and therefore there
 is no guarantee on the orthogonality of the returned basis vectors (rows).
-* If `eltype(A) <: AbstractFloat` this is followed by a call to `svd` (or
-`qr` in the sparse case) and the appropriate rows of its orthogonal factor are
+* If `eltype(A) <: AbstractFloat` a thin `svd` (or `qr` in the sparse case)
+decomposition is computed and the appropriate rows of its orthogonal factor are
 returned, thus the basis is (numerically) orthonormal.
+
+If the dimension (`=rank` of the matrix) is known beforehand (because of e.g.
+algebra) it can be passed to `image_basis` to use more efficient methods.
 
 # Examples:
 ```julia
@@ -364,76 +410,87 @@ julia> ibf = SymbolicWedderburn.image_basis(float.(a))
 
 ```
 """
-image_basis(A::AbstractMatrix) =
-    ((m, p) = image_basis!(deepcopy(A)); m[1:length(p), :])
+image_basis(A::AbstractMatrix, rank = nothing) = image_basis!(deepcopy(A), rank)
 
-function image_basis(χ::Character)
-    mpr = isirreducible(χ) ? matrix_projection_irr(χ) : matrix_projection(χ)
-    image, pivots = image_basis!(mpr)
-    return image[1:length(pivots), :]
+function image_basis(α::Union{Character,AlgebraElement}, rank = nothing)
+    mpr = matrix_representation(α)
+    return image_basis!(mpr, rank)
 end
 
-function image_basis(hom::InducedActionHomomorphism, χ::Character)
-    mpr =
-        isirreducible(χ) ? matrix_projection_irr(hom, χ) :
-        matrix_projection(hom, χ)
-    image, pivots = image_basis!(mpr)
-    return image[1:length(pivots), :]
+function image_basis(
+    hom::InducedActionHomomorphism,
+    α::Union{Character,AlgebraElement},
+    rank = nothing,
+)
+    mpr = matrix_representation(hom, α)
+    return image_basis!(mpr, rank)
 end
 
-function image_basis(α::AlgebraElement)
-    image, pivots = image_basis!(matrix_representation(α))
-    return image[1:length(pivots), :]
-end
+##
+# the internal, (possibly) modifying versions
 
-function image_basis(hom::InducedActionHomomorphism, α::AlgebraElement)
-    image, pivots = image_basis!(matrix_representation(hom, α))
-    return image[1:length(pivots), :]
-end
+_eps(T::Type{<:AbstractFloat}) = eps(T)
+_eps(::Type{Complex{T}}) where {T} = 2 * _eps(real(T))
+_eps(::Type{<:Cyclotomic{T}}) where {T} = 2_eps(T)
+_eps(::Any) = 0.0
 
-image_basis!(A::AbstractMatrix) = row_echelon_form!(A)
-function image_basis!(A::AbstractSparseMatrix)
-    A, p = row_echelon_form!(A)
-    dropzeros!(A)
-    return A, p
-end
-
-_eps(::Type{T}) where {T} = T <: Complex ? 2eps(real(T)) : eps(T)
-
-function _orth!(M::AbstractMatrix{T}) where {T<:Union{AbstractFloat,Complex}}
-    F = svd!(convert(Matrix{T}, M))
-    M_rank = count(>(maximum(size(M)) * _eps(T)), F.S)
-    return F.Vt, M_rank
-end
-
-function _orth!(
-    M::AbstractSparseMatrix{T},
-) where {T<:Union{AbstractFloat,Complex}}
-    F = qr(M)
-    M_rank = rank(F)
-    result = let tmp = F.Q * Matrix(I, size(F.Q, 2), M_rank)
-        sparse(tmp[invperm(F.prow), :]')
+function image_basis!(A::AbstractMatrix, rank = nothing)
+    img, pivots = row_echelon_form!(A)
+    if img isa AbstractSparseArray
+        ε = _eps(eltype(img))
+        if iszero(ε)
+            dropzeros!(img)
+        else
+            droptol!(img, _eps(eltype(img)) * max(size(img)...))
+        end
     end
-    result = droptol!(result, maximum(size(result)) * _eps(T))
-    return result, M_rank
+    # TODO: orthogonalize the result
+    return img[pivots, :]
 end
 
 function image_basis!(
     A::AbstractMatrix{T},
+    ::Nothing,
 ) where {T<:Union{AbstractFloat,Complex}}
-    A, p = row_echelon_form!(A)
-    A_orth, A_rank = _orth!(@view A[1:length(p), :])
-    @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
-    return A_orth, 1:A_rank
+    F = svd!(A)
+    tol = _eps(T) * first(F.S)
+    rk = count(x -> x > tol, F.S)
+    return Matrix((@view F.U[1:rk, :])')
 end
 
 function image_basis!(
     A::AbstractSparseMatrix{T},
+    ::Nothing,
 ) where {T<:Union{AbstractFloat,Complex}}
-    N = LinearAlgebra.checksquare(A)
-    droptol!(A, N * _eps(T))
-    # A, p = row_echelon_form!(A)
-    A_orth, A_rank = _orth!(A)
-    # @assert A_rank == length(p) "_orth rank doesn't agree with rref rank!"
-    return A_orth, 1:A_rank
+    F = qr(A)
+    rk = rank(F)
+    img = let tmp = F.Q * Matrix(I, size(A, 1), rk)
+        pinv = getfield(F, :rpivinv)
+        sparse((@view tmp[pinv, :])')
+    end
+    return droptol!(img, _eps(T) * max(size(img)...))
+end
+
+# to disambiguate
+function image_basis!(
+    M::AbstractMatrix{T},
+    rank::Integer,
+) where {T<:Union{AbstractFloat,Complex}}
+    img = image_basis!(M, nothing)
+    if size(img, 1) ≠ rank
+        @warn "Possibly wrong numerical rank: (numerical) $(size(img, 1)) ≠ $rank (expected)"
+    end
+    return img
+end
+
+function image_basis!(
+    M::AbstractSparseMatrix{T},
+    rank::Integer,
+) where {T<:Union{AbstractFloat,Complex}}
+    # return _image_basis!(M, rank)
+    img = image_basis!(M, nothing)
+    if size(img, 1) ≠ rank
+        @warn "Possibly wrong rank estimate? (numerical) $(size(img, 1)) ≠ $rank (expected)"
+    end
+    return img
 end

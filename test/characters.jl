@@ -29,7 +29,7 @@
     @test hash(ψ) == hash(χ)
 
     @test 2ψ == 2χ
-    @test 2ψ/2 == χ
+    @test 2ψ / 2 == χ
     @test 2ψ != χ
 
     @test PermutationGroups.degree(χ) == 2
@@ -38,7 +38,9 @@
 
     @test_throws AssertionError ι(2χ)
     a = 2χ
-    @test sum(length(cc)*a(first(cc)^2) for cc in Characters.conjugacy_classes(a))//order(G) == 2ι(χ)
+    @test sum(
+        length(cc) * a(first(cc)^2) for cc in Characters.conjugacy_classes(a)
+    ) // order(G) == 2ι(χ)
 end
 
 @testset "Characters io" begin
@@ -47,12 +49,10 @@ end
 
     @test sprint(show, chars[1]) == "χ₁"
     @test sprint(show, chars[2]) == "χ₂"
-    @test sprint(show, chars[1]+2chars[2]) == "χ₁ +2·χ₂"
-    @test sprint(show, 2chars[1]-chars[2]) == "2·χ₁ -1·χ₂"
-    @test sprint(show, -2chars[1]+3chars[2]) == "-2·χ₁ +3·χ₂"
+    @test sprint(show, chars[1] + 2chars[2]) == "χ₁ +2·χ₂"
+    @test sprint(show, 2chars[1] - chars[2]) == "2·χ₁ -1·χ₂"
+    @test sprint(show, -2chars[1] + 3chars[2]) == "-2·χ₁ +3·χ₂"
 
-    if VERSION > v"1.3.0"
-        @test sprint(show, MIME"text/plain"(), chars[1]) ==
-        "Character over Cyclotomic{Rational{Int64}, SparseVector{Rational{Int64}, Int64}}\nχ₁"
-    end
+    @test sprint(show, MIME"text/plain"(), chars[1]) ==
+          "Character over Cyclotomic{Rational{Int64}, SparseVector{Rational{Int64}, Int64}}\nχ₁"
 end

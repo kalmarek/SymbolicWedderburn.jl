@@ -17,7 +17,6 @@ export basis,
     issimple,
     multiplicity
 
-
 include("Characters/Characters.jl")
 using .Characters
 import .Characters: row_echelon_form!

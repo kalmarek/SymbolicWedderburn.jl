@@ -26,7 +26,7 @@ function Base.getindex(M::CMMatrix, s::Integer, t::Integer)
         for g in M.cc[r]
             for h in M.cc[s]
                 out = GroupsCore.mul!(out, g, h)
-                for t = 1:size(M, 2)
+                for t in 1:size(M, 2)
                     if out == first(M.cc[t])
                         M.m[s, t] += 1
                         break

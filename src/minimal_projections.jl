@@ -1,9 +1,9 @@
 function _group_algebra(G::Group)
     @assert isfinite(G)
     b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
-    RG = if order(Int, G) <= (typemax(UInt16) >> 1) # 32767
+    RG = if order(Int, G) <= (typemax(UInt16) >> 2)
         StarAlgebra(G, b, (length(b), length(b)); precompute = true)
-        # cache is about ~ 1Gb
+        # the cache is ~ 0.5 GB
     else
         StarAlgebra(G, b)
     end
@@ -37,13 +37,19 @@ function StarAlgebras.AlgebraElement(
     return x
 end
 
-function algebra_elt_from_support(support, RG::StarAlgebra; val=1 // length(support))
+function algebra_elt_from_support(
+    support,
+    RG::StarAlgebra;
+    val = 1 // length(support),
+)
     b = basis(RG)
     I = [b[s] for s in support]
     V = fill(val, length(support))
     return AlgebraElement(sparsevec(I, V, length(b)), RG)
 end
-_small_idem(RG::StarAlgebra{<:Group}, H) = algebra_elt_from_support(H, RG, val=1 // length(H))
+function _small_idem(RG::StarAlgebra{<:Group}, H)
+    return algebra_elt_from_support(H, RG; val = 1 // length(H))
+end
 
 struct CyclicSubgroups{Gr,GEl}
     group::Gr
@@ -52,12 +58,15 @@ struct CyclicSubgroups{Gr,GEl}
     max_order::Int
 end
 
-function CyclicSubgroups(G::Group; min_order=1, max_order=order(Int, G))
+function CyclicSubgroups(G::Group; min_order = 1, max_order = order(Int, G))
     seen = Dict{Int,Set{eltype(G)}}()
     return CyclicSubgroups{typeof(G),eltype(G)}(G, seen, min_order, max_order)
 end
 
-function Base.deepcopy_internal(citr::CyclicSubgroups{Gr,E}, iddict::IdDict) where {Gr,E}
+function Base.deepcopy_internal(
+    citr::CyclicSubgroups{Gr,E},
+    iddict::IdDict,
+) where {Gr,E}
     G = citr.group
     seen = Base.deepcopy_internal(citr.seen, iddict)
     return CyclicSubgroups{Gr,E}(G, seen, citr.min_order, citr.max_order)
@@ -103,19 +112,31 @@ end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    iszero(α) && return zero(eltype(StarAlgebras.coeffs(α))) * zero(eltype(χ))
     return sum(α(g) * χ(g) for g in supp(α))
 end
 
-function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
-    subgroups=CyclicSubgroups(parent(RG), min_order=2),
-    iters=3
+function minimal_rank_projection(
+    χ::Character,
+    RG::StarAlgebra{<:Group};
+    subgroups = CyclicSubgroups(parent(RG); min_order = 2),
+    iters = 3,
 )
-    degree(χ) == 1 && return one(Rational{Int}, RG), true
+    degree(χ) == 1 && return one(Rational{Int}, RG), 1
+
+    π = one(Rational{Int}, RG)
+    rank = degree(χ)
 
     for H in subgroups
         µ = _small_idem(RG, H)
-        isone(χ(µ)) && µ^2 == µ && return µ, true
+        d = χ(µ)
+        isreal(d) || continue
+        rd = float(d)
+        isinteger(rd) || continue
+        if 0 < rd < rank
+            π = µ
+            rank = Int(rd)
+            isone(rank) && return (π, rank)
+        end
     end
 
     _id = [deepcopy(subgroups), deepcopy(subgroups)]
@@ -123,24 +144,35 @@ function minimal_rank_projection(χ::Character, RG::StarAlgebra{<:Group};
     for _ in 2:iters
         for sbgrps in Iterators.product(_id...)
             µ = *((_small_idem(RG, H) for H in sbgrps)...)
-            isone(χ(µ)) && µ^2 == µ && return µ, true
+            π^2 == π || continue
+            d = χ(µ)
+            isreal(d) || continue
+            rd = float(d)
+            isinteger(rd) || continue
+            if 0 < rd < rank
+                π = µ
+                rank = Int(rd)
+                isone(rank) && return (π, rank)
+            end
         end
         push!(_id, deepcopy(subgroups))
     end
     @debug "Could not find minimal projection for $χ"
-    return one(Rational{Int}, RG), false
+    return (π, rank)
 end
 
 function minimal_projection_system(
     chars::AbstractVector{<:AbstractClassFunction},
-    RG::StarAlgebra{<:Group}
+    RG::StarAlgebra{<:Group},
 )
     res = fetch.([Threads.@spawn minimal_rank_projection(χ, RG) for χ in chars])
 
-    r1p, simple = first.(res), last.(res) # rp1 are sparse storage
+    r1p, ranks = first.(res), last.(res) # rp1 are sparse storage
 
-    mps = [isone(µ) ? AlgebraElement(χ, RG) : µ * AlgebraElement(χ, RG)
-           for (µ, χ) in zip(r1p, chars)] # dense storage
+    mps = [
+        isone(µ) ? AlgebraElement(χ, RG) : µ * AlgebraElement(χ, RG) for
+        (µ, χ) in zip(r1p, chars)
+    ] # dense storage
 
-    return mps, simple
+    return mps, ranks
 end

@@ -13,12 +13,13 @@ The following functionality is required for an `AbstractClassFunction`:
 """
 abstract type AbstractClassFunction{T} end # <:AbstractVector{T}?
 
-Base.eltype(::AbstractClassFunction{T}) where T = T
+Base.eltype(::AbstractClassFunction{T}) where {T} = T
 
 function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     @assert conjugacy_classes(χ) === conjugacy_classes(ψ)
     val = sum(
-        length(cc) * χ[i] * ψ[-i] for (i, cc) in enumerate(conjugacy_classes(χ))
+        length(cc) * χ[i] * ψ[-i] for
+        (i, cc) in enumerate(conjugacy_classes(χ))
     )
     orderG = sum(length, conjugacy_classes(χ))
     val = _div(val, orderG)
@@ -29,12 +30,7 @@ function (χ::AbstractClassFunction)(g::GroupElement)
     for (i, cc) in enumerate(conjugacy_classes(χ))
         g ∈ cc && return χ[i]
     end
-    throw(
-        DomainError(
-            g,
-            "element does not belong to conjugacy classes of $χ",
-        ),
-    )
+    throw(DomainError(g, "element does not belong to conjugacy classes of $χ"))
 end
 
 _div(val, orderG) = div(val, orderG)
@@ -67,12 +63,7 @@ function (χ::ClassFunction)(g::GroupElement)
     for (i, cc) in enumerate(conjugacy_classes(χ))
         g ∈ cc && return χ[i]
     end
-    throw(
-        DomainError(
-            g,
-            "element does not belong to conjugacy classes of $χ",
-        ),
-    )
+    throw(DomainError(g, "element does not belong to conjugacy classes of $χ"))
 end
 
 """
@@ -87,36 +78,38 @@ vector of coefficients of `χ` in the basis of `irreducible_characters(table(χ)
 It is assumed that equal class functions on the same group will have **identical**
 (ie. `===`) character tables.
 """
-struct Character{T, S, ChT<:CharacterTable} <: AbstractClassFunction{T}
+struct Character{T,S,ChT<:CharacterTable} <: AbstractClassFunction{T}
     table::ChT
     constituents::Vector{S}
 end
 
 function Character{R}(
-    chtbl::CharacterTable{Gr, T},
-    constituents::AbstractVector{S}
-) where {R, Gr, T, S}
-    return Character{R, S, typeof(chtbl)}(chtbl, constituents)
+    chtbl::CharacterTable{Gr,T},
+    constituents::AbstractVector{S},
+) where {R,Gr,T,S}
+    return Character{R,S,typeof(chtbl)}(chtbl, constituents)
 end
 
 function Character(chtbl::CharacterTable, constituents::AbstractVector)
-    R = Base._return_type(*, Tuple{eltype(chtbl), eltype(constituents)})
+    R = Base._return_type(*, Tuple{eltype(chtbl),eltype(constituents)})
     @assert R ≠ Any
     return Character{R}(chtbl, constituents)
 end
 
-Character(chtbl::CharacterTable, i::Integer) = Character{eltype(chtbl)}(chtbl, i)
-
-function Character{T}(chtbl::CharacterTable, i::Integer) where T
-    v = zeros(Int, nconjugacy_classes(chtbl))
-    v[i] = 1
-    return Character{T, Int, typeof(chtbl)}(chtbl, v)
+function Character(chtbl::CharacterTable, i::Integer)
+    return Character{eltype(chtbl)}(chtbl, i)
 end
 
-function Character{T}(χ::Character) where T
+function Character{T}(chtbl::CharacterTable, i::Integer) where {T}
+    v = zeros(Int, nconjugacy_classes(chtbl))
+    v[i] = 1
+    return Character{T,Int,typeof(chtbl)}(chtbl, v)
+end
+
+function Character{T}(χ::Character) where {T}
     S = eltype(constituents(χ))
     ChT = typeof(table(χ))
-    return Character{T, S, ChT}(table(χ), constituents(χ))
+    return Character{T,S,ChT}(table(χ), constituents(χ))
 end
 
 ## Accessors
@@ -126,7 +119,9 @@ constituents(χ::Character) = χ.constituents
 ## AbstractClassFunction api
 Base.parent(χ::Character) = parent(table(χ))
 conjugacy_classes(χ::Character) = conjugacy_classes(table(χ))
-Base.values(χ::Character{T}) where T = T[χ[i] for i in 1:nconjugacy_classes(table(χ))]
+function Base.values(χ::Character{T}) where {T}
+    return T[χ[i] for i in 1:nconjugacy_classes(table(χ))]
+end
 
 Base.@propagate_inbounds function Base.getindex(
     χ::Character{T},
@@ -151,12 +146,14 @@ end
 
 ## Basic functionality
 
-Base.:(==)(χ::Character, ψ::Character) =
-    table(χ) === table(ψ) && constituents(χ) == constituents(ψ)
+function Base.:(==)(χ::Character, ψ::Character)
+    return table(χ) === table(ψ) && constituents(χ) == constituents(ψ)
+end
 Base.hash(χ::Character, h::UInt) = hash(table(χ), hash(constituents(χ), h))
 
-Base.deepcopy_internal(χ::Character, ::IdDict) =
-    Character(table(χ), copy(constituents(χ)))
+function Base.deepcopy_internal(χ::Character, ::IdDict)
+    return Character(table(χ), copy(constituents(χ)))
+end
 
 ## Character arithmetic
 
@@ -176,28 +173,31 @@ Base.:/(χ::Character, c::Number) = Character(table(χ), constituents(χ) ./ c)
 ## Group-theoretic functions:
 
 PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))
-PermutationGroups.degree(
+function PermutationGroups.degree(
     χ::Character{T,CCl},
-) where {T,CCl <: AbstractOrbit{<:AbstractMatrix}} = Int(χ[1])
+) where {T,CCl<:AbstractOrbit{<:AbstractMatrix}}
+    return Int(χ[1])
+end
 
-function Base.conj(χ::Character{T, S}) where {T, S}
+function Base.conj(χ::Character{T,S}) where {T,S}
     vals = collect(values(χ))
     all(isreal, vals) && return Character{T}(χ)
     tbl = table(χ)
     ψ = ClassFunction(vals[tbl.inv_of], conjugacy_classes(tbl), tbl.inv_of)
     constituents = S[dot(ψ, χ) for χ in irreducible_characters(tbl)]
-    return Character{T, eltype(constituents), typeof(tbl)}(tbl, constituents)
+    return Character{T,eltype(constituents),typeof(tbl)}(tbl, constituents)
 end
 
-isvirtual(χ::Character) =
-    any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
+function isvirtual(χ::Character)
+    return any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
+end
 
 function isirreducible(χ::Character)
     C = constituents(χ)
     k = findfirst(!iszero, C)
     k !== nothing || return false # χ is zero
     isone(C[k]) || return false # muliplicity is ≠ 1
-    kn = findnext(!iszero, C, k+1)
+    kn = findnext(!iszero, C, k + 1)
     kn === nothing && return true # there is only one ≠ 0 entry
     return false
 end
@@ -249,7 +249,7 @@ Base.isreal(χ::Character) = frobenius_schur(χ) > 0
 
 function Base.show(io::IO, ::MIME"text/plain", χ::Character)
     println(io, "Character over ", eltype(χ))
-    _print_char(io, χ)
+    return _print_char(io, χ)
 end
 
 Base.show(io::IO, χ::Character) = _print_char(io, χ)

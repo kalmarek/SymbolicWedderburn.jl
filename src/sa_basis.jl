@@ -1,6 +1,6 @@
 function affordable_real(
     irreducible_characters,
-    multiplicities=fill(1, length(irreducible_characters)),
+    multiplicities = fill(1, length(irreducible_characters)),
 )
     irr_real = similar(irreducible_characters, 0)
     mls_real = similar(multiplicities, 0)
@@ -14,7 +14,7 @@ function affordable_real(
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
             @assert k !== nothing
-            @debug "complex" χ conj(χ)=irreducible_characters[k]
+            @debug "complex" χ conj(χ) = irreducible_characters[k]
             if k > i # ... we haven't already observed a conjugate of
                 @assert multiplicities[i] == multiplicities[k]
                 push!(irr_real, χ + cχ)
@@ -32,7 +32,7 @@ function symmetry_adapted_basis(
     semisimple::Bool = false,
 )
     tbl = CharacterTable(S, G)
-    return symmetry_adapted_basis(eltype(tbl), tbl, semisimple = semisimple)
+    return symmetry_adapted_basis(eltype(tbl), tbl; semisimple = semisimple)
 end
 
 """
@@ -77,12 +77,18 @@ overflow occurs during the computation of characters) specifying
   effort to find _minimal projection system_ is made, i.e all, some (or none!)
   of the returned blocks corresponds to a **projection** `V → Wₖ ≅ mₖVₖ → Vₖ` for a single irreducible subspace `Vₖ`. This means that some blocks can not be further decomposed into nontrivial `G`-invariant subspaces.
 """
-symmetry_adapted_basis(
+function symmetry_adapted_basis(
     T::Type,
     G::PermutationGroups.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
-) = symmetry_adapted_basis(T, CharacterTable(S, G), semisimple = semisimple)
+)
+    return symmetry_adapted_basis(
+        T,
+        CharacterTable(S, G);
+        semisimple = semisimple,
+    )
+end
 
 function symmetry_adapted_basis(
     T::Type,
@@ -125,11 +131,21 @@ function symmetry_adapted_basis(
     action::Action,
     basis,
     S::Type = Rational{Int};
-    semisimple=false,
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
-    return symmetry_adapted_basis(eltype(tbl), tbl, ehom, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(
+        parent(tbl),
+        action,
+        basis;
+        precompute = true,
+    )
+    return symmetry_adapted_basis(
+        eltype(tbl),
+        tbl,
+        ehom;
+        semisimple = semisimple,
+    )
 end
 
 function symmetry_adapted_basis(
@@ -138,18 +154,23 @@ function symmetry_adapted_basis(
     action::Action,
     basis,
     S::Type = Rational{Int};
-    semisimple=false,
+    semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(parent(tbl), action, basis, precompute=true)
-    return symmetry_adapted_basis(T, tbl, ehom, semisimple=semisimple)
+    ehom = CachedExtensionHomomorphism(
+        parent(tbl),
+        action,
+        basis;
+        precompute = true,
+    )
+    return symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 end
 
 function symmetry_adapted_basis(
     T::Type,
     tbl::CharacterTable,
     ehom::InducedActionHomomorphism;
-    semisimple=false,
+    semisimple = false,
 )
     ψ = action_character(ehom, tbl)
 
@@ -159,7 +180,6 @@ function symmetry_adapted_basis(
         @debug "Decomposition into real character spaces:
         degrees:        $(join([lpad(d, 6) for d in degree.(irr)], ""))
         multiplicities: $(join([lpad(m, 6) for m in multips], ""))"
-
     end
 
     if semisimple || all(isone ∘ degree, irr)
@@ -191,19 +211,18 @@ function _symmetry_adapted_basis(
     T::Type,
     irr::AbstractVector{<:Character},
     multiplicities::AbstractVector{<:Integer},
-    hom=nothing
+    hom = nothing,
 )
     res = map(zip(irr, multiplicities)) do (µ, m)
         Threads.@spawn begin
             µT = eltype(µ) == T ? µ : Character{T}(µ)
-            image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
-            simple = size(image, 1) == m
             deg = degree(µ)
-            @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"
-            if deg == 1
-                @assert simple "Central projection associated to character is not simple unless its degree == 1"
-            end
-            DirectSummand(image, m, deg, simple)
+            # here we use algebra to compute the dimension of image;
+            # direct summand is simple only if rk == m, i.e. deg == 1
+            rk = m * deg
+            image =
+                isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
+            DirectSummand(image, m, deg)
         end
     end
     return fetch.(res)
@@ -214,23 +233,31 @@ function _symmetry_adapted_basis(
     irr::AbstractVector{<:Character},
     multiplicities::AbstractVector{<:Integer},
     RG::StarAlgebra{<:Group},
-    hom=nothing,
+    hom = nothing,
 )
-    mps, simples = minimal_projection_system(irr, RG)
+    mps, ranks = minimal_projection_system(irr, RG)
     degrees = degree.(irr)
-    res = map(zip(mps, multiplicities, degrees, simples)) do (µ, m, deg, simple)
+    @debug "ranks of projections obtained by mps:" degrees
+    res = map(zip(mps, multiplicities, degrees, ranks)) do (µ, m, deg, r)
         Threads.@spawn begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
-            image = hom === nothing ? image_basis(µT) : image_basis(hom, µT)
-            @assert size(image, 1) == (simple ? m : m*deg) "incompatible projection dimension: $(size(image, 1)) ≠ $(simple ? m : m*deg)"
-            DirectSummand(image, m, deg, simple)
+            # here we use algebra to compute the dimension of image;
+            # direct summand is simple only if rk == m, i.e. r == 1
+            rk = m * r
+            image =
+                isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
+            return DirectSummand(image, m, deg)
         end
     end
     direct_summands = fetch.(res)
 
     for (χ, ds) in zip(irr, direct_summands)
-        if issimple(ds) && (d = size(ds, 1)) != (e = multiplicity(ds)*sum(constituents(χ).>0))
-            throw("The dimension of the projection doesn't match with simple summand multiplicity: $d ≠ $e")
+        if issimple(ds) &&
+           (d = size(ds, 1)) !=
+           (e = multiplicity(ds) * sum(constituents(χ) .> 0))
+            throw(
+                "The dimension of the projection doesn't match with simple summand multiplicity: $d ≠ $e",
+            )
         end
     end
 
