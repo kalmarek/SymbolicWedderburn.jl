@@ -87,10 +87,10 @@ The algorithm of `SymbolicWedderburn.jl` can be summarised in a few steps. As an
 
 ### Computing with characters i.e. isotypical projections
 3. After computing the character table of `G` we find the decomposition of `(V, η)` into irreducibles: `η ≅ χ₁ + … + χᵣ` by some symbolic magic (i.e. orthogonality relations) in the group ring `ℂG` (or `ℝG`). We know that this decomposition corresponds to a decomposition `V ≅ V₁ ⊕ ⋯ ⊕ Vᵣ`, and we will compute that correspondence explicitely in a moment.
-4. Moreover, we abstractly know that each `χᵢ ≅ mᵢϱᵢ` (and `Vᵢ ≅ mᵢWᵢ`) is isomorphic to a multiple `mᵢ` of irreducible characters `ϱᵢ`, but we can't use this information yet. These irreducibles lead us later to `πᵢ : V → Vᵢ`, the projections onto isotypical summands. <details open=""><summary>show me more…</summary>Our implementation of projections is matrix-free. Projections are just idempotent elements (`x² = x`) in the group algebra. In that sense the projection to an isotypical component is unique in `ℂG`, but not as `πᵢ = η(ϱᵢ)`, an element of `End_G((V, η))` i.e. as a matrix: a matrix representation of a projection already includes a choice of basis (think of the difference of a linear operator vs its matix).</details>
+4. Moreover, we abstractly know that each `χᵢ ≅ mᵢϱᵢ` (and `Vᵢ ≅ mᵢWᵢ`) is isomorphic to a multiple `mᵢ` of irreducible characters `ϱᵢ`, but we can't use this information yet. These irreducibles lead us later to `πᵢ : V → Vᵢ`, the projections onto isotypical summands. <details><summary>show me more…</summary>Our implementation of projections is matrix-free. Projections are just idempotent elements (`x² = x`) in the group algebra. In that sense the projection to an isotypical component is unique in `ℂG`, but not as `πᵢ = η(ϱᵢ)`, an element of `End_G((V, η))` i.e. as a matrix: a matrix representation of a projection already includes a choice of basis (think of the difference of a linear operator vs its matix).</details>
 
 ### Minimal projection system
-4. Sometimes this step is followed by finding even tighter _minimal projection system_<details open=""><summary>show me more…</summary>Finding tighter projections use a lemma of Schur.
+4. Sometimes this step is followed by finding even tighter _minimal projection system_<details><summary>show me more…</summary>Finding tighter projections use a lemma of Schur.
    > **Lemma** (Shur) Over an algebraically closed field the commutant of a matrix algebra consist of matrices of a particularly simple form:
    > * direct sums of endomorphisms of isotypical subspaces (i.e. isotypical subspaces are orthogonal which gives us block structure for endomorphisms),
    > * within isotypical subspace (of character `ϱ`) the endomorphisms are of the form `M⊗Iₙ`, where `n = degree(ϱ)` and `M` is (square) of size `m = multiplicity(ϱ, η)`.
@@ -102,7 +102,7 @@ The algorithm of `SymbolicWedderburn.jl` can be summarised in a few steps. As an
 
 ### Working with matrices
 5. Given the monomial basis we realize those projections as sparse matrices (only now we start computing with matrices, but even this step is exact).
-6. Unitary vectors in the images of those projections are found via sparse `qr` decomposition and these basis vectors form the symmetry adapted basis.<details open=""><summary>show me more…</summary>
+6. Unitary vectors in the images of those projections are found via sparse `qr` decomposition and these basis vectors form the symmetry adapted basis.<details><summary>show me more…</summary>
 The image (i.e. as a linear subspace) of the matrix projection is well defined; any (orthogonal) basis of the subspace would do; We just take the first few columns of the `Q` factor of sparse `qr` factorisation.</details>
 
 > For more complete introduction to projections, characters and their place in the group ring we recommend the book by J.P. Serre _Linear representations of finite groups_.
