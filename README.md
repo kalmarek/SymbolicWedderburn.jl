@@ -97,7 +97,7 @@ The algorithm of `SymbolicWedderburn.jl` can be summarised in a few steps. As an
 
    Here the matrix algebra is the one defined by the image of `η` and the projections commute with those, so the conclusion is that reconstructing a single projection endomorphism corresponding to an irreducible `ϱ` requires only `m²` parameters (regardless of the degree of `ϱ`!)
    * For every irreducible character `ϱᵢ` we try to find a (non-central) projection `pᵢ` such that `ϱᵢ∘pᵢ(e) = k` is as small as possible (desirably just `1`), so that `η(ϱᵢ∘pᵢ) = πᵢ∘η(pᵢ)` and therefore `rank(πᵢ∘η(pᵢ)) = k`. We call those `{ϱᵢ∘pᵢ}_{ϱ ∈ Irr(G)}` a **minimal projection system**. Note: the existence and complexity of finding the system depends **on the group only**, not on the representation `η`, its associated action (and hence not on the dimension of `V`!).
-   * Sometimes it the system exists (symmetric, alternating groups etc.) sometimes it doesn’t (e.g. real representations of cyclic groups).
+   * Sometimes the system exists (symmetric, alternating groups etc.) sometimes it doesn’t (e.g. real representations of cyclic groups).
    * We employ a simple brute-force algorithm to search for `pᵢ` over all characteristic/alternating projections for small subgroups of `G`.</details>
 
 ### Working with matrices
