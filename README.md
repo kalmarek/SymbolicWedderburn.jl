@@ -91,7 +91,7 @@ The algorithm of `SymbolicWedderburn.jl` can be summarised in a few steps. As an
 
 ### Minimal projection system
 4. Sometimes this step is followed by finding even tighter _minimal projection system_<details><summary>show me more…</summary>Finding tighter projections use a lemma of Schur.
-   > **Lemma** (Shur) Over an algebraically closed field the commutant of a matrix algebra consist of matrices of a particularly simple form:
+   > **Lemma** (Schur) Over an algebraically closed field the commutant of a matrix algebra consist of matrices of a particularly simple form:
    > * direct sums of endomorphisms of isotypical subspaces (i.e. isotypical subspaces are orthogonal which gives us block structure for endomorphisms),
    > * within isotypical subspace (of character `ϱ`) the endomorphisms are of the form `M⊗Iₙ`, where `n = degree(ϱ)` and `M` is (square) of size `m = multiplicity(ϱ, η)`.
 
