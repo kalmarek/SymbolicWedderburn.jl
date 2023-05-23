@@ -7,7 +7,7 @@ Amazing package providing symbolic but explicit
 * the Wedderburn decompositions for endomorphisms of those representations.
 
 We work with
-* a (linear) **orthogonal** actions of a **finite group** `G` on **finite dimensional** vector space `V` over `K = ℝ` or `K = ℂ` (i.e. a `KG`-module `V`) and
+* a (linear) **unitary** actions of a **finite group** `G` on **finite dimensional** vector space `V` over `K = ℝ` or `K = ℂ` (i.e. a `KG`-module `V`) and
 * linear, `G`-equivariant maps (equivariant endomorphisms) `f : V → V`.
 
 These objects are of primary inportance in the study of the representation theory for finite groups, but also naturally arise from (non)commutative polynomial optimization with group symmetry. The aim of the package is to facilitate such uses.
@@ -26,7 +26,7 @@ by a sequence of constraints
 
 > `0 ⪯ P[1:nᵢ, 1:nᵢ]` for `i = 1…r`,
 
-greatly reducing the computational complexity (The size of psd constraint is reduced from `n²` to `Σᵢ nᵢ²`). Such replacement can be justified if e.g. the objective is symmetric and the set of linear constraints follows a similar group-symmetric structure.
+greatly reducing the computational complexity: the size of the psd constraint is reduced from `n²` to `Σᵢ nᵢ²`. Such replacement can be justified if e.g. the objective is symmetric and the set of linear constraints follows a similar group-symmetric structure.
 
 If we are only interested in the _feasibility_ of an optimization problem, then such replacement is always justified (i.e. an _invariant solution_ is a _honest solution_ which might not attain the same objective).
 
@@ -51,6 +51,7 @@ Moreover, the symmetry group has just `7 229` orbits (when acting on the subspac
 The symmetrized problem is solvable in ~20 minutes on an average office laptop (with `16GB` of RAM).
 
 For more examples you may have a look at [dihedral action example](https://github.com/kalmarek/SymbolicWedderburn.jl/blob/master/examples/ex_robinson_form.jl), or different [sum of squares formulations](https://github.com/kalmarek/SymbolicWedderburn.jl/blob/master/examples/sos_problem.jl).
+
 # Related software
 
 ## Sum of Squares optimization
@@ -74,3 +75,35 @@ If you happen to use `SymbolicWedderburn` please cite either of
 * M. Kaluba, D. Kielak and P.W. Nowak *On property (T) for $Aut(Fₙ)$ and $SLₙ(Z)$* [1812.03456](https://arxiv.org/abs/1812.03456).
 
 (Follow the arxiv link for proper link to the journal.)
+
+## How does `SymbolicWedderburn.jl` really work (a bit more theory)?
+
+The algorithm of `SymbolicWedderburn.jl` can be summarised in a few steps. As an example it might be helpful to think of `G` acting on a polynomial ring by permuting variables.
+
+### Defining the action
+
+1. Given the action of `G` on variables the action `η` on the whole monomial basis is induced and therefore on the whole polynomial ring.
+2. For the concrete `G`-invariant linear subspace `V` (given by a fixed set of monomials) of the polynomial ring (a vector space with `G`-action) we compute the character of representation `η:G → 𝒰(V)` (we assume that `η` is unitary, which is automatic for (signed) permutation actions).
+
+### Computing with characters i.e. isotypical projections
+3. After computing the character table of `G` we find the decomposition of `(V, η)` into irreducibles: `η ≅ χ₁ + … + χᵣ` by some symbolic magic (i.e. orthogonality relations) in the group ring `ℂG` (or `ℝG`). We know that this decomposition corresponds to a decomposition `V ≅ V₁ ⊕ ⋯ ⊕ Vᵣ`, and we will compute that correspondence explicitely in a moment.
+4. Moreover, we abstractly know that each `χᵢ ≅ mᵢϱᵢ` (and `Vᵢ ≅ mᵢWᵢ`) is isomorphic to a multiple `mᵢ` of irreducible characters `ϱᵢ`, but we can't use this information yet. These irreducibles lead us later to `πᵢ : V → Vᵢ`, the projections onto isotypical summands. <details><summary>show me more…</summary>Our implementation of projections is matrix-free. Projections are just idempotent elements (`x² = x`) in the group algebra. In that sense the projection to an isotypical component is unique in `ℂG`, but not as `πᵢ = η(ϱᵢ)`, an element of `End_G((V, η))` i.e. as a matrix: a matrix representation of a projection already includes a choice of basis (think of the difference of a linear operator vs its matix).</details>
+
+### Minimal projection system
+4. Sometimes this step is followed by finding even tighter _minimal projection system_<details><summary>show me more…</summary>Finding tighter projections use a lemma of Schur.
+   > **Lemma** (Schur) Over an algebraically closed field the commutant of a matrix algebra consist of matrices of a particularly simple form:
+   > * direct sums of endomorphisms of isotypical subspaces (i.e. isotypical subspaces are orthogonal which gives us block structure for endomorphisms),
+   > * within isotypical subspace (of character `ϱ`) the endomorphisms are of the form `M⊗Iₙ`, where `n = degree(ϱ)` and `M` is (square) of size `m = multiplicity(ϱ, η)`.
+
+   Here the matrix algebra is the one defined by the image of `η` and the projections commute with those, so the conclusion is that reconstructing a single projection endomorphism corresponding to an irreducible `ϱ` requires only `m²` parameters (regardless of the degree of `ϱ`!)
+   * For every irreducible character `ϱᵢ` we try to find a (non-central) projection `pᵢ` such that `ϱᵢ∘pᵢ(e) = k` is as small as possible (desirably just `1`), so that `η(ϱᵢ∘pᵢ) = πᵢ∘η(pᵢ)` and therefore `rank(πᵢ∘η(pᵢ)) = k`. We call those `{ϱᵢ∘pᵢ}_{ϱ ∈ Irr(G)}` a **minimal projection system**. Note: the existence and complexity of finding the system depends **on the group only**, not on the representation `η`, its associated action (and hence not on the dimension of `V`!).
+   * Sometimes the system exists (symmetric, alternating groups etc.) sometimes it doesn’t (e.g. real representations of cyclic groups).
+   * We employ a simple brute-force algorithm to search for `pᵢ` over all characteristic/alternating projections for small subgroups of `G`.</details>
+
+### Working with matrices
+5. Given the monomial basis we realize those projections as sparse matrices (only now we start computing with matrices, but even this step is exact).
+6. Unitary vectors in the images of those projections are found via sparse `qr` decomposition and these basis vectors form the symmetry adapted basis.<details><summary>show me more…</summary>
+The image (i.e. as a linear subspace) of the matrix projection is well defined; any (orthogonal) basis of the subspace would do; We just take the first few columns of the `Q` factor of sparse `qr` factorisation.</details>
+
+> For more complete introduction to projections, characters and their place in the group ring we recommend the book by J.P. Serre _Linear representations of finite groups_.
+> A somewhat condensed account of minimal projection system is presented in sections 2 (theory) and 3.3 (particular example computations) of [1712.07167](https://arxiv.org/abs/1712.07167).
