@@ -1,6 +1,63 @@
 # abstract type Action is defined in ext_homomorphisms
 
 """
+    GroupActionError
+`GroupActionError` is an indicator that the group action defined by
+`(G, action, basis)` might be incorrect.
+
+If you implement the action in question yourself or encounter inconsistent results
+is advisable to run `check_group_action(G, action, basis, full_check=true)` to
+check the correctness of the implementation of the action.
+"""
+struct GroupActionError <: Exception
+    msg::String
+end
+
+function Base.showerror(io::IO, err::GroupActionError)
+    print(io, "Failure of group action axiom:")
+    return print(io, err.msg)
+end
+
+function __check_group_action_axioms(itr, act::Action, set_with_action)
+    id = one(first(itr))
+    for x in set_with_action
+        if action(act, id, x) != x
+            throw(
+                GroupActionError("`one(G)` doesn't act as identity on `$(x)`"),
+            )
+        end
+        for g in itr, h in itr
+            a = action(act, g * h, x)
+            b = action(act, h, action(act, g, x))
+            if a != b
+                throw(
+                    GroupActionError(
+                        "action by `g=$(g)` and `h=$(h)` fail right-associativity on `x=$(x)` :\n " *
+                        "`action(act, g * h, x) = $a ≠ $b = action(act, h, action(act, g, x))`",
+                    ),
+                )
+            end
+        end
+    end
+    return true
+end
+
+function check_group_action(
+    G::Group,
+    act::Action,
+    basis::AbstractVector;
+    full_check = false,
+    elts = full_check ? (1:length(basis)) : (1:min(length(basis), ngens(G))),
+)
+    X = @view basis[elts]
+    if full_check
+        return __check_group_action_axioms(G, act, X)
+    else
+        return __check_group_action_axioms(gens(G), act, X)
+    end
+end
+
+"""
     ByPermutations <: Action
 A type of action where a group acts through permutations on a set.
 

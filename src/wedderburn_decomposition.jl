@@ -9,18 +9,24 @@ end
     WedderburnDecomposition([T::Type, ]G::Group, action::Action, basis_full, basis_half[, S; semisimple])
 Compute `WedderburnDecomposition` related to `G` acting on `basis_half`, representing a form of Wedderburn-Artin decomposition.
 
-This object is intended to be used to simplify problems of positive-semidefinite optimization.
+This object is intended to be used to simplify problems of positive-semidefinite
+optimization.
 # Arguments
- * `basis_full` corresponds to the basis (or index set) for the objective functional (the set of constraints);
- * `basis_half` corresponds to the basis (or index set) of the PSD constraint.
+ * `basis_full` corresponds to the basis (or the index set) for the objective
+   functional (the set of constraints);
+ * `basis_half` corresponds to the basis (or the index set) for the PSD constraint.
 
 For description of the remaining arguments see [symmetry_adapted_basis](@ref).
 
 Return a `wd::WedderburnDecomposition` object which defines:
  * `basis(wd)`: the original `basis_full`.
- * `invariant_vectors(wd)`: a basis for the subspace `⟨basis_full⟩^G` invariant under the action of `G`.
- * `direct_summands(wd)`: a vector of `DirectSummands` defining a map from `⟨basis_half⟩` to a direct (orthogonal) sum of subspaces
- * `diagonalize(M::AbstractMatrix, wd::WedderburnDecomposition)`: a map implementing the Wedderburn-Artin decomposition for matrices `M ∈ End(⟨basis_half⟩)` (i.e. with rows and columns indexed by the elements of `basis_half`).
+ * `invariant_vectors(wd)`: a basis for the subspace `⟨basis_full⟩^G` invariant
+    under the action of `G`.
+ * `direct_summands(wd)`: a vector of `DirectSummands` defining a map from `⟨basis_half⟩`
+    to a direct (orthogonal) sum of subspaces (the diagonalization map).
+ * `diagonalize(M::AbstractMatrix, wd::WedderburnDecomposition)`: a map
+    implementing the Wedderburn-Artin decomposition for matrices `M ∈ End(⟨basis_half⟩)`
+    (i.e. with rows and columns indexed by the elements of `basis_half`).
 
 See also: [symmetry_adapted_basis](@ref).
 """
@@ -33,6 +39,7 @@ function WedderburnDecomposition(
     S = Rational{Int};
     semisimple = false,
 )
+    check_group_action(G, action, basis_full; full_check = false)
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
 

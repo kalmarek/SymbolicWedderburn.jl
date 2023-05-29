@@ -125,6 +125,9 @@ the whole `basis`, a call to `symmetry_adapted_basis(G)` is preferred.
 * For inducing the action `basis` needs to be indexable and iterable
 (e.g. in the form of an `AbstractVector`).
 
+!!! note !!!
+    A [GroupActionError](@ref) is an indicator that the group action defined by
+    `(G, action, basis)` might be incorrect.
 """
 function symmetry_adapted_basis(
     G::Group,
@@ -133,6 +136,8 @@ function symmetry_adapted_basis(
     S::Type = Rational{Int};
     semisimple = false,
 )
+    check_group_action(G, action, basis; full_check = false)
+
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(
         parent(tbl),
@@ -156,6 +161,7 @@ function symmetry_adapted_basis(
     S::Type = Rational{Int};
     semisimple = false,
 )
+    check_group_action(G, action, basis; full_check = false)
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(
         parent(tbl),
