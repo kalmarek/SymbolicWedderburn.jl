@@ -39,9 +39,9 @@ function WedderburnDecomposition(
     S = Rational{Int};
     semisimple = false,
 )
-    check_group_action(G, action, basis_full; full_check = false)
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
+    check_group_action(G, ehom; full_check = false)
 
     Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 

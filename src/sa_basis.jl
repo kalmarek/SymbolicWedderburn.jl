@@ -136,8 +136,6 @@ function symmetry_adapted_basis(
     S::Type = Rational{Int};
     semisimple = false,
 )
-    check_group_action(G, action, basis; full_check = false)
-
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(
         parent(tbl),
@@ -145,6 +143,7 @@ function symmetry_adapted_basis(
         basis;
         precompute = true,
     )
+    check_group_action(G, ehom; full_check = false)
     return symmetry_adapted_basis(
         eltype(tbl),
         tbl,
@@ -161,7 +160,6 @@ function symmetry_adapted_basis(
     S::Type = Rational{Int};
     semisimple = false,
 )
-    check_group_action(G, action, basis; full_check = false)
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(
         parent(tbl),
@@ -169,6 +167,7 @@ function symmetry_adapted_basis(
         basis;
         precompute = true,
     )
+    check_group_action(G, ehom; full_check = false)
     return symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
 end
 

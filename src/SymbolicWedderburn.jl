@@ -24,6 +24,7 @@ import .Characters.FiniteFields
 
 include("ext_homomorphisms.jl")
 include("actions.jl")
+include("group_action_error.jl")
 include("action_characters.jl")
 include("matrix_projections.jl")
 include("minimal_projections.jl")
