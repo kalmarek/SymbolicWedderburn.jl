@@ -46,7 +46,7 @@ orbit_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end
@@ -67,7 +67,7 @@ semisimple_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end
@@ -87,7 +87,7 @@ wedderburn_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end
