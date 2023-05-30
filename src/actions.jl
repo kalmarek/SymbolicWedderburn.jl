@@ -124,8 +124,6 @@ function induce(
     hom::InducedActionHomomorphism,
     g::GroupElement,
 )
-    n = length(basis(hom))
-
     I = Int[]
     J = Int[]
     V = coeff_type(ac)[]
@@ -137,7 +135,8 @@ function induce(
         append!(J, idcs)
         append!(V, vals)
     end
-    return sparse(I, J, V)
+    n = length(basis(hom))
+    return sparse(I, J, V, n, n)
 end
 
 # disabmiguation:
@@ -151,19 +150,20 @@ end
 
 """
     decompose(v, hom::InducedActionHomomorphism)
-Decompose element `v` in the (implicit) basis provided by `hom`.
+Decompose element `v` in basis `basis(hom)` provided by `hom`.
 
 Let `B = basis(hom)::StarAlgebras.AbstractBasis`. Then `v` should be decomposed
 as a unique linear combination `v = a₁b₁ + ⋯ aₙbₙ` and the indices of `bᵢ`s in `B`
 and a vector of coefficients `A` returned, so that
 
 ```
-@assert sparsevec(decompose(v, hom)...) == v
+b, c = decompose(v, hom)
+@assert sparsevec(b, c) == v
 ```
 
 !!! note
-    For performance reasons it is best to drop zeros in `A`, i.e. return a
-    sparse representation.
+    For performance reasons it is best to drop zeros in `c`, i.e. return a
+    possibly sparse representation.
 
 See also [`ByLinearTransformation`](@ref).
 """
@@ -198,20 +198,18 @@ function induce(
     hom::InducedActionHomomorphism,
     g::GroupElement,
 )
-    bs = basis(hom)
-    n = length(bs)
-
     I = Int[]
     J = Int[]
     V = coeff_type(ac)[]
 
-    for (i, f) in enumerate(bs)
+    for (i, f) in enumerate(basis(hom))
         k, s = action(action(hom), g, f)
         push!(I, i)
-        push!(J, bs[k])
+        push!(J, basis(hom)[k])
         push!(V, s)
     end
-    return sparse(I, J, V)
+    n = length(basis(hom))
+    return sparse(I, J, V, n, n)
 end
 
 # disabmiguation
