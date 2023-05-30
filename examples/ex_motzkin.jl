@@ -16,7 +16,7 @@ no_symmetry = let poly = motzkin * g
     m, model_creation_t = @timed sos_problem(poly)
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters = 20_000, eps = 1e-7, accel = 20),
+        scs_optimizer(; max_iters = 20_000, eps = 1e-7, accel = 20),
     )
 
     optimize!(m)
@@ -32,12 +32,12 @@ end
 wedderburn_dec =
     let poly = motzkin * g,
         G = PermGroup(perm"(1,2)"),
-        action = VariablePermutation()
+        action = VariablePermutation([x, y])
 
         m, stats = sos_problem(poly, G, action)
         JuMP.set_optimizer(
             m,
-            scs_optimizer(max_iters = 20_000, eps = 1e-7, accel = 20),
+            scs_optimizer(; max_iters = 20_000, eps = 1e-7, accel = 20),
         )
 
         optimize!(m)
