@@ -68,7 +68,12 @@ no_symmetry = let f = robinson_form
     m, creation_t = @timed sos_problem(f)
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters = 10_000, alpha = 1.8, accel = -10, eps = 1e-5),
+        scs_optimizer(;
+            max_iters = 10_000,
+            alpha = 1.8,
+            accel = -10,
+            eps = 1e-5,
+        ),
     )
     optimize!(m)
 
@@ -96,13 +101,18 @@ orbit_dec = let f = robinson_form, T = Float64
     m, stats = sos_problem(
         f,
         DihedralGroup(4),
-        DihedralAction(),
+        DihedralAction();
         decompose_psd = false,
     )
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(max_iters = 10_000, alpha = 1.9, accel = -10, eps = 1e-5),
+        scs_optimizer(;
+            max_iters = 10_000,
+            alpha = 1.9,
+            accel = -10,
+            eps = 1e-5,
+        ),
     )
     optimize!(m)
 
@@ -118,11 +128,11 @@ orbit_dec = let f = robinson_form, T = Float64
 end
 
 semisimple_dec = let f = robinson_form, T = Float64
-    m, stats = sos_problem(f, DihedralGroup(4), DihedralAction(), semisimple = true)
+    m, stats = sos_problem(f, DihedralGroup(4), DihedralAction(); semisimple = true)
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(
+        scs_optimizer(;
             max_iters = 10_000,
             alpha = 1.95,
             accel = -15,
@@ -146,13 +156,13 @@ wedderburn_dec = let f = robinson_form, T = Float64
     m, stats = sos_problem(
         f,
         DihedralGroup(4),
-        DihedralAction(),
+        DihedralAction();
         semisimple = false,
     )
 
     JuMP.set_optimizer(
         m,
-        scs_optimizer(
+        scs_optimizer(;
             max_iters = 5_000,
             alpha = 1.95,
             accel = -15,
@@ -176,5 +186,3 @@ end
 @assert no_symmetry.solve_t / wedderburn_dec.solve_t > 1
 
 @info "Summary of Example: Robinson form" no_symmetry orbit_dec semisimple_dec wedderburn_dec
-
-
