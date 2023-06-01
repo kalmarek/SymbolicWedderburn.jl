@@ -3,20 +3,14 @@
     GroupActionError
 `GroupActionError` is an indicator that the group action defined by
 `(G, action, basis)` might be incorrect.
-
-If you receive `GroupActionError` while running functions from `SymbolicWedderburn`
-or encounter inconsistent results it is advisable to run
-
-    `check_group_action(G, action, basis, full_check=true)`
-
-to check the correctness of the implementation of the action.
 """
-struct GroupActionError <: Exception
+struct GroupActionError{A} <: Exception
+    action::A
     msg::String
 end
 
 function Base.showerror(io::IO, err::GroupActionError)
-    print(io, "Failure of group action axiom: ")
+    print(io, "Group action $(err.action) seems to be ill defined: ")
     return print(io, err.msg)
 end
 
@@ -121,7 +115,9 @@ function __check_group_action_axioms(
         if !(passed)
             throw(
                 GroupActionError(
-                    "group identity doesn't act as identity on `x=$(x) ≠ $(xᵉ) = action(act, id, x)`",
+                    action(hom),
+                    "group identity `id = $(id)` fails to act as identity at `x = $(x)`:\n" *
+                    "`x = $(x) ≠ $(xᵉ) = action(act, id, x)`",
                 ),
             )
         end
@@ -134,8 +130,10 @@ function __check_group_action_axioms(
             if !(passed)
                 throw(
                     GroupActionError(
-                        "action by `g=$(g)` and `h=$(h)` fail right-associativity on `x=$(x)` :\n " *
-                        "`action(act, g * h, x) = $(xᵍʰ) ≠ $(xᵍ⁾ʰ) = action(act, h, action(act, g, x))`",
+                        action(hom),
+                        "`g = $(g)` and `h = $(h)` fail right-associativity at `x = $(x)` :\n " *
+                        "`action(act, g * h, x) = $(xᵍʰ) ≠ " *
+                        "$(xᵍ⁾ʰ) = action(act, h, action(act, g, x))`",
                     ),
                 )
             end
