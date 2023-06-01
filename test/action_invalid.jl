@@ -3,7 +3,7 @@ using DynamicPolynomials
 
 include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
 
-@testset "Catching Invalid actions" begin
+@testset "Catching invalid actions" begin
     include(joinpath(dirname(pathof(GroupsCore)), "..", "test", "cyclic.jl"))
     struct CyclicAction <: OnMonomials end
     SymbolicWedderburn.coeff_type(::CyclicAction) = Float64

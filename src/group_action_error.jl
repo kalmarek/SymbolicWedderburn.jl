@@ -30,18 +30,6 @@ function __group_action_id(
     return x == xᵉ, xᵉ
 end
 
-function __group_action_right_assoc(
-    hom::InducedActionHomomorphism{<:ByPermutations},
-    g,
-    h,
-    x,
-)
-    xᵍʰ = action(action(hom), g * h, x)
-    xᵍ = action(action(hom), g, x)
-    xᵍꜝʰ = action(action(hom), h, xᵍ)
-    return xᵍʰ == xᵍꜝʰ, xᵍʰ, xᵍꜝʰ
-end
-
 function __group_action_id(
     hom::InducedActionHomomorphism{<:BySignedPermutations},
     id::GroupElement,
@@ -67,6 +55,18 @@ function __group_action_id(
     passed = __isexact(T) ? v1 == v2 : v1 ≈ v2
 
     return passed, xᵉ
+end
+
+function __group_action_right_assoc(
+    hom::InducedActionHomomorphism{<:ByPermutations},
+    g,
+    h,
+    x,
+)
+    xᵍʰ = action(action(hom), g * h, x)
+    xᵍ = action(action(hom), g, x)
+    xᵍꜝʰ = action(action(hom), h, xᵍ)
+    return xᵍʰ == xᵍꜝʰ, xᵍʰ, xᵍꜝʰ
 end
 
 function __group_action_right_assoc(
@@ -105,13 +105,13 @@ end
 
 function __check_group_action_axioms(
     itr,
-    ehom::InducedActionHomomorphism,
+    hom::InducedActionHomomorphism,
     elts_idcs,
 )
     id = one(first(itr))
     for idx in elts_idcs # checking that id really acts as identity
-        x = basis(ehom)[idx]
-        passed, xᵉ = __group_action_id(ehom, id, x)
+        x = basis(hom)[idx]
+        passed, xᵉ = __group_action_id(hom, id, x)
         if !(passed)
             throw(
                 GroupActionError(
@@ -124,9 +124,9 @@ function __check_group_action_axioms(
     end
 
     for idx in elts_idcs
-        x = basis(ehom)[idx]
+        x = basis(hom)[idx]
         for g in itr, h in itr
-            passed, xᵍʰ, xᵍ⁾ʰ = __group_action_right_assoc(ehom, g, h, x)
+            passed, xᵍʰ, xᵍ⁾ʰ = __group_action_right_assoc(hom, g, h, x)
             if !(passed)
                 throw(
                     GroupActionError(
@@ -147,13 +147,13 @@ function check_group_action(
     hom::InducedActionHomomorphism;
     full_check = false,
 )
-    if full_check
-        return __check_group_action_axioms(G, hom, 1:length(basis(hom)))
+    return if full_check
+        __check_group_action_axioms(G, hom, 1:length(basis(hom)))
     else
-        return __check_group_action_axioms(
+        __check_group_action_axioms(
             gens(G),
             hom,
-            1:min(length(basis(hom)), ngens(G)),
+            1:min(length(basis(hom)), 16), # arbitrary, smallish number
         )
     end
 end
