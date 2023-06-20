@@ -1,55 +1,45 @@
 using DynamicPolynomials
-const DPoly = DynamicPolynomials
+const DP = DynamicPolynomials
 using GroupsCore
 using PermutationGroups
 
-struct VariablePermutation <: SymbolicWedderburn.ByPermutations end
+const SW = SymbolicWedderburn
 
-function SymbolicWedderburn.action(
+# Defining action on polynomials by acting on terms and monomials:
+function SW.action(a::SW.Action, el::GroupElement, poly::DP.AbstractPolynomial)
+    return sum(SW.action(a, el, term) for term in DP.terms(poly))
+end
+
+function SW.action(a::SW.Action, el::GroupElement, term::DP.AbstractTerm)
+    return DP.coefficient(term) * SW.action(a, el, DP.monomial(term))
+end
+
+struct VariablePermutation{V} <: SW.ByPermutations
+    variables::V
+end
+
+function SW.action(
     a::VariablePermutation,
     g::PermutationGroups.AbstractPerm,
     m::Monomial,
 )
-    v = variables(m)
-    return m(v => SymbolicWedderburn.action(a, g, v))
+    v = a.variables
+    # v = variables(m)
+    return m(v => v^g)
 end
 
-function SymbolicWedderburn.action(
-    ::VariablePermutation,
-    g::PermutationGroups.AbstractPerm,
-    v::AbstractVector,
-)
-    return map(i -> v[i^g], eachindex(v))
-end
+# this is a general linear action that can be induced
+# from the action on monomials
+abstract type OnMonomials <: SW.ByLinearTransformation end
 
-abstract type OnMonomials <: SymbolicWedderburn.ByLinearTransformation end
-
-function SymbolicWedderburn.action(
-    a::Union{VariablePermutation,OnMonomials},
-    el::GroupElement,
-    term::DPoly.AbstractTerm,
-)
-    return DPoly.coefficient(term) *
-           SymbolicWedderburn.action(a, el, DPoly.monomial(term))
-end
-function SymbolicWedderburn.action(
-    a::Union{VariablePermutation,OnMonomials},
-    el::GroupElement,
-    poly::DPoly.AbstractPolynomial,
-)
-    return sum([
-        SymbolicWedderburn.action(a, el, term) for term in DPoly.terms(poly)
-    ])
-end
-
-function SymbolicWedderburn.decompose(
-    k::DPoly.AbstractPolynomialLike,
-    hom::SymbolicWedderburn.InducedActionHomomorphism,
+function SW.decompose(
+    k::DP.AbstractPolynomialLike,
+    hom::SW.InducedActionHomomorphism,
 )
     # correct only if basis(hom) == monomials
-    I = SymbolicWedderburn._int_type(hom)
-    indcs = I[hom[mono] for mono in DPoly.monomials(k)]
-    coeffs = DPoly.coefficients(k)
+    I = SW._int_type(hom)
+    indcs = I[hom[mono] for mono in DP.monomials(k)]
+    coeffs = DP.coefficients(k)
 
     return indcs, coeffs
 end

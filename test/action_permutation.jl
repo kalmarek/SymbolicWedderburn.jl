@@ -23,7 +23,7 @@ function SymbolicWedderburn.action(
     p::PermutationGroups.AbstractPerm,
     w::Word,
 )
-    return Word(w.alphabet, [l^p for l in w.letters])
+    return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
 end
 
 function allwords(A, radius)

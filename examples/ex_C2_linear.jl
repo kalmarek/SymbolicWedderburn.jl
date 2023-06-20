@@ -24,13 +24,13 @@ function SymbolicWedderburn.action(
 end
 
 function SymbolicWedderburn.decompose(
-    k::AbstractPolynomial,
+    k::DynamicPolynomials.AbstractPolynomialLike,
     hom::SymbolicWedderburn.InducedActionHomomorphism,
 )
     # correct only if basis(hom) == monomials
-
-    indcs = [hom[m] for m in monomials(k)]
-    coeffs = coefficients(k)
+    I = SymbolicWedderburn._int_type(hom)
+    indcs = I[hom[mono] for mono in DynamicPolynomials.monomials(k)]
+    coeffs = DynamicPolynomials.coefficients(k)
 
     return indcs, coeffs
 end

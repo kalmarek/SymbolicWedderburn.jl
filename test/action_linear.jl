@@ -1,10 +1,11 @@
 using DynamicPolynomials
 
 using GroupsCore
-include(joinpath(pathof(GroupsCore), "..", "..", "test", "cyclic.jl"))
+include(joinpath(dirname(pathof(GroupsCore)), "..", "test", "cyclic.jl"))
 
 x, y = @polyvar x y
 struct By90Rotation <: SymbolicWedderburn.ByLinearTransformation end
+# It would be clearer to make this action <: OnMonomials
 # (x, y) → (x+y, x-y)/sqrt(2)
 
 SymbolicWedderburn.coeff_type(::By90Rotation) = Float64

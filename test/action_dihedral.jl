@@ -84,10 +84,15 @@ function SymbolicWedderburn.action(
     el::DihedralElement,
     mono::AbstractMonomial,
 )
-    g_mono = SymbolicWedderburn.action(DihedralAction(), el, mono)
-    u = leadingcoefficient(g_mono) ÷ leadingcoefficient(mono)
+    var_x, var_y = iseven(el.reflection + el.id) ? (x, y) : (y, x)
 
-    return leadingmonomial(g_mono), u
+    sign_x = 1 <= el.id <= 2 ? -1 : 1
+    sign_y = 2 <= el.id ? -1 : 1
+
+    g_mono = mono([x, y] => [sign_x * var_x, sign_y * var_y])
+    sign = DP.coefficient(mono) ÷ DP.coefficient(g_mono)
+
+    return monomial(g_mono), sign
 end
 
 # This is only needed to define action on the whole Robinson form to check that is actually invariant.
@@ -104,6 +109,12 @@ function SymbolicWedderburn.action(
 end
 
 @testset "Dihedral action through Signed Permutations" begin
+    @test all(
+        SymbolicWedderburn.action(DihedralAction(), g, mono) ==
+        prod(SymbolicWedderburn.action(DihedralActionSP(), g, mono)) for
+        mono in monomials([x, y], 0:4), g in DihedralGroup(4)
+    )
+
     m, _ = sos_problem(robinson_form, DihedralGroup(4), DihedralActionSP())
 
     JuMP.set_optimizer(

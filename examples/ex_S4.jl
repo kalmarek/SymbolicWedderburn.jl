@@ -10,7 +10,7 @@ include(joinpath(@__DIR__, "solver.jl"))
 const N = 4
 @polyvar x[1:N]
 
-OPTIMIZER = cosmo_optimizer(max_iters = 10_000, accel = 10, eps = 1e-7)
+OPTIMIZER = cosmo_optimizer(; max_iters = 10_000, accel = 10, eps = 1e-7)
 
 f =
     sum(x) +
@@ -35,7 +35,7 @@ orbit_dec = let f = f, vars = DynamicPolynomials.variables(f)
     m, stats = sos_problem(
         f,
         PermGroup([perm"(1,2)", Perm([2:N; 1])]),
-        VariablePermutation(),
+        VariablePermutation(x);
         decompose_psd = false,
     )
 
@@ -46,7 +46,7 @@ orbit_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end
@@ -56,7 +56,7 @@ semisimple_dec = let f = f, vars = DynamicPolynomials.variables(f)
     m, stats = sos_problem(
         f,
         PermGroup([perm"(1,2)", Perm([2:N; 1])]),
-        VariablePermutation(),
+        VariablePermutation(x);
         semisimple = true,
     )
 
@@ -67,7 +67,7 @@ semisimple_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end
@@ -77,7 +77,7 @@ wedderburn_dec = let f = f, vars = DynamicPolynomials.variables(f)
     m, stats = sos_problem(
         f,
         PermGroup([perm"(1,2)", Perm([2:N; 1])]),
-        VariablePermutation(),
+        VariablePermutation(x),
     )
 
     JuMP.set_optimizer(m, OPTIMIZER)
@@ -87,7 +87,7 @@ wedderburn_dec = let f = f, vars = DynamicPolynomials.variables(f)
         status = termination_status(m),
         objective = objective_value(m),
         symmetry_adaptation_t = stats["symmetry_adaptation"],
-        creation_t = ["problem_creation"],
+        creation_t = stats["model_creation"],
         solve_t = solve_time(m),
     )
 end

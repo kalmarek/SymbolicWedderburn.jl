@@ -24,11 +24,14 @@ import .Characters.FiniteFields
 
 include("ext_homomorphisms.jl")
 include("actions.jl")
+include("group_action_error.jl")
 include("action_characters.jl")
 include("matrix_projections.jl")
 include("minimal_projections.jl")
 include("direct_summands.jl")
 include("sa_basis.jl")
 include("wedderburn_decomposition.jl")
+
+include("precompile.jl")
 
 end # module

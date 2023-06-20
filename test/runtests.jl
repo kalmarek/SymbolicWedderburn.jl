@@ -14,6 +14,7 @@ using SymbolicWedderburn.StarAlgebras
 include("action_permutation.jl")
 include("action_linear.jl")
 include("action_dihedral.jl")
+include("action_invalid.jl")
 
 if VERSION >= v"1.7.0" && !haskey(ENV, "CI")
     @testset "Examples" begin
