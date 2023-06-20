@@ -3,6 +3,18 @@
     GroupActionError
 `GroupActionError` is an indicator that the group action defined by
 `(G, action, basis)` might be incorrect.
+
+The checks in `SymbolicWedderburn` only make sure that the group action is well
+defined. To verify the correctness of the definition of a group you may
+additionally run
+```julia
+using GroupsCore
+include(joinpath(pathof(GroupsCore), "..", "..", "test", "conformance_test.jl"))
+let G = ...
+    test_Group_interface(G)
+    test_GroupElement_interface(rand(G, 2)...)
+end
+```
 """
 struct GroupActionError{A} <: Exception
     action::A
