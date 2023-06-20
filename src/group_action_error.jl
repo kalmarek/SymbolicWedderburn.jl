@@ -138,6 +138,7 @@ function __check_group_action_axioms(
     for idx in elts_idcs
         x = basis(hom)[idx]
         for g in itr, h in itr
+            h = inv(h)
             passed, xᵍʰ, xᵍ⁾ʰ = __group_action_right_assoc(hom, g, h, x)
             if !(passed)
                 throw(
