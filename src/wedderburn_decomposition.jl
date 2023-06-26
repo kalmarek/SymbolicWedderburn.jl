@@ -38,6 +38,7 @@ function WedderburnDecomposition(
     basis_half,
     S = Rational{Int};
     semisimple = false,
+    try_harder = false,
 )
     tbl = CharacterTable(S, G)
     ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
@@ -47,6 +48,10 @@ function WedderburnDecomposition(
 
     basis = StarAlgebras.Basis{UInt32}(basis_full)
     invariants = invariant_vectors(tbl, action, basis)
+
+    if try_harder
+        Uπs .= simple_projection.(Uπs, Ref(G), Ref(ehom))
+    end
 
     return WedderburnDecomposition(basis, invariants, Uπs, ehom)
 end
