@@ -174,8 +174,8 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
-    I = UInt32[]
-    J = UInt32[]
+    I = Int32[]
+    J = Int32[]
     V = eltype(result)[]
     for (val, cc) in zip(vals, ccls)
         iszero(val) && continue
@@ -232,8 +232,8 @@ function matrix_projection_irr_acc!(
     weight,
 )
     iszero(weight) && return result
-    I = UInt32[]
-    J = UInt32[]
+    I = Int32[]
+    J = Int32[]
     V = eltype(result)[]
     for (val, ccl) in zip(class_values, conjugacy_cls)
         iszero(val) && continue
@@ -304,8 +304,8 @@ function matrix_representation_acc!(
     },
 )
     b = basis(parent(α))
-    I = UInt32[]
-    J = UInt32[]
+    I = Int32[]
+    J = Int32[]
     V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         g = b[idx]
@@ -326,8 +326,8 @@ function matrix_representation_acc!(
     α::AlgebraElement,
 )
     b = basis(parent(α))
-    I = UInt32[]
-    J = UInt32[]
+    I = Int32[]
+    J = Int32[]
     V = eltype(result)[]
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
