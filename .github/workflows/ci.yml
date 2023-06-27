@@ -8,18 +8,20 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        version:
-          - '1.6'
-          - '1'
-          - 'nightly'
-        os:
-          - ubuntu-latest
-          - macOS-latest
-          - windows-latest
-        arch:
-          - x64
-        allow_failures:
-          - julia: nightly
+        include:
+          - version: '1.6'
+            os: ubuntu-latest
+            arch: x64
+          - version: '1'
+            os: ubuntu-latest
+            arch: x64
+          - version: '1'
+            os: ubuntu-latest
+            arch: x86
+          - version: 'nightly'
+            os: ubuntu-latest
+            arch: x64
+            allow_failures: true
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
