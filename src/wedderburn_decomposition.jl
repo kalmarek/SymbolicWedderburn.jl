@@ -163,16 +163,23 @@ end
 
 function invariant_vectors(
     tbl::Characters.CharacterTable,
+    act::Union{<:ByPermutations,<:BySignedPermutations},
+    basis::StarAlgebras.Basis,
+)
+    return invariant_vectors(parent(tbl), act, basis)
+end
+
+function invariant_vectors(
+    G::Group,
     act::ByPermutations,
     basis::StarAlgebras.Basis{T,I},
 ) where {T,I}
-    G = parent(tbl)
     tovisit = trues(length(basis))
-    invariant_vs = Vector{SparseVector{Rational{Int}}}()
-
+    invariant_vs = Vector{SparseVector{Rational{Int},I}}()
     ordG = order(Int, G)
     elts = collect(G)
     orbit = zeros(I, ordG)
+    sizehint!(invariant_vs, 2length(basis) ÷ ordG)
 
     for i in eachindex(basis)
         if tovisit[i]
@@ -191,11 +198,10 @@ function invariant_vectors(
 end
 
 function invariant_vectors(
-    tbl::Characters.CharacterTable,
+    G::Group,
     act::BySignedPermutations,
     basis::StarAlgebras.Basis{T,I},
 ) where {T,I}
-    G = parent(tbl)
     ordG = order(Int, G)
     elts = collect(G)
     orbit = zeros(I, ordG)
