@@ -218,7 +218,7 @@ function invariant_vectors(
         end
     end
     fetch.(states)
-    return invariant_vs
+    return sort!(invariant_vs; by = first ∘ SparseArrays.nonzeroinds)
 end
 
 function invariant_vectors(
