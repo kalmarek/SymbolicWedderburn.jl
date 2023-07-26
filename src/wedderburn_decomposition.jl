@@ -245,9 +245,9 @@ function invariant_vectors(
                 coeffs[j] = c
             end
             @view(tovisit[orbit]) .= false
-            vals = sparsevec(orbit, coeffs, length(basis))
+            v = sparsevec(orbit, coeffs, length(basis))
             if CT <: Union{AbstractFloat,Complex}
-                droptol!(v, eps(real(CT)) * length(vals))
+                droptol!(v, eps(real(CT)) * length(v))
             end
             if !iszero(v)
                 v .*= 1 // ordG
