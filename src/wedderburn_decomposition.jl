@@ -245,11 +245,12 @@ function invariant_vectors(
                 coeffs[j] = c
             end
             @view(tovisit[orbit]) .= false
-            v = sparsevec(orbit, 1 // ordG .* coeffs, length(basis))
-            if (VT = eltype(v)) <: Union{AbstractFloat,Complex}
-                droptol!(v, eps(real(VT)) * length(v))
+            vals = sparsevec(orbit, coeffs, length(basis))
+            if CT <: Union{AbstractFloat,Complex}
+                droptol!(v, eps(real(CT)) * length(vals))
             end
             if !iszero(v)
+                v .*= 1 // ordG
                 push!(invariant_vs, v)
             end
         end
