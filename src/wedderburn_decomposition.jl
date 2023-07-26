@@ -178,22 +178,37 @@ function invariant_vectors(
     invariant_vs = Vector{SparseVector{Rational{Int},I}}()
     ordG = order(Int, G)
     elts = collect(G)
-    orbit = zeros(I, ordG)
     sizehint!(invariant_vs, 2length(basis) ÷ ordG)
 
-    for i in eachindex(basis)
-        if tovisit[i]
-            bi = basis[i]
-            Threads.@threads for j in eachindex(elts)
-                orbit[j] = basis[action(act, elts[j], bi)]
+    lck = Threads.SpinLock() # to guard tovisit & invariant_vs
+
+    tasks_per_thread = 2
+    chunk_size = max(1, length(basis) ÷ (tasks_per_thread * Threads.nthreads()))
+    data_chunks = Iterators.partition(eachindex(basis), chunk_size)
+
+    states = map(data_chunks) do chunk
+        Threads.@spawn begin
+            orbit = zeros(I, ordG)
+            for i in chunk
+                if tovisit[i]
+                    bi = basis[i]
+                    for j in eachindex(elts)
+                        orbit[j] = basis[action(act, elts[j], bi)]
+                    end
+                    vals = fill(1 // ordG, ordG)
+                    v = sparsevec(orbit, vals, length(basis))
+                    lock(lck) do
+                        if tovisit[i]
+                            tovisit[orbit] .= false
+                            push!(invariant_vs, v)
+                        end
+                    end
+                end
             end
-            tovisit[orbit] .= false
-            push!(
-                invariant_vs,
-                sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
-            )
+            return true
         end
     end
+    fetch.(states)
     return invariant_vs
 end
 
