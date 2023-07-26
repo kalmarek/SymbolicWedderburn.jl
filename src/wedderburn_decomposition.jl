@@ -34,8 +34,28 @@ function WedderburnDecomposition(
     T::Type,
     G::Group,
     action::Action,
-    basis_full,
-    basis_half,
+    basis_full::AbstractVector,
+    basis_half::AbstractVector,
+    S = Rational{Int};
+    semisimple = false,
+)
+    return WedderburnDecomposition(
+        T,
+        G,
+        action,
+        StarAlgebras.Basis{UInt32}(basis_full),
+        StarAlgebras.Basis{UInt32}(basis_half),
+        S;
+        semisimple = semisimple,
+    )
+end
+
+function WedderburnDecomposition(
+    T::Type,
+    G::Group,
+    action::Action,
+    basis_full::StarAlgebras.Basis,
+    basis_half::StarAlgebras.Basis,
     S = Rational{Int};
     semisimple = false,
 )
