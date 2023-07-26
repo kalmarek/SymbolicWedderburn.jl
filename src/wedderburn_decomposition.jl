@@ -60,15 +60,24 @@ function WedderburnDecomposition(
     semisimple = false,
 )
     tbl = CharacterTable(S, G)
+    invariants = Threads.@spawn invariant_vectors(tbl, action, basis_full)
+
     ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
     check_group_action(G, ehom; full_check = false)
 
-    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
+    Uπs = Threads.@spawn symmetry_adapted_basis(
+        T,
+        tbl,
+        ehom;
+        semisimple = semisimple,
+    )
 
-    basis = StarAlgebras.Basis{UInt32}(basis_full)
-    invariants = invariant_vectors(tbl, action, basis)
-
-    return WedderburnDecomposition(basis, invariants, Uπs, ehom)
+    return WedderburnDecomposition(
+        basis_full,
+        fetch(invariants),
+        fetch(Uπs),
+        ehom,
+    )
 end
 
 function Base.show(io::IO, wbdec::SymbolicWedderburn.WedderburnDecomposition)
