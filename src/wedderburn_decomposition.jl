@@ -208,7 +208,7 @@ function invariant_vectors(
                     v = sparsevec(orbit, vals, length(basis))
                     lock(lck) do
                         if tovisit[i]
-                            tovisit[orbit] .= false
+                            @view(tovisit[orbit]) .= false
                             push!(invariant_vs, v)
                         end
                     end
@@ -228,32 +228,46 @@ function invariant_vectors(
 ) where {T,I}
     ordG = order(Int, G)
     elts = collect(G)
-    orbit = zeros(I, ordG)
     CT = promote_type(coeff_type(act), Rational{Int}) # output coeff type
-    coeffs = Vector{CT}(undef, ordG)
     tovisit = trues(length(basis))
     invariant_vs = Vector{SparseVector{CT,Int}}()
 
     sizehint!(invariant_vs, length(basis) ÷ ordG)
 
-    for (i, b) in enumerate(basis)
-        if tovisit[i]
-            Threads.@threads for j in eachindex(elts)
-                g = elts[j]
-                gb, c = SymbolicWedderburn.action(act, g, b)
-                orbit[j] = basis[gb]
-                coeffs[j] = c
-            end
-            @view(tovisit[orbit]) .= false
-            v = sparsevec(orbit, coeffs, length(basis))
-            if CT <: Union{AbstractFloat,Complex}
-                droptol!(v, eps(real(CT)) * length(v))
-            end
-            if !iszero(v)
-                v .*= 1 // ordG
-                push!(invariant_vs, v)
+    lck = Threads.SpinLock() # to guard tovisit & invariant_vs
+
+    tasks_per_thread = 2
+    chunk_size = max(1, length(basis) ÷ (tasks_per_thread * Threads.nthreads()))
+    data_chunks = Iterators.partition(eachindex(basis), chunk_size)
+
+    states = map(data_chunks) do chunk
+        Threads.@spawn begin
+            orbit = zeros(I, ordG)
+            coeffs = Vector{CT}(undef, ordG)
+            for i in chunk
+                if tovisit[i]
+                    bi = basis[i]
+                    for j in eachindex(elts)
+                        gb, c = SymbolicWedderburn.action(act, elts[j], bi)
+                        orbit[j] = basis[gb]
+                        coeffs[j] = c
+                    end
+                    v = sparsevec(orbit, coeffs .// ordG, length(basis))
+                    if CT <: Union{AbstractFloat,Complex}
+                        droptol!(v, eps(real(CT)) * length(v))
+                    end
+                    if !iszero(v)
+                        lock(lck) do
+                            if tovisit[i]
+                                @view(tovisit[orbit]) .= false
+                                push!(invariant_vs, v)
+                            end
+                        end
+                    end
+                end
             end
         end
     end
-    return invariant_vs
+    fetch.(states)
+    return sort!(invariant_vs; by = first ∘ SparseArrays.nonzeroinds)
 end
