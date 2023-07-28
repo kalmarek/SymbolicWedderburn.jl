@@ -73,7 +73,7 @@ end
         SymbolicWedderburn.basis(ehom),
     )
     @test length(inv_vec) == 22
-    @test eltype(inv_vec) == SparseVector{Rational{Int}}
+    @test eltype(eltype(inv_vec)) == Rational{Int}
 
     @testset "semisimple decomposition" begin
         let i = 1

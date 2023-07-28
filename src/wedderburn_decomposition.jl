@@ -34,21 +34,50 @@ function WedderburnDecomposition(
     T::Type,
     G::Group,
     action::Action,
-    basis_full,
-    basis_half,
+    basis_full::AbstractVector,
+    basis_half::AbstractVector,
+    S = Rational{Int};
+    semisimple = false,
+)
+    return WedderburnDecomposition(
+        T,
+        G,
+        action,
+        StarAlgebras.Basis{UInt32}(basis_full),
+        StarAlgebras.Basis{UInt32}(basis_half),
+        S;
+        semisimple = semisimple,
+    )
+end
+
+function WedderburnDecomposition(
+    T::Type,
+    G::Group,
+    action::Action,
+    basis_full::StarAlgebras.Basis,
+    basis_half::StarAlgebras.Basis,
     S = Rational{Int};
     semisimple = false,
 )
     tbl = CharacterTable(S, G)
+    invariants = Threads.@spawn invariant_vectors(tbl, action, basis_full)
+
     ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
     check_group_action(G, ehom; full_check = false)
 
-    Uπs = symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)
+    Uπs = Threads.@spawn symmetry_adapted_basis(
+        T,
+        tbl,
+        ehom;
+        semisimple = semisimple,
+    )
 
-    basis = StarAlgebras.Basis{UInt32}(basis_full)
-    invariants = invariant_vectors(tbl, action, basis)
-
-    return WedderburnDecomposition(basis, invariants, Uπs, ehom)
+    return WedderburnDecomposition(
+        basis_full,
+        fetch(invariants),
+        fetch(Uπs),
+        ehom,
+    )
 end
 
 function Base.show(io::IO, wbdec::SymbolicWedderburn.WedderburnDecomposition)
@@ -143,66 +172,102 @@ end
 
 function invariant_vectors(
     tbl::Characters.CharacterTable,
-    act::ByPermutations,
-    basis::StarAlgebras.Basis{T,I},
-) where {T,I}
-    G = parent(tbl)
-    tovisit = trues(length(basis))
-    invariant_vs = Vector{SparseVector{Rational{Int}}}()
-
-    ordG = order(Int, G)
-    elts = collect(G)
-    orbit = zeros(I, ordG)
-
-    for i in eachindex(basis)
-        if tovisit[i]
-            bi = basis[i]
-            Threads.@threads for j in eachindex(elts)
-                orbit[j] = basis[action(act, elts[j], bi)]
-            end
-            tovisit[orbit] .= false
-            push!(
-                invariant_vs,
-                sparsevec(orbit, fill(1 // ordG, ordG), length(basis)),
-            )
-        end
-    end
-    return invariant_vs
+    act::Union{<:ByPermutations,<:BySignedPermutations},
+    basis::StarAlgebras.Basis,
+)
+    return invariant_vectors(parent(tbl), act, basis)
 end
 
 function invariant_vectors(
-    tbl::Characters.CharacterTable,
+    G::Group,
+    act::ByPermutations,
+    basis::StarAlgebras.Basis{T,I},
+) where {T,I}
+    tovisit = trues(length(basis))
+    invariant_vs = Vector{SparseVector{Rational{Int},I}}()
+    ordG = order(Int, G)
+    elts = collect(G)
+    sizehint!(invariant_vs, 2length(basis) ÷ ordG)
+
+    lck = Threads.SpinLock() # to guard tovisit & invariant_vs
+
+    tasks_per_thread = 2
+    chunk_size = max(1, length(basis) ÷ (tasks_per_thread * Threads.nthreads()))
+    data_chunks = Iterators.partition(eachindex(basis), chunk_size)
+
+    states = map(data_chunks) do chunk
+        Threads.@spawn begin
+            orbit = zeros(I, ordG)
+            for i in chunk
+                if tovisit[i]
+                    bi = basis[i]
+                    for j in eachindex(elts)
+                        orbit[j] = basis[action(act, elts[j], bi)]
+                    end
+                    vals = fill(1 // ordG, ordG)
+                    v = sparsevec(orbit, vals, length(basis))
+                    lock(lck) do
+                        if tovisit[i]
+                            @view(tovisit[orbit]) .= false
+                            push!(invariant_vs, v)
+                        end
+                    end
+                end
+            end
+            return true
+        end
+    end
+    fetch.(states)
+    return sort!(invariant_vs; by = first ∘ SparseArrays.nonzeroinds)
+end
+
+function invariant_vectors(
+    G::Group,
     act::BySignedPermutations,
     basis::StarAlgebras.Basis{T,I},
 ) where {T,I}
-    G = parent(tbl)
     ordG = order(Int, G)
     elts = collect(G)
-    orbit = zeros(I, ordG)
     CT = promote_type(coeff_type(act), Rational{Int}) # output coeff type
-    coeffs = Vector{CT}(undef, ordG)
     tovisit = trues(length(basis))
     invariant_vs = Vector{SparseVector{CT,Int}}()
 
     sizehint!(invariant_vs, length(basis) ÷ ordG)
 
-    for (i, b) in enumerate(basis)
-        if tovisit[i]
-            Threads.@threads for j in eachindex(elts)
-                g = elts[j]
-                gb, c = SymbolicWedderburn.action(act, g, b)
-                orbit[j] = basis[gb]
-                coeffs[j] = c
-            end
-            @view(tovisit[orbit]) .= false
-            v = sparsevec(orbit, 1 // ordG .* coeffs, length(basis))
-            if (VT = eltype(v)) <: Union{AbstractFloat,Complex}
-                droptol!(v, eps(real(VT)) * length(v))
-            end
-            if !iszero(v)
-                push!(invariant_vs, v)
+    lck = Threads.SpinLock() # to guard tovisit & invariant_vs
+
+    tasks_per_thread = 2
+    chunk_size = max(1, length(basis) ÷ (tasks_per_thread * Threads.nthreads()))
+    data_chunks = Iterators.partition(eachindex(basis), chunk_size)
+
+    states = map(data_chunks) do chunk
+        Threads.@spawn begin
+            orbit = zeros(I, ordG)
+            coeffs = Vector{CT}(undef, ordG)
+            for i in chunk
+                if tovisit[i]
+                    bi = basis[i]
+                    for j in eachindex(elts)
+                        gb, c = SymbolicWedderburn.action(act, elts[j], bi)
+                        orbit[j] = basis[gb]
+                        coeffs[j] = c
+                    end
+                    v = sparsevec(orbit, coeffs .// ordG, length(basis))
+                    if CT <: Union{AbstractFloat,Complex}
+                        droptol!(v, eps(real(CT)) * length(v))
+                    end
+                    if !iszero(v)
+                        lock(lck) do
+                            if tovisit[i]
+                                @view(tovisit[orbit]) .= false
+                                push!(invariant_vs, v)
+                            end
+                        end
+                    end
+                end
             end
         end
     end
-    return invariant_vs
+    fetch.(states)
+    return sort!(invariant_vs; by = first ∘ SparseArrays.nonzeroinds)
 end
