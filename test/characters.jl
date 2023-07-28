@@ -54,5 +54,5 @@ end
     @test sprint(show, -2chars[1] + 3chars[2]) == "-2·χ₁ +3·χ₂"
 
     @test sprint(show, MIME"text/plain"(), chars[1]) ==
-          "Character over Cyclotomic{Rational{Int64}, SparseVector{Rational{Int64}, Int64}}\nχ₁"
+          "Character over Cyclotomic{Rational{$Int}, SparseVector{Rational{$Int}, $Int}}\nχ₁"
 end

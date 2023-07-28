@@ -27,7 +27,7 @@ characteristic(::GF{q}) where {q} = q
 Base.:(==)(n::GF{q}, m::GF{q}) where {q} = Int(n) == Int(m)
 # hash(GF) == 0x04fd9e474909f8bf
 function Base.hash(n::GF{q}, h::UInt) where {q}
-    return xor(0x04fd9e474909f8bf, hash(q, hash(Int(n), h)))
+    return xor(0x04fd9e474909f8bf % UInt, hash(q, hash(Int(n), h)))
 end
 
 Base.:+(n::GF{q}, m::GF{q}) where {q} = GF{q}(Int(n) + Int(m), false)
