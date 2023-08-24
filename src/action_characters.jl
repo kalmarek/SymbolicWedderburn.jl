@@ -101,6 +101,7 @@ function action_character(
     tbl::CharacterTable,
 ) where {T}
     ac_char = _action_class_fun(hom, conjugacy_classes(tbl))
-    constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
+    vals = [dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
+    constituents = convert(Vector{Int}, vals)
     return Character{T}(tbl, constituents)
 end
