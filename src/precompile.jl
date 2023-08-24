@@ -24,7 +24,7 @@ PrecompileTools.@setup_workload begin
     end
 
     struct OnLetters <: ByPermutations end
-    function action(::OnLetters, p::PermutationGroups.AbstractPerm, w::Word)
+    function action(::OnLetters, p::PermutationGroups.AbstractPermutation, w::Word)
         return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
     end
 

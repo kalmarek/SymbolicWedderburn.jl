@@ -20,7 +20,7 @@ end
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
     ::OnLetters,
-    p::PermutationGroups.AbstractPerm,
+    p::PermutationGroups.AbstractPermutation,
     w::Word,
 )
     return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])

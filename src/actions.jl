@@ -32,7 +32,7 @@ coeff_type(::ByPermutations) = Int
 
 function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
     I = _int_type(hom)
-    return Perm(vec(I[hom[action(action(hom), g, f)] for f in basis(hom)]))
+    return Perm{I}(vec(I[hom[action(action(hom), g, f)] for f in basis(hom)]))
 end
 
 """

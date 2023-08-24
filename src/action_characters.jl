@@ -2,7 +2,7 @@
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPerm}}
+) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPermutation}}
     vals =
         Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
     # in general:

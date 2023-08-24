@@ -12,7 +12,6 @@ end
 __an_elt(χ::Character) = first(first(conjugacy_classes(χ)))
 __an_elt(α::AlgebraElement) = first(basis(parent(α)))
 
-_projection_size(p::PermutationGroups.AbstractPerm) = (d = degree(p); (d, d))
 _projection_size(m::AbstractMatrix) = size(m)
 
 _projection_size(::Nothing, χ::Character) = _projection_size(__an_elt(χ))
@@ -55,7 +54,7 @@ Compute matrix projection associated to character `χ`.
 
 Returned `M<:AbstractMatrix{T}` of size `(d, d)` where the degree `d` of the
 projecion is determined by elements in `conjugacy_classes(χ)`. E.g. `d` could
-be equal to the `degree` when conjugacy classes consist of `AbstractPerms`.
+be equal to the `degree` when conjugacy classes consist of `AbstractPermutation`s.
 If the homomorphism is passed, the dimension will be derived in similar
 manner from the elements of the image of the homomorphism.
 
@@ -170,7 +169,9 @@ end
 function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     vals,
-    ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
+    ccls::AbstractVector{
+        <:AbstractOrbit{<:PermutationGroups.AbstractPermutation},
+    },
     weight,
 )
     iszero(weight) && return result
