@@ -11,7 +11,7 @@ end
 
 @testset "ConjClassMatrix" begin
     @testset "example: Symmetric group (4)" begin
-        G = PermutationGroups.SymmetricGroup(4)
+        G = PermGroup(perm"(1,2,3,4)", perm"(1,2)")
 
         @test Characters.conjugacy_classes(G) isa
               AbstractVector{<:AbstractOrbit}
@@ -55,11 +55,13 @@ end
         a = perm"(1,2,3)(4)"
         b = perm"(1,2,4)"
         G = PermGroup([a, b])
+        (G::PermGroup)(p::Perm) = (@assert p in G; Permutation(p, G))
+
         C = [
-            Orbit(gens(G), one(G)),
-            Orbit(gens(G), G(perm"(1,2)(3,4)")),
-            Orbit(gens(G), G(perm"(1,2,3)(4)")),
-            Orbit(gens(G), G(perm"(1,3,2)(4)")),
+            Orbit(one(G), gens(G)),
+            Orbit(G(perm"(1,2)(3,4)"), gens(G)),
+            Orbit(G(perm"(1,2,3)(4)"), gens(G)),
+            Orbit(G(perm"(1,3,2)(4)"), gens(G)),
         ]
 
         generic_tests_ccmatrix(C)
@@ -94,11 +96,11 @@ end
         S = gens(G)
 
         ccG = [
-            Orbit(S, one(G)),
-            Orbit(S, G(perm"(2,3)(4,5)")),
-            Orbit(S, G(perm"(2,4,3,5)")),
-            Orbit(S, G(perm"(2,5,3,4)")),
-            Orbit(S, G(perm"(1,2,4,5,3)")),
+            Orbit(one(G), S),
+            Orbit(G(perm"(2,3)(4,5)"), S),
+            Orbit(G(perm"(2,4,3,5)"), S),
+            Orbit(G(perm"(2,5,3,4)"), S),
+            Orbit(G(perm"(1,2,4,5,3)"), S),
         ]
         # the order of cclasses is taken from GAP
 
@@ -146,7 +148,11 @@ end
 
     @testset "random subgroups of SymetricGroup(N)" begin
         for i in 2:6
-            G = PermutationGroups.SymmetricGroup(i)
+            G = if i == 2
+                PermGroup(perm"(1,2)")
+            else
+                PermGroup(perm"(1,2)", Perm([2:i; 1]))
+            end
             for _ in 1:5
                 PG = PermGroup(rand(G, 2))
                 generic_tests_ccmatrix(Characters.conjugacy_classes(PG))
