@@ -13,6 +13,14 @@ of elements in `S` one can then represent `g` as a permutation of degree `|S|`.
 """
 abstract type ByPermutations <: Action end
 
+function action(
+    ::ByPermutations,
+    g::PermutationGroups.AbstractPermutation,
+    v::AbstractVector,
+)
+    return [v[i^g] for i in eachindex(v)]
+end
+
 """
     action(hom::InducedActionHomomorphism, g::GroupElement, x)
 Return the result of `g` acting on `x` through action homomorphism `hom`.
@@ -25,7 +33,7 @@ function action(
     g::GroupElement,
     v::AbstractVector,
 )
-    return v^induce(hom, g)
+    return action(action(hom), induce(hom, g), v)
 end
 
 coeff_type(::ByPermutations) = Int
