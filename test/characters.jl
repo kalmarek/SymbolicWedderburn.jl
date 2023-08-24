@@ -4,7 +4,7 @@
 
     # quaternionic character
     χ = irr[1]
-    @test collect(values(χ)) == [2, 0, 0, -2, 0]
+    @test collect(values(χ)) == [2, 0, -2, 0, 0]
 
     ι = Characters.frobenius_schur
 
