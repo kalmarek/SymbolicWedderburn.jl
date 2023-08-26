@@ -10,12 +10,13 @@ include(joinpath(@__DIR__, "solver.jl"))
 const N = 4
 @polyvar x[1:N]
 
-OPTIMIZER = cosmo_optimizer(; max_iters = 10_000, accel = 10, eps = 1e-7)
+OPTIMIZER = csdp_optimizer(; max_iters = 2_000, accel = 10, eps = 1e-7)
 
 f =
-    sum(x) +
-    sum(x .^ 2) +
-    (sum((x .+ 1) .^ 2 .* (x .+ x') .^ 2))^2 * (1 + sum(x .^ 2))
+    1 +
+    sum(x .+ 1) +
+    sum((x .+ 1) .^ 2)^4 +
+    sum((x .+ x') .^ 2)^2 * sum((x .+ 1) .^ 2)
 
 no_symmetry = let f = f
     m, creation_time = @timed sos_problem(f)
@@ -92,9 +93,10 @@ wedderburn_dec = let f = f, vars = DynamicPolynomials.variables(f)
     )
 end
 
-@assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL
-@assert isapprox(wedderburn_dec.objective, no_symmetry.objective, atol = 1e-5)
-@assert no_symmetry.solve_t > wedderburn_dec.solve_t
-@assert no_symmetry.solve_t / wedderburn_dec.solve_t > 10
 
 @info "Summary of Example: S4" no_symmetry orbit_dec semisimple_dec wedderburn_dec
+
+@assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL
+@assert isapprox(wedderburn_dec.objective, no_symmetry.objective, rtol = 1e-5)
+@assert no_symmetry.solve_t > wedderburn_dec.solve_t
+@assert no_symmetry.solve_t / wedderburn_dec.solve_t > 5

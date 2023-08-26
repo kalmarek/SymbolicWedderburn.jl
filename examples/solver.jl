@@ -24,29 +24,14 @@ function scs_optimizer(;
     )
 end
 
-import COSMO
-function cosmo_optimizer(;
-    accel = 15,
-    alpha = 1.6,
-    eps = 1e-8,
-    max_iters = 2_000,
-    rho = 0.1,
-    verbose = true,
-    verbose_timing = verbose,
-)
+import CSDP
+function csdp_optimizer(; eps = 1e-8, max_iters = 100, kwargs...)
     return JuMP.optimizer_with_attributes(
-        COSMO.Optimizer,
-        "accelerator" =>
-            COSMO.with_options(COSMO.AndersonAccelerator, mem = accel),
-        "alpha" => alpha,
-        "decompose" => true,
-        "eps_abs" => eps,
-        "eps_rel" => eps,
-        "eps_prim_inf" => eps,
-        "eps_dual_inf" => eps,
-        "max_iter" => max_iters,
-        "rho" => rho,
-        "verbose" => verbose,
-        "verbose_timing" => verbose_timing,
+        CSDP.Optimizer,
+        "axtol" => eps,
+        "atytol" => eps,
+        "objtol" => eps,
+        "maxiter" => max_iters,
+        "usexzgap" => 0,
     )
 end
