@@ -61,20 +61,15 @@ for g in G
             robinson_form
 end
 
+OPTIMIZER =
+    scs_optimizer(; max_iters = 10_000, alpha = 1.9, accel = -10, eps = 1e-5)
+
 # A simple Gramm-matrix like formulation of SOS problem:
 # * a single large pdd constraint and
 # * one linear constraint for each monomial in the monomial basis of f.
 no_symmetry = let f = robinson_form
     m, creation_t = @timed sos_problem(f)
-    JuMP.set_optimizer(
-        m,
-        scs_optimizer(;
-            max_iters = 10_000,
-            alpha = 1.8,
-            accel = -10,
-            eps = 1e-5,
-        ),
-    )
+    JuMP.set_optimizer(m, OPTIMIZER)
     optimize!(m)
 
     @info isapprox(objective_value(m), -3825 / 4096, rtol = 1e-4)
@@ -105,15 +100,7 @@ orbit_dec = let f = robinson_form, T = Float64
         decompose_psd = false,
     )
 
-    JuMP.set_optimizer(
-        m,
-        scs_optimizer(;
-            max_iters = 10_000,
-            alpha = 1.9,
-            accel = -10,
-            eps = 1e-5,
-        ),
-    )
+    JuMP.set_optimizer(m, OPTIMIZER)
     optimize!(m)
 
     @info isapprox(objective_value(m), -3825 / 4096, rtol = 1e-4)
@@ -129,19 +116,14 @@ end
 
 semisimple_dec = let f = robinson_form, T = Float64
     m, stats = sos_problem(f, DihedralGroup(4), DihedralAction(); semisimple = true)
-
-    JuMP.set_optimizer(
-        m,
-        scs_optimizer(;
-            max_iters = 10_000,
-            alpha = 1.95,
-            accel = -15,
-            eps = 1e-5,
-        ),
-    )
+    JuMP.set_optimizer(m, OPTIMIZER)
     optimize!(m)
 
-    @info isapprox(objective_value(m), -3825 / 4096, rtol = 1e-4)
+    @info "objective value/true objective: $(objective_value(m)) / $(-3825 / 4096)" isapprox(
+        objective_value(m),
+        -3825 / 4096,
+        rtol = 1e-4,
+    )
 
     (
         status = termination_status(m),
@@ -159,17 +141,7 @@ wedderburn_dec = let f = robinson_form, T = Float64
         DihedralAction();
         semisimple = false,
     )
-
-    JuMP.set_optimizer(
-        m,
-        scs_optimizer(;
-            max_iters = 5_000,
-            alpha = 1.95,
-            accel = -15,
-            eps = 1e-5,
-            verbose = true,
-        ),
-    )
+    JuMP.set_optimizer(m, OPTIMIZER)
     optimize!(m)
 
     (
@@ -181,8 +153,9 @@ wedderburn_dec = let f = robinson_form, T = Float64
     )
 end
 
+@info "Summary of Example: Robinson form" no_symmetry orbit_dec semisimple_dec wedderburn_dec
+
 @assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL
 @assert isapprox(wedderburn_dec.objective, no_symmetry.objective, atol = 1e-3)
 @assert no_symmetry.solve_t / wedderburn_dec.solve_t > 1
 
-@info "Summary of Example: Robinson form" no_symmetry orbit_dec semisimple_dec wedderburn_dec
