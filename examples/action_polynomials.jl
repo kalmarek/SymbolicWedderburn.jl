@@ -20,12 +20,11 @@ end
 
 function SW.action(
     a::VariablePermutation,
-    g::PermutationGroups.AbstractPerm,
+    g::PermutationGroups.AbstractPermutation,
     m::Monomial,
 )
     v = a.variables
-    # v = variables(m)
-    return m(v => v^g)
+    return m(v => SW.action(a, g, v))
 end
 
 # this is a general linear action that can be induced

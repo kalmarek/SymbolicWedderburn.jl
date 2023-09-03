@@ -1,10 +1,16 @@
 ## characters defined by actions/homomorphisms
+function nfixedpoints(p::PermutationGroups.AbstractPermutation, deg = degree(p))
+    return count(i -> i^p == i, Base.OneTo(deg))
+end
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPerm}}
-    vals =
-        Int[PermutationGroups.nfixedpoints(first(cc)) for cc in conjugacy_cls]
+) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPermutation}}
+    deg = mapreduce(cc -> maximum(degree, cc), max, conjugacy_cls)
+    vals = map(conjugacy_cls) do cc
+        repr = first(cc)
+        return nfixedpoints(repr, deg)
+    end
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
@@ -21,10 +27,11 @@ function _action_class_fun(
     hom::InducedActionHomomorphism{<:ByPermutations},
     conjugacy_cls,
 )
-    vals = Int[
-        PermutationGroups.nfixedpoints(induce(hom, first(cc))) for
-        cc in conjugacy_cls
-    ]
+    deg = degree(hom)
+    vals = map(conjugacy_cls) do cc
+        repr = induce(hom, first(cc))
+        return nfixedpoints(repr, deg)
+    end
     # in general:
     # vals = [tr(matrix_representative(first(cc))) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
@@ -94,6 +101,7 @@ function action_character(
     tbl::CharacterTable,
 ) where {T}
     ac_char = _action_class_fun(hom, conjugacy_classes(tbl))
-    constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
+    vals = [dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
+    constituents = convert(Vector{Int}, vals)
     return Character{T}(tbl, constituents)
 end

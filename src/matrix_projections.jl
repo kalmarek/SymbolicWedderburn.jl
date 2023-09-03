@@ -9,23 +9,15 @@ function _preallocate(::Type{T}, sizes::Tuple, sizehint) where {T}
     return res
 end
 
-__an_elt(χ::Character) = first(first(conjugacy_classes(χ)))
-__an_elt(α::AlgebraElement) = first(basis(parent(α)))
+__hint(χ::Character) = length(conjugacy_classes(χ))
+__hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
 
-_projection_size(p::PermutationGroups.AbstractPerm) = (d = degree(p); (d, d))
 _projection_size(m::AbstractMatrix) = size(m)
-
-_projection_size(::Nothing, χ::Character) = _projection_size(__an_elt(χ))
-_projection_size(::Nothing, α::AlgebraElement) = _projection_size(__an_elt(α))
-function _projection_size(hom::InducedActionHomomorphism, χ::Character)
-    return _projection_size(induce(hom, __an_elt(χ)))
+_projection_size(::Nothing, χ::Character) = (d = degree(parent(χ)); (d, d))
+function _projection_size(::Nothing, α::AlgebraElement)
+    return (d = degree(parent(parent(α))); (d, d))
 end
-function _projection_size(hom::InducedActionHomomorphism, α::AlgebraElement)
-    return _projection_size(induce(hom, __an_elt(α)))
-end
-
-_hint(χ::Character) = length(conjugacy_classes(χ))
-_hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
+_projection_size(hom::InducedActionHomomorphism, _) = (d = degree(hom); (d, d))
 
 function preallocate(::Type{T}, χ::Union{Character,AlgebraElement}) where {T}
     return preallocate(T, nothing, χ)
@@ -45,7 +37,7 @@ function preallocate(
     χ::Union{Character,AlgebraElement},
 ) where {T}
     sizes = _projection_size(a, χ)
-    return _preallocate(T, sizes, _hint(χ))
+    return _preallocate(T, sizes, __hint(χ))
 end
 
 ## matrix projection [irreducible]
@@ -55,7 +47,7 @@ Compute matrix projection associated to character `χ`.
 
 Returned `M<:AbstractMatrix{T}` of size `(d, d)` where the degree `d` of the
 projecion is determined by elements in `conjugacy_classes(χ)`. E.g. `d` could
-be equal to the `degree` when conjugacy classes consist of `AbstractPerms`.
+be equal to the `degree` when conjugacy classes consist of `AbstractPermutation`s.
 If the homomorphism is passed, the dimension will be derived in similar
 manner from the elements of the image of the homomorphism.
 
@@ -170,7 +162,9 @@ end
 function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     vals,
-    ccls::AbstractVector{<:AbstractOrbit{<:PermutationGroups.AbstractPerm}},
+    ccls::AbstractVector{
+        <:AbstractOrbit{<:PermutationGroups.AbstractPermutation},
+    },
     weight,
 )
     iszero(weight) && return result

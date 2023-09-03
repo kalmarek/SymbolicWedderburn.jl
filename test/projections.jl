@@ -47,7 +47,15 @@ end
             chars = SymbolicWedderburn.irreducible_characters(Rational{Int}, G)
 
             @test test_orthogonality(chars)
-            @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
+
+            @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, chars) ==
+                  PermutationGroups.degree(G)
+
+            mps, _ = SymbolicWedderburn.minimal_projection_system(
+                chars,
+                SymbolicWedderburn._group_algebra(G),
+            )
+            @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, mps) ≤
                   PermutationGroups.degree(G)
         end
     end
