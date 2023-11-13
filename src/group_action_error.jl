@@ -92,7 +92,7 @@ function __group_action_right_assoc(
     xᵍꜝʰ, s_g_h = action(action(hom), h, xᵍ)
 
     passed = s_gh == s_g * s_g_h && xᵍʰ == xᵍꜝʰ
-    return passed, s_gh * xᵍʰ, (s_g * s_g_h) * xᵍꜝʰ
+    return passed, (s_gh,  xᵍʰ), (s_g * s_g_h, xᵍꜝʰ)
 end
 
 function __group_action_right_assoc(
