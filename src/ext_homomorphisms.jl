@@ -78,12 +78,13 @@ StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
 
 function CachedExtensionHomomorphism(
+    ::Type{I},
     G::Group,
     action::Action,
     basis;
     precompute = false,
-)
-    hom = ExtensionHomomorphism(action, basis)
+) where {I}
+    hom = ExtensionHomomorphism(I, action, basis)
     S = typeof(induce(hom, one(G)))
     chom = CachedExtensionHomomorphism{eltype(G),S}(hom)
     @sync if precompute
@@ -94,6 +95,21 @@ function CachedExtensionHomomorphism(
         end
     end
     return chom
+end
+
+function CachedExtensionHomomorphism(
+    G::Group,
+    action::Action,
+    basis;
+    precompute = false,
+)
+    return CachedExtensionHomomorphism(
+        _int_type(ExtensionHomomorphism),
+        G,
+        action,
+        basis;
+        precompute = precompute,
+    )
 end
 
 function induce(ac::Action, chom::CachedExtensionHomomorphism, g::GroupElement)
