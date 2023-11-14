@@ -26,12 +26,24 @@ function SymbolicWedderburn.action(
     return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
 end
 
+struct OnLettersSigned <: SymbolicWedderburn.BySignedPermutations end
+function SymbolicWedderburn.action(
+    ::OnLettersSigned,
+    p::PermutationGroups.AbstractPermutation,
+    w::Word,
+)
+    return (Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
+end
+
 function allwords(A, radius)
     words = [Word(A, [i]) for i in 1:length(A)]
     for r in 2:radius
         append!(
             words,
-            [Word(A, collect(w)) for w in Iterators.product(fill(1:3, r)...)],
+            [
+                Word(A, collect(w)) for
+                w in Iterators.product(fill(1:length(A), r)...)
+            ],
         )
     end
     return words
@@ -49,6 +61,10 @@ end
     end
 
     G = PermGroup(perm"(1,2,3)", perm"(1,2)") # G acts on words permuting letters
+
+    @test SymbolicWedderburn.check_group_action(G, OnLetters(), words)
+    @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), words)
+
     action = OnLetters()
     tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
     ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
