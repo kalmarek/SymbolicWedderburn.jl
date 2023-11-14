@@ -68,7 +68,7 @@ end
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
-    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt16}
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.constituents(ψ) == [40, 22, 18]

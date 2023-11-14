@@ -17,11 +17,14 @@ PermutationGroups.degree(hom::InducedActionHomomorphism) = length(basis(hom))
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
 _int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I
-_int_type(hom::InducedActionHomomorphism) = _int_type(typeof(basis(hom)))
+_int_type(basis::StarAlgebras.AbstractBasis) = _int_type(typeof(basis))
+_int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 
-# Exceeding typemax(UInt16) here would mean e.g. that you're trying to block-diagonalize
-# an SDP constraint of size 65535×65535, which is highly unlikely ;)
-_int_type(::Type{<:InducedActionHomomorphism}) = UInt16
+# Exceeding typemax(UInt32) here would mean e.g. that you're trying to block-diagonalize
+# an SDP constraint of size 4_294_967_295 × 4_294_967_295, which is highly unlikely ;)
+_int_type(::Type{<:Action}) = UInt32
+_int_type(ac::Action) = _int_type(typeof(ac))
+
 
 function induce(hom::InducedActionHomomorphism, g::GroupElement)
     return induce(action(hom), hom, g)
@@ -43,7 +46,7 @@ end
 
 function ExtensionHomomorphism(action::Action, basis)
     return ExtensionHomomorphism(
-        _int_type(ExtensionHomomorphism),
+        _int_type(action),
         action,
         basis,
     )
@@ -104,7 +107,7 @@ function CachedExtensionHomomorphism(
     precompute = false,
 )
     return CachedExtensionHomomorphism(
-        _int_type(ExtensionHomomorphism),
+        _int_type(action),
         G,
         action,
         basis;
