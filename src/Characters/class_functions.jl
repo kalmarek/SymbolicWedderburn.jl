@@ -17,10 +17,8 @@ Base.eltype(::AbstractClassFunction{T}) where {T} = T
 
 function LinearAlgebra.dot(χ::AbstractClassFunction, ψ::AbstractClassFunction)
     @assert conjugacy_classes(χ) === conjugacy_classes(ψ)
-    val = sum(
-        length(cc) * χ[i] * ψ[-i] for
-        (i, cc) in enumerate(conjugacy_classes(χ))
-    )
+    CC = conjugacy_classes(χ)
+    val = sum(length(cc) * χ[i] * ψ[-i] for (i, cc) in enumerate(CC))
     orderG = sum(length, conjugacy_classes(χ))
     val = _div(val, orderG)
     return val
@@ -138,7 +136,8 @@ Base.@propagate_inbounds function Base.getindex(
             T,
             sum(
                 c * table(χ)[idx, i] for
-                (idx, c) in enumerate(constituents(χ)) if !iszero(c)
+                (idx, c) in enumerate(constituents(χ)) if !iszero(c);
+                init = zero(T),
             ),
         )
     end
@@ -169,6 +168,8 @@ end
 Base.:*(χ::Character, c::Number) = Character(table(χ), c .* constituents(χ))
 Base.:*(c::Number, χ::Character) = χ * c
 Base.:/(χ::Character, c::Number) = Character(table(χ), constituents(χ) ./ c)
+
+Base.zero(χ::Character) = 0 * χ
 
 ## Group-theoretic functions:
 
