@@ -9,7 +9,6 @@ The following functionality is required for an `AbstractClassFunction`:
  * `getindex(χ, i::Integer)`: the value on `i`-th conjugacy class.
  Note: Indexing with negative integers should return values on the class which
  contains inverses of the `i`-th class.
- * `χ(g::GroupElement)`: value of `χ` on a group element (only for julia < 1.3)
 """
 abstract type AbstractClassFunction{T} end # <:AbstractVector{T}?
 
@@ -53,15 +52,6 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     i = i < 0 ? χ.inv_of[-i] : i
     @boundscheck 1 ≤ i ≤ length(conjugacy_classes(χ))
     return values(χ)[i]
-end
-
-# TODO: move to AbstractClassFunction when we drop julia-1.0
-# adding call methods to abstract types was not supported before julia-1.3
-function (χ::ClassFunction)(g::GroupElement)
-    for (i, cc) in enumerate(conjugacy_classes(χ))
-        g ∈ cc && return χ[i]
-    end
-    throw(DomainError(g, "element does not belong to conjugacy classes of $χ"))
 end
 
 """
