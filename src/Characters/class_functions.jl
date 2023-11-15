@@ -118,19 +118,14 @@ Base.@propagate_inbounds function Base.getindex(
     i = i < 0 ? table(χ).inv_of[abs(i)] : i
     @boundscheck 1 ≤ i ≤ nconjugacy_classes(table(χ))
 
-    if isirreducible(χ)
-        k = findfirst(!iszero, constituents(χ))::Int
-        return convert(T, table(χ)[k, i])
-    else
-        return convert(
-            T,
-            sum(
-                c * table(χ)[idx, i] for
-                (idx, c) in enumerate(constituents(χ)) if !iszero(c);
-                init = zero(T),
-            ),
-        )
-    end
+    return convert(
+        T,
+        sum(
+            c * table(χ)[idx, i] for
+            (idx, c) in enumerate(constituents(χ)) if !iszero(c);
+            init = zero(T),
+        ),
+    )
 end
 
 ## Basic functionality
