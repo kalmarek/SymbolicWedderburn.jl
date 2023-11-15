@@ -68,12 +68,23 @@ end
     action = OnLetters()
     tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
     ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
+        Int32,
         G,
         action,
         words;
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{Int32}
+
+    ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
+        G,
+        action,
+        words;
+        precompute = true,
+    )
+    @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.constituents(ψ) == [40, 22, 18]
