@@ -41,6 +41,11 @@
     @test sum(
         length(cc) * a(first(cc)^2) for cc in Characters.conjugacy_classes(a)
     ) // order(G) == 2ι(χ)
+
+    # zero character
+    @test zero(χ) == Characters.Character(Characters.table(χ), zeros(5))
+    @test dot(χ, zero(χ)) == 0
+    @test dot(zero(χ), zero(χ)) == 0
 end
 
 @testset "Characters io" begin

@@ -13,6 +13,11 @@ function dixon_prime(ordG::Integer, exponent::Integer)
     # computations of this function over `BigInt` if `ordG` is so we convert
     # to `Int`.
     p = 2 * convert(Int, isqrt(ordG))
+    if isone(ordG)
+        @assert isone(exponent)
+        return 3one(p)
+    end
+
     while true
         p = nextprime(p + 1)
         isone(p % exponent) && break # we need -1 to be in the field

@@ -10,7 +10,9 @@ struct PowerMap{T<:AbstractOrbit} <: AbstractMatrix{Int}
         id = one(first(first(ccG)))
         idx = findfirst(cc -> id ∈ cc, ccG)
         cache[:, 1] .= idx
-        cache[:, 2] .= 1:length(ccG)
+        if size(cache, 2) > 1
+            cache[:, 2] .= 1:length(ccG)
+        end
         return new{T}(ccG, cache)
     end
 end
