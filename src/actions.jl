@@ -173,3 +173,59 @@ function induce(
 )
     return _induce(ac, hom, g)
 end
+
+function induce(
+    ac::Union{<:ByPermutations,<:ByLinearTransformation},
+    schr_hom::SchreierExtensionHomomorphism,
+    g::GroupElement,
+)
+    if g in keys(schr_hom.cache)
+        return schr_hom.cache[g]
+    else
+        h, s = schr_hom.schreier_tree[g]
+        sI = induce(ac, schr_hom, s)
+        hI = induce(ac, schr_hom, h)
+        gI = hI * sI
+
+        if schr_hom.memoize
+            lock(schr_hom.lock) do
+                return schr_hom.cache[g] = gI
+            end
+        end
+
+        if length(schr_hom.schreier_tree) == length(schr_hom.cache)
+            # we no longer need to store the schreier tree
+            empty!(schr_hom.schreier_tree)
+        end
+
+        return gI
+    end
+end
+
+function induce(
+    ac::BySignedPermutations,
+    schr_hom::SchreierExtensionHomomorphism,
+    g::GroupElement,
+)
+    if g in keys(schr_hom.cache)
+        return schr_hom.cache[g]
+    else
+        s, h = schr_hom.schreier_tree[g]
+        sI = induce(ac, schr_hom, s)
+        hI = induce(ac, schr_hom, h)
+        gI = first(hI) * first(sI), last(hI) * last(sI)
+
+        if schr_hom.memoize
+            lock(schr_hom.lock) do
+                return schr_hom.cache[g] = gI
+            end
+        end
+
+        if length(schr_hom.schreier_tree) == length(schr_hom.cache)
+            # we no longer need to store the schreier tree
+            empty!(schr_hom.schreier_tree)
+        end
+
+        return gI
+    end
+end

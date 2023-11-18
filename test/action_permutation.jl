@@ -74,6 +74,18 @@ end
         @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{T}
     end
 
+    schrhom = SymbolicWedderburn.SchreierExtensionHomomorphism(
+        G,
+        action,
+        words;
+        memoize = true,
+    )
+
+    @test all(
+        SymbolicWedderburn.induce(ehom, g) ==
+        SymbolicWedderburn.induce(schrhom, g) for g in G
+    )
+
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.multiplicities(ψ) == [23, 18, 40]
     irr = SymbolicWedderburn.irreducible_characters(tbl)

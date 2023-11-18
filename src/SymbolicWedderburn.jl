@@ -25,6 +25,7 @@ import .Characters: row_echelon_form!
 import .Characters.FiniteFields
 
 include("ext_homomorphisms.jl")
+include("ext_hom_schreier.jl")
 include("actions.jl")
 include("group_action_error.jl")
 include("action_characters.jl")
