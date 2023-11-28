@@ -146,7 +146,8 @@ end
 
 function normalize!(chtbl::CharacterTable{<:Group,<:FiniteFields.GF})
     id = one(parent(chtbl))
-    for (i, χ) in enumerate(irreducible_characters(chtbl))
+    Threads.@threads for i in axes(chtbl, 1)
+        χ = Character(chtbl, i)
         k = χ(id)
         if !isone(k)
             chtbl.values[i, :] .*= inv(k)
