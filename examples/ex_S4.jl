@@ -10,7 +10,7 @@ include(joinpath(@__DIR__, "solver.jl"))
 const N = 4
 @polyvar x[1:N]
 
-OPTIMIZER = csdp_optimizer(; max_iters = 2_000, accel = 10, eps = 1e-7)
+OPTIMIZER = scs_optimizer(; max_iters = 2_000, accel = 10, eps = 1e-7)
 
 f =
     1 +
