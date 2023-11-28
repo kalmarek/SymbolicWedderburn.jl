@@ -58,6 +58,10 @@ function CharacterTable(
     G::Group,
     cclasses = conjugacy_classes(G),
 )
+    # make sure that the first class contains the indentity
+    k = findfirst(cl -> one(G) in cl, cclasses)
+    cclasses[k], cclasses[1] = cclasses[1], cclasses[k]
+
     Ns = [CMMatrix(cclasses, i) for i in 1:length(cclasses)]
     esd = common_esd(Ns, Fp)
     @assert isdiag(esd)
@@ -71,6 +75,17 @@ function CharacterTable(
     )
 
     tbl = normalize!(tbl)
+
+    let vals = tbl.values
+        # make order of characters deterministic
+        vals .= sortslices(vals; dims = 1)
+        # and that the trivial character is first
+        k = findfirst(r -> all(isone, r), eachrow(vals))
+        if k ≠ 1
+            _swap_rows!(vals, 1, k)
+        end
+    end
+
     return tbl
 end
 
