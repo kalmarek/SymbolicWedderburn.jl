@@ -63,8 +63,8 @@ function action_character(
     tbl::CharacterTable,
 ) where {T}
     ac_char = _action_class_fun(conjugacy_clss)
-    constituents = Int[dot(ac_char, χ) for χ in irreducible_characters(tbl)]
-    return Character{T}(tbl, constituents)
+    vals = Characters.decompose(Int, ac_char, tbl)
+    return Character{T}(tbl, vals)
 end
 
 function action_character(
@@ -73,14 +73,8 @@ function action_character(
     tbl::CharacterTable,
 ) where {T<:Union{AbstractFloat,ComplexF64}}
     ac_char = _action_class_fun(conjugacy_cls)
-
-    constituents = [dot(ac_char, χ) for χ in irreducible_characters(tbl)]
-    all(constituents) do c
-        ac = abs(c)
-        return abs(ac - round(ac)) < eps(real(T)) * length(conjugacy_cls)
-    end
-
-    return Character{T}(tbl, round.(Int, abs.(constituents)))
+    vals = Characters.decompose(T, ac_char, tbl)
+    return Character{T}(tbl, round.(Int, abs.(vals)))
 end
 
 """
@@ -100,8 +94,7 @@ function action_character(
     hom::InducedActionHomomorphism,
     tbl::CharacterTable,
 ) where {T}
-    ac_char = _action_class_fun(hom, conjugacy_classes(tbl))
-    vals = [dot(ac_char, χ) for χ in irreducible_characters(T, tbl)]
-    constituents = convert(Vector{Int}, vals)
-    return Character{T}(tbl, constituents)
+    act_character = _action_class_fun(hom, conjugacy_classes(tbl))
+    vals = Characters.decompose(Int, act_character, tbl)
+    return Character{T}(tbl, vals)
 end
