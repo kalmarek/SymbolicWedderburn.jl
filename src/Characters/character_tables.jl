@@ -78,7 +78,9 @@ function CharacterTable(
         # make order of characters deterministic
         vals .= sortslices(vals; dims = 1)
         # and that the trivial character is first
-        k = findfirst(r -> all(isone, r), eachrow(vals))
+        k = findfirst(i -> all(isone, @views vals[i, :]), axes(vals, 1))
+        # doesn't work on julia-1.6
+        # k = findfirst(r -> all(isone, r), eachrow(vals))
         if k ≠ 1
             _swap_rows!(vals, 1, k)
         end
