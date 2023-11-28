@@ -29,7 +29,7 @@ end
         irr = SymbolicWedderburn.irreducible_characters(G)
         @test irr isa
               AbstractVector{<:SymbolicWedderburn.Character{<:Cyclotomic}}
-        @test SymbolicWedderburn.degree.(irr) == [2, 1, 1]
+        @test SymbolicWedderburn.degree.(irr) == [1, 1, 2]
 
         RG = let G = G
             b = StarAlgebras.Basis{UInt16}(collect(G))
@@ -48,8 +48,8 @@ end
         mps, ranks = SymbolicWedderburn.minimal_projection_system(irr, RG)
         @test all(isone, ranks)
 
-        @test rank(float.(SymbolicWedderburn.matrix_projection(irr[1]))) == 2
-        @test rank(float.(SymbolicWedderburn.matrix_representation(mps[1]))) ==
+        @test rank(float.(SymbolicWedderburn.matrix_projection(irr[3]))) == 2
+        @test rank(float.(SymbolicWedderburn.matrix_representation(mps[3]))) ==
               1
 
         sa_basis_ssimple = symmetry_adapted_basis(
@@ -59,8 +59,8 @@ end
             semisimple = true,
         )
 
-        @test issimple.(sa_basis_ssimple) == [false, true]
-        @test rank.(convert.(Matrix, sa_basis_ssimple)) == [2, 1]
+        @test issimple.(sa_basis_ssimple) == [true, false]
+        @test rank.(convert.(Matrix, sa_basis_ssimple)) == [1, 2]
         @test dot(
             multiplicity.(sa_basis_ssimple),
             SymbolicWedderburn.degree.(sa_basis_ssimple),

@@ -1,9 +1,9 @@
 @testset "Frobenius-Schur & projections" begin
     G = SmallPermGroups[8][4]
-    irr = Characters.irreducible_characters(G)
+    tbl = Characters.CharacterTable(Rational{Int}, G)
 
     # quaternionic character
-    χ = irr[1]
+    χ = Characters.Character{Rational{Int}}(tbl, 5)
     @test collect(values(χ)) == [2, 0, -2, 0, 0]
 
     ι = Characters.frobenius_schur

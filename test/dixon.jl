@@ -119,10 +119,9 @@ end
             tbl = Characters.CharacterTable(F, G)
             chars = Characters.irreducible_characters(tbl)
 
-            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 3]
+            @test SymbolicWedderburn.degree.(chars) == [1, 1, 1, 3]
 
-            @test Set(Int.(values(χ)) for χ in chars) ==
-                  Set([[3, 0, 0, 6], [1, 4, 2, 1], [1, 2, 4, 1], [1, 1, 1, 1]])
+            @test [Int.(values(χ)) for χ in chars] == [[1, 1, 1, 1], [1, 2, 4, 1], [1, 4, 2, 1], [3, 0, 0, 6]]
         end
     end
 
@@ -157,10 +156,10 @@ end
             E = Characters.Cyclotomics.E
 
             @test [collect(values(χ)) for χ in chars_C] == [
-                E(3, 0) .* [3, 0, 0, -1],
-                E(3, 0) .* [1, E(3, 2), E(3, 1), 1],
-                E(3, 0) .* [1, E(3, 1), E(3, 2), 1],
                 E(3, 0) .* [1, 1, 1, 1],
+                E(3, 0) .* [1, E(3, 1), E(3, 2), 1],
+                E(3, 0) .* [1, E(3, 2), E(3, 1), 1],
+                E(3, 0) .* [3, 0, 0, -1],
             ]
         end
 
@@ -180,12 +179,12 @@ end
 
             chars = Characters.irreducible_characters(G, ccG)
 
-            @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 2, 3, 3]
+            @test SymbolicWedderburn.degree.(chars) == [1, 1, 2, 3, 3]
             @test [collect(values(χ)) for χ in chars] == [
-                [2, 0, 2, -1, 0],
-                [3, 1, -1, 0, -1],
                 [1, 1, 1, 1, 1],
                 [1, -1, 1, 1, -1],
+                [2, 0, 2, -1, 0],
+                [3, 1, -1, 0, -1],
                 [3, -1, -1, 0, 1],
             ]
         end
@@ -209,11 +208,11 @@ end
 
             @test sort(SymbolicWedderburn.degree.(chars)) == [1, 1, 1, 1, 4]
             @test [collect(values(χ)) for χ in chars] == [
-                E(4, 0) .* [4, 0, 0, 0, -1],
                 E(4, 0) .* [1, 1, 1, 1, 1],
                 E(4, 0) .* [1, 1, -1, -1, 1],
-                E(4, 0) .* [1, -1, E(4), -E(4), 1],
                 E(4, 0) .* [1, -1, -E(4), E(4), 1],
+                E(4, 0) .* [1, -1, E(4), -E(4), 1],
+                E(4, 0) .* [4, 0, 0, 0, -1],
             ]
         end
     end
