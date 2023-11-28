@@ -24,11 +24,13 @@ nirreps(chtbl::CharacterTable) = size(chtbl.values, 1)
 
 ## irreps
 function irreducible_characters(chtbl::CharacterTable)
-    return [Character(chtbl, i) for i in 1:size(chtbl, 1)]
+    return irreducible_characters(eltype(chtbl), chtbl)
 end
+
 function irreducible_characters(T::Type, chtbl::CharacterTable)
-    return Character{T}[Character{T}(chtbl, i) for i in 1:size(chtbl, 1)]
+    return [Character{T}(chtbl, i) for i in axes(chtbl, 1)]
 end
+
 function irreducible_characters(G::Group, cclasses = conjugacy_classes(G))
     return irreducible_characters(Rational{Int}, G, cclasses)
 end
@@ -41,17 +43,13 @@ function irreducible_characters(
     return irreducible_characters(CharacterTable(R, G, cclasses))
 end
 
-function trivial_character(chtbl::CharacterTable)
-    # return Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
-    # can't use findfirst(f, eachrow(...)) on julia-1.6
-    for i in 1:size(chtbl, 1)
-        all(isone, @view(chtbl[i, :])) && return Character(chtbl, i)
-    end
-    # never hit, to keep compiler happy
-    return Character(chtbl, 0)
-end
+trivial_character(chtbl::CharacterTable) = Character(chtbl, 1)
 
 ## construcing tables
+
+function CharacterTable(G::Group, cclasses = conjugacy_classes(G))
+    return CharacterTable(Rational{Int}, G, cclasses)
+end
 
 function CharacterTable(
     Fp::Type{<:FiniteFields.GF},
