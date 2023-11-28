@@ -198,18 +198,18 @@ end
 function _constituents_decomposition(ψ::Character, tbl::CharacterTable)
     irr = irreducible_characters(tbl)
     degrees = degree.(irr)
-    multiplicities = constituents(ψ)
+    multips = multiplicities(ψ)
 
     @debug "Decomposition into character spaces:
     degrees:        $(join([lpad(d, 6) for d in degrees], ""))
-    multiplicities: $(join([lpad(m, 6) for m in multiplicities], ""))"
+    multiplicities: $(join([lpad(m, 6) for m in multips], ""))"
 
-    @assert dot(multiplicities, degrees) == degree(ψ)
+    @assert dot(multips, degrees) == degree(ψ)
     "Something went wrong: characters do not constitute a complete basis for action:
-    $(dot(multiplicities, degrees)) ≠ $(degree(ψ))"
+    $(dot(multips, degrees)) ≠ $(degree(ψ))"
 
-    present_irreps = [i for (i, m) in enumerate(multiplicities) if m ≠ 0]
-    return irr[present_irreps], multiplicities[present_irreps]
+    present_irreps = [i for (i, m) in enumerate(multips) if m ≠ 0]
+    return irr[present_irreps], multips[present_irreps]
 end
 
 function _symmetry_adapted_basis(
@@ -236,14 +236,14 @@ end
 function _symmetry_adapted_basis(
     T::Type,
     irr::AbstractVector{<:Character},
-    multiplicities::AbstractVector{<:Integer},
+    multips::AbstractVector{<:Integer},
     RG::StarAlgebra{<:Group},
     hom = nothing,
 )
     mps, ranks = minimal_projection_system(irr, RG)
     degrees = degree.(irr)
     @debug "ranks of projections obtained by mps:" degrees
-    res = map(zip(mps, multiplicities, degrees, ranks)) do (µ, m, deg, r)
+    res = map(zip(mps, multips, degrees, ranks)) do (µ, m, deg, r)
         Threads.@spawn begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             # here we use algebra to compute the dimension of image;
@@ -259,7 +259,7 @@ function _symmetry_adapted_basis(
     for (χ, ds) in zip(irr, direct_summands)
         if issimple(ds) &&
            (d = size(ds, 1)) !=
-           (e = multiplicity(ds) * sum(constituents(χ) .> 0))
+           (e = multiplicity(ds) * sum(multiplicities(χ) .> 0))
             throw(
                 "The dimension of the projection doesn't match with simple summand multiplicity: $d ≠ $e",
             )

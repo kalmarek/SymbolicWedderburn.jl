@@ -23,8 +23,8 @@
     @test Characters.table(ψ) === Characters.table(χ)
 
     @test collect(values(ψ)) == collect(values(χ))
-    @test Characters.constituents(ψ) == Characters.constituents(χ)
-    @test Characters.constituents(ψ) !== Characters.constituents(χ)
+    @test Characters.multiplicities(ψ) == Characters.multiplicities(χ)
+    @test Characters.multiplicities(ψ) !== Characters.multiplicities(χ)
 
     @test hash(ψ) == hash(χ)
 

@@ -87,9 +87,9 @@ end
     @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
-    @test SymbolicWedderburn.constituents(ψ) == [40, 22, 18]
+    @test SymbolicWedderburn.multiplicities(ψ) == [40, 22, 18]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
-    multips = SymbolicWedderburn.constituents(ψ)
+    multips = SymbolicWedderburn.multiplicities(ψ)
     @test dot(SymbolicWedderburn.degree.(irr), multips) == length(words)
     simple = isone.(SymbolicWedderburn.degree.(irr))
     @test simple == [false, true, true]

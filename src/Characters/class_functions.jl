@@ -59,29 +59,30 @@ end
 Struct representing (possibly virtual) character of a group.
 
 Characters are backed by `table(χ)::CharacterTable` which actually stores the
-character values. The constituents (decomposition into the irreducible summands)
-of a given character can be obtained by calling `constituents(χ)` which returns a
-vector of coefficients of `χ` in the basis of `irreducible_characters(table(χ))`.
+character values. The multiplicities (decomposition into the irreducible
+summands) of a given character can be obtained by calling `multiplicities(χ)`
+which returns a vector of coefficients of `χ` in the basis of
+`irreducible_characters(table(χ))`.
 
-It is assumed that equal class functions on the same group will have **identical**
-(ie. `===`) character tables.
+It is assumed that equal class functions on the same group will have
+**identical** (ie. `===`) character tables.
 """
 struct Character{T,S,ChT<:CharacterTable} <: AbstractClassFunction{T}
     table::ChT
-    constituents::Vector{S}
+    multips::Vector{S}
 end
 
 function Character{R}(
     chtbl::CharacterTable{Gr,T},
-    constituents::AbstractVector{S},
+    multips::AbstractVector{S},
 ) where {R,Gr,T,S}
-    return Character{R,S,typeof(chtbl)}(chtbl, constituents)
+    return Character{R,S,typeof(chtbl)}(chtbl, multips)
 end
 
-function Character(chtbl::CharacterTable, constituents::AbstractVector)
-    R = Base._return_type(*, Tuple{eltype(chtbl),eltype(constituents)})
+function Character(chtbl::CharacterTable, multips::AbstractVector)
+    R = Base._return_type(*, Tuple{eltype(chtbl),eltype(multips)})
     @assert R ≠ Any
-    return Character{R}(chtbl, constituents)
+    return Character{R}(chtbl, multips)
 end
 
 function Character(chtbl::CharacterTable, i::Integer)
@@ -95,14 +96,14 @@ function Character{T}(chtbl::CharacterTable, i::Integer) where {T}
 end
 
 function Character{T}(χ::Character) where {T}
-    S = eltype(constituents(χ))
+    S = eltype(multiplicities(χ))
     ChT = typeof(table(χ))
-    return Character{T,S,ChT}(table(χ), constituents(χ))
+    return Character{T,S,ChT}(table(χ), multiplicities(χ))
 end
 
 ## Accessors
 table(χ::Character) = χ.table
-constituents(χ::Character) = χ.constituents
+multiplicities(χ::Character) = χ.multips
 
 ## AbstractClassFunction api
 Base.parent(χ::Character) = parent(table(χ))
@@ -122,7 +123,7 @@ Base.@propagate_inbounds function Base.getindex(
         T,
         sum(
             c * table(χ)[idx, i] for
-            (idx, c) in enumerate(constituents(χ)) if !iszero(c);
+            (idx, c) in enumerate(multiplicities(χ)) if !iszero(c);
             init = zero(T),
         ),
     )
@@ -131,12 +132,12 @@ end
 ## Basic functionality
 
 function Base.:(==)(χ::Character, ψ::Character)
-    return table(χ) === table(ψ) && constituents(χ) == constituents(ψ)
+    return table(χ) === table(ψ) && multiplicities(χ) == multiplicities(ψ)
 end
-Base.hash(χ::Character, h::UInt) = hash(table(χ), hash(constituents(χ), h))
+Base.hash(χ::Character, h::UInt) = hash(table(χ), hash(multiplicities(χ), h))
 
 function Base.deepcopy_internal(χ::Character, ::IdDict)
-    return Character(table(χ), copy(constituents(χ)))
+    return Character(table(χ), copy(multiplicities(χ)))
 end
 
 ## Character arithmetic
@@ -145,16 +146,51 @@ for f in (:+, :-)
     @eval begin
         function Base.$f(χ::Character, ψ::Character)
             @assert table(χ) === table(ψ)
-            return Character(table(χ), $f(constituents(χ), constituents(ψ)))
+            return Character(table(χ), $f(multiplicities(χ), multiplicities(ψ)))
         end
     end
 end
 
-Base.:*(χ::Character, c::Number) = Character(table(χ), c .* constituents(χ))
+Base.:*(χ::Character, c::Number) = Character(table(χ), c .* multiplicities(χ))
 Base.:*(c::Number, χ::Character) = χ * c
-Base.:/(χ::Character, c::Number) = Character(table(χ), constituents(χ) ./ c)
+Base.:/(χ::Character, c::Number) = Character(table(χ), multiplicities(χ) ./ c)
 
 Base.zero(χ::Character) = 0 * χ
+
+function __decompose(T::Type, values::AbstractVector, tbl::CharacterTable)
+    ψ = ClassFunction(values, conjugacy_classes(tbl), tbl.inv_of)
+    return decompose(T, ψ, tbl)
+end
+
+function decompose(cfun::AbstractClassFunction, tbl::CharacterTable)
+    return decompose(eltype(cfun), cfun, tbl)
+end
+
+function decompose(T::Type, cfun::AbstractClassFunction, tbl::CharacterTable)
+    vals = Vector{T}(undef, length(conjugacy_classes(tbl)))
+    return decompose!(vals, cfun, tbl)
+end
+
+function decompose!(
+    vals::AbstractVector,
+    cfun::AbstractClassFunction,
+    tbl::CharacterTable,
+)
+    @assert length(vals) == length(conjugacy_classes(tbl))
+    @assert conjugacy_classes(tbl) === conjugacy_classes(cfun)
+
+    for (i, idx) in enumerate(eachindex(vals))
+        χ = Character(tbl, i)
+        vals[idx] = dot(χ, cfun)
+    end
+    return vals
+end
+
+function Base.:*(χ::Character, ψ::Character)
+    @assert table(χ) == table(ψ)
+    values = Characters.values(χ) .* Characters.values(ψ)
+    return Character(table(χ), __decompose(Int, values, table(χ)))
+end
 
 ## Group-theoretic functions:
 
@@ -170,16 +206,16 @@ function Base.conj(χ::Character{T,S}) where {T,S}
     all(isreal, vals) && return Character{T}(χ)
     tbl = table(χ)
     ψ = ClassFunction(vals[tbl.inv_of], conjugacy_classes(tbl), tbl.inv_of)
-    constituents = S[dot(ψ, χ) for χ in irreducible_characters(tbl)]
-    return Character{T,eltype(constituents),typeof(tbl)}(tbl, constituents)
+    multips = S[dot(ψ, χ) for χ in irreducible_characters(tbl)]
+    return Character{T,eltype(multips),typeof(tbl)}(tbl, multips)
 end
 
 function isvirtual(χ::Character)
-    return any(<(0), constituents(χ)) || any(!isinteger, constituents(χ))
+    return any(<(0), multiplicities(χ)) || any(!isinteger, multiplicities(χ))
 end
 
 function isirreducible(χ::Character)
-    C = constituents(χ)
+    C = multiplicities(χ)
     k = findfirst(!iszero, C)
     k !== nothing || return false # χ is zero
     isone(C[k]) || return false # muliplicity is ≠ 1
@@ -196,7 +232,7 @@ representation, modifying `χ` in place.
 function affordable_real!(χ::Character)
     ι = frobenius_schur(χ)
     if ι <= 0 # i.e. χ is complex or quaternionic
-        χ.constituents .+= constituents(conj(χ))
+        χ.multips .+= multiplicities(conj(χ))
     end
     return χ
 end
@@ -242,7 +278,7 @@ Base.show(io::IO, χ::Character) = _print_char(io, χ)
 
 function _print_char(io::IO, χ::Character)
     first = true
-    for (i, c) in enumerate(constituents(χ))
+    for (i, c) in enumerate(multiplicities(χ))
         iszero(c) && continue
         first || print(io, " ")
         print(io, ((c < 0 || first) ? "" : '+'))
