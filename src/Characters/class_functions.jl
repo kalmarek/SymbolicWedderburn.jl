@@ -136,8 +136,9 @@ function Base.:(==)(χ::Character, ψ::Character)
 end
 Base.hash(χ::Character, h::UInt) = hash(table(χ), hash(multiplicities(χ), h))
 
-function Base.deepcopy_internal(χ::Character, ::IdDict)
-    return Character(table(χ), copy(multiplicities(χ)))
+function Base.deepcopy_internal(χ::Character{T}, d::IdDict) where {T}
+    haskey(d, χ) && return d[χ]
+    return Character{T}(table(χ), copy(multiplicities(χ)))
 end
 
 ## Character arithmetic
