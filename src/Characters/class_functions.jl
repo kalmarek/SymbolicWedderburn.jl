@@ -272,21 +272,3 @@ end
 
 Base.isreal(χ::Character) = frobenius_schur(χ) > 0
 
-function Base.show(io::IO, ::MIME"text/plain", χ::Character)
-    println(io, "Character over ", eltype(χ))
-    return _print_char(io, χ)
-end
-
-Base.show(io::IO, χ::Character) = _print_char(io, χ)
-
-function _print_char(io::IO, χ::Character)
-    first = true
-    for (i, c) in enumerate(multiplicities(χ))
-        iszero(c) && continue
-        first || print(io, " ")
-        print(io, ((c < 0 || first) ? "" : '+'))
-        !isone(c) && print(io, c, '·')
-        print(io, 'χ', FiniteFields.subscriptify(i))
-        first = false
-    end
-end
