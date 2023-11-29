@@ -1,38 +1,42 @@
-struct DirectSummand{T,M<:AbstractMatrix{T}} <: AbstractMatrix{T}
+struct DirectSummand{T,M<:AbstractMatrix{T},Ch} <: AbstractMatrix{T}
     basis::M
     multiplicity::Int
-    degree::Int
+    character::Ch
 
     function DirectSummand(
         basis::M,
         multiplicity::Integer,
-        degree::Integer,
+        character::Characters.Character,
     ) where {M<:AbstractMatrix}
         @assert size(basis, 1) < size(basis, 2)
-        # @assert 1 ≤ degree ≤ size(basis, 1)
         let (pr_rank, r) = divrem(size(basis, 1), multiplicity)
-            @assert 1 ≤ pr_rank ≤ degree
+            @assert 1 ≤ pr_rank ≤ Characters.degree(character)
             @assert r == 0
         end
-        return new{eltype(M),M}(basis, multiplicity, degree)
+        return new{eltype(M),M,typeof(character)}(
+            basis,
+            multiplicity,
+            character,
+        )
     end
 end
 
-image_basis(ds::DirectSummand) = ds.basis
-PermutationGroups.degree(ds::DirectSummand) = ds.degree
-multiplicity(ds::DirectSummand) = ds.multiplicity
-pr_rank(ds::DirectSummand) = div(size(image_basis(ds), 1), multiplicity(ds))
-issimple(ds::DirectSummand) = isone(pr_rank(ds))
-
+# AbstractArray API
 Base.size(ds::DirectSummand) = size(ds.basis)
 Base.@propagate_inbounds function Base.getindex(ds::DirectSummand, i...)
     return image_basis(ds)[i...]
 end
 
-function SparseArrays.sparse(ds::DirectSummand)
-    sp = sparse(image_basis(ds))
-    return DirectSummand(sp, multiplicity(ds), degree(ds), issimple(ds))
+# Accessors
+image_basis(ds::DirectSummand) = ds.basis
+character(ds::DirectSummand) = ds.character
+multiplicity(ds::DirectSummand) = ds.multiplicity
+
+PermutationGroups.degree(ds::DirectSummand) = Characters.degree(character(ds))
+function projection_rank(ds::DirectSummand)
+    return div(size(image_basis(ds), 1), multiplicity(ds))
 end
+issimple(ds::DirectSummand) = isone(projection_rank(ds))
 
 function SparseArrays.droptol!(
     ds::DirectSummand{T,<:AbstractSparseArray},

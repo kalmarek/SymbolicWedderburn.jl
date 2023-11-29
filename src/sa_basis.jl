@@ -208,7 +208,7 @@ function _constituents_decomposition(ψ::Character, tbl::CharacterTable)
     "Something went wrong: characters do not constitute a complete basis for action:
     $(dot(multips, degrees)) ≠ $(degree(ψ))"
 
-    present_irreps = [i for (i, m) in enumerate(multips) if m ≠ 0]
+    present_irreps = [i for (i, m) in pairs(multips) if m ≠ 0]
     return irr[present_irreps], multips[present_irreps]
 end
 
@@ -218,16 +218,15 @@ function _symmetry_adapted_basis(
     multiplicities::AbstractVector{<:Integer},
     hom = nothing,
 )
-    res = map(zip(irr, multiplicities)) do (µ, m)
+    res = map(zip(irr, multiplicities)) do (χ, m)
         Threads.@spawn begin
-            µT = eltype(µ) == T ? µ : Character{T}(µ)
-            deg = degree(µ)
+            χT = eltype(χ) == T ? χ : Character{T}(χ)
             # here we use algebra to compute the dimension of image;
             # direct summand is simple only if rk == m, i.e. deg == 1
-            rk = m * deg
+            rk = m * degree(χ)
             image =
-                isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            DirectSummand(image, m, deg)
+                isnothing(hom) ? image_basis(χT, rk) : image_basis(hom, χT, rk)
+            DirectSummand(image, m, χ)
         end
     end
     return fetch.(res)
@@ -241,9 +240,8 @@ function _symmetry_adapted_basis(
     hom = nothing,
 )
     mps, ranks = minimal_projection_system(irr, RG)
-    degrees = degree.(irr)
     @debug "ranks of projections obtained by mps:" degrees
-    res = map(zip(mps, multips, degrees, ranks)) do (µ, m, deg, r)
+    res = map(zip(mps, irr, multips, ranks)) do (µ, χ, m, r)
         Threads.@spawn begin
             µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
             # here we use algebra to compute the dimension of image;
@@ -251,7 +249,7 @@ function _symmetry_adapted_basis(
             rk = m * r
             image =
                 isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            return DirectSummand(image, m, deg)
+            return DirectSummand(image, m, χ)
         end
     end
     direct_summands = fetch.(res)
