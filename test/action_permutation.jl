@@ -87,12 +87,12 @@ end
     @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
-    @test SymbolicWedderburn.constituents(ψ) == [40, 22, 18]
+    @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
-    multips = SymbolicWedderburn.constituents(ψ)
+    multips = SymbolicWedderburn.multiplicities(ψ)
     @test dot(SymbolicWedderburn.degree.(irr), multips) == length(words)
     simple = isone.(SymbolicWedderburn.degree.(irr))
-    @test simple == [false, true, true]
+    @test simple == [true, true, false]
 
     inv_vec = SymbolicWedderburn.invariant_vectors(
         tbl,
@@ -106,19 +106,19 @@ end
         let i = 1
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 80
+            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 22
         end
 
         let i = 2
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 22
+            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 18
         end
 
         let i = 3
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 18
+            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 80
         end
 
         @test symmetry_adapted_basis(G, action, words; semisimple = true) isa
@@ -146,11 +146,11 @@ end
         @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
 
         @test length(sa_basis) == 3
-        @test multiplicity.(sa_basis) == [40, 22, 18]
-        @test SymbolicWedderburn.degree.(sa_basis) == [2, 1, 1]
+        @test multiplicity.(sa_basis) == [22, 18, 40]
+        @test SymbolicWedderburn.degree.(sa_basis) == [1, 1, 2]
         @test size.(sa_basis, 1) ==
               multips .* SymbolicWedderburn.degree.(irr) ==
-              [80, 22, 18]
+              [22, 18, 80]
         @test sum(first ∘ size, sa_basis) == length(words)
     end
 
@@ -222,9 +222,9 @@ end
         sa_basis = symmetry_adapted_basis(G, action, words)
 
         @test length(sa_basis) == 3
-        @test multiplicity.(sa_basis) == [40, 22, 18]
-        @test SymbolicWedderburn.degree.(sa_basis) == [2, 1, 1]
+        @test multiplicity.(sa_basis) == [22, 18, 40]
+        @test SymbolicWedderburn.degree.(sa_basis) == [1, 1, 2]
         @test all(issimple, sa_basis)
-        @test size.(sa_basis, 1) == multips == [40, 22, 18]
+        @test size.(sa_basis, 1) == multips == [22, 18, 40]
     end
 end

@@ -110,7 +110,7 @@ _mproj_fitsT!(args...) = _mproj_outsT!(args...)
 function _mproj_outsT!(mproj::AbstractMatrix{T}, χ::Character) where {T}
     mproj .= sum(
         c .* matrix_projection_irr(Character(table(χ), i)) for
-        (i, c) in pairs(constituents(χ)) if !iszero(c)
+        (i, c) in pairs(multiplicities(χ)) if !iszero(c)
     )
     return mproj
 end
@@ -122,7 +122,7 @@ function _mproj_outsT!(
 ) where {T}
     mproj .= sum(
         c .* matrix_projection_irr(hom, Character(table(χ), i)) for
-        (i, c) in pairs(constituents(χ)) if !iszero(c)
+        (i, c) in pairs(multiplicities(χ)) if !iszero(c)
     )
     return mproj
 end

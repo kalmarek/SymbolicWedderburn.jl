@@ -24,11 +24,13 @@ nirreps(chtbl::CharacterTable) = size(chtbl.values, 1)
 
 ## irreps
 function irreducible_characters(chtbl::CharacterTable)
-    return [Character(chtbl, i) for i in 1:size(chtbl, 1)]
+    return irreducible_characters(eltype(chtbl), chtbl)
 end
+
 function irreducible_characters(T::Type, chtbl::CharacterTable)
-    return Character{T}[Character{T}(chtbl, i) for i in 1:size(chtbl, 1)]
+    return [Character{T}(chtbl, i) for i in axes(chtbl, 1)]
 end
+
 function irreducible_characters(G::Group, cclasses = conjugacy_classes(G))
     return irreducible_characters(Rational{Int}, G, cclasses)
 end
@@ -41,23 +43,23 @@ function irreducible_characters(
     return irreducible_characters(CharacterTable(R, G, cclasses))
 end
 
-function trivial_character(chtbl::CharacterTable)
-    # return Character(chtbl, findfirst(r->all(isone, r), eachrow(chtbl)))
-    # can't use findfirst(f, eachrow(...)) on julia-1.6
-    for i in 1:size(chtbl, 1)
-        all(isone, @view(chtbl[i, :])) && return Character(chtbl, i)
-    end
-    # never hit, to keep compiler happy
-    return Character(chtbl, 0)
-end
+trivial_character(chtbl::CharacterTable) = Character(chtbl, 1)
 
 ## construcing tables
+
+function CharacterTable(G::Group, cclasses = conjugacy_classes(G))
+    return CharacterTable(Rational{Int}, G, cclasses)
+end
 
 function CharacterTable(
     Fp::Type{<:FiniteFields.GF},
     G::Group,
     cclasses = conjugacy_classes(G),
 )
+    # make sure that the first class contains the indentity
+    k = findfirst(cl -> one(G) in cl, cclasses)
+    cclasses[k], cclasses[1] = cclasses[1], cclasses[k]
+
     Ns = [CMMatrix(cclasses, i) for i in 1:length(cclasses)]
     esd = common_esd(Ns, Fp)
     @assert isdiag(esd)
@@ -71,6 +73,19 @@ function CharacterTable(
     )
 
     tbl = normalize!(tbl)
+
+    let vals = tbl.values
+        # make order of characters deterministic
+        vals .= sortslices(vals; dims = 1)
+        # and that the trivial character is first
+        k = findfirst(i -> all(isone, @views vals[i, :]), axes(vals, 1))
+        # doesn't work on julia-1.6
+        # k = findfirst(r -> all(isone, r), eachrow(vals))
+        if k ≠ 1
+            _swap_rows!(vals, 1, k)
+        end
+    end
+
     return tbl
 end
 
@@ -131,7 +146,8 @@ end
 
 function normalize!(chtbl::CharacterTable{<:Group,<:FiniteFields.GF})
     id = one(parent(chtbl))
-    for (i, χ) in enumerate(irreducible_characters(chtbl))
+    Threads.@threads for i in axes(chtbl, 1)
+        χ = Character(chtbl, i)
         k = χ(id)
         if !isone(k)
             chtbl.values[i, :] .*= inv(k)

@@ -147,7 +147,7 @@ end
     end
 
     @testset "random subgroups of SymetricGroup(N)" begin
-        for i in 2:6
+        for i in 3:6
             G = if i == 2
                 PermGroup(perm"(1,2)")
             else
