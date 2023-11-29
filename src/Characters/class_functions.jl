@@ -193,6 +193,8 @@ function Base.:*(χ::Character, ψ::Character)
     return Character(table(χ), __decompose(Int, values, table(χ)))
 end
 
+Base.:^(χ::Character, n::Integer) = Base.power_by_squaring(χ, n)
+
 ## Group-theoretic functions:
 
 PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))

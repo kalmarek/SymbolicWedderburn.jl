@@ -46,6 +46,49 @@
     @test zero(χ) == Characters.Character(Characters.table(χ), zeros(5))
     @test dot(χ, zero(χ)) == 0
     @test dot(zero(χ), zero(χ)) == 0
+
+    @testset "characters multiplication: Sym(3)" begin
+        G = PermGroup(perm"(1,2,3)", perm"(1,2)")
+        tbl = Characters.CharacterTable(G)
+        χ = Characters.irreducible_characters(tbl)
+
+        # χ[1] - the trivial character
+        # χ[2] - the alternating character
+        # χ[3] - the non-trivial, degree-2 character
+
+        @test all(χ[1] * ψ == ψ for ψ in χ)
+        @test χ[2]^2 == χ[1]
+        @test χ[2] * χ[3] == χ[3] * χ[2] == χ[3]
+
+        @test χ[3]^2 == χ[1] + χ[2] + χ[3]
+    end
+
+    @testset "characters multiplication: Sym(4)" begin
+        G = PermGroup(perm"(1,2,3,4)", perm"(1,2)")
+        tbl = Characters.CharacterTable(G)
+        χ = Characters.irreducible_characters(tbl)
+
+        # χ[1] - the trivial character
+        # χ[2] - the alternating character
+        # χ[3] - the non-trivial, degree-2 character
+        # χ[4] - the non-trivial, degree-3 character
+        # χ[5] - χ[4]*χ[2]
+
+        @test all(χ[1] * ψ == ψ for ψ in χ)
+        @test χ[2]^2 == χ[1]
+        @test χ[2] * χ[3] == χ[3]
+        @test χ[2] * χ[4] == χ[5]
+        @test χ[2] * χ[5] == χ[4]
+
+        @test χ[3]^2 == χ[1] + χ[2] + χ[3]
+        @test χ[3] * χ[4] == χ[4] + χ[5]
+        @test χ[3] * χ[5] == χ[4] + χ[5]
+
+        @test χ[4]^2 == χ[1] + χ[3] + χ[4] + χ[5]
+        @test χ[4] * χ[5] == χ[2] + χ[3] + χ[4] + χ[5]
+
+        @test χ[5]^2 == χ[1] + χ[3] + χ[4] + χ[5]
+    end
 end
 
 @testset "Characters io" begin
