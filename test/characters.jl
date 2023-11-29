@@ -102,5 +102,12 @@ end
     @test sprint(show, -2chars[1] + 3chars[2]) == "-2·χ₁ +3·χ₂"
 
     @test sprint(show, MIME"text/plain"(), chars[1]) ==
-          "Character over Cyclotomic{Rational{$Int}, SparseVector{Rational{$Int}, $Int}}\nχ₁"
+          "Character over cyclotomics (Rational{$Int})\nχ₁"
+
+    χ = Characters.Character{Rational{BigInt}}(chars[1])
+    @test sprint(show, MIME"text/plain"(), χ) ==
+          "Character over rationals ($BigInt)\nχ₁"
+
+    @test sprint(show, MIME"text/plain"(), Characters.table(χ)) isa
+          AbstractString
 end
