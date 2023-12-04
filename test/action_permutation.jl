@@ -86,6 +86,18 @@ end
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
     @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
 
+    schrhom = SymbolicWedderburn.SchreierExtensionHomomorphism(
+        G,
+        action,
+        words;
+        memoize = true,
+    )
+
+    @test all(
+        SymbolicWedderburn.induce(ehom, g) ==
+        SymbolicWedderburn.induce(schrhom, g) for g in G
+    )
+
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
