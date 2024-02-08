@@ -85,10 +85,10 @@ end
             G = PermGroup([perm"(1,2,3)(4)", perm"(2,3,4)"])
             ccG = let S = gens(G)
                 [
-                    Orbit(one(G), S),
-                    Orbit(G(perm"(2,3,4)"), S),
-                    Orbit(G(perm"(2,4,3)"), S),
-                    Orbit(G(perm"(1,2)(3,4)"), S),
+                    PG.Orbit(one(G), S),
+                    PG.Orbit(PG.Permutation(perm"(2,3,4)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(2,4,3)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2)(3,4)", G), S),
                 ] # the order is taken from GAP
             end
 
@@ -130,10 +130,10 @@ end
             G = PermGroup([perm"(1,2,3)(4)", perm"(2,3,4)"])
             ccG = let S = gens(G)
                 [
-                    Orbit(one(G), S),
-                    Orbit(G(perm"(2,3,4)"), S),
-                    Orbit(G(perm"(2,4,3)"), S),
-                    Orbit(G(perm"(1,2)(3,4)"), S),
+                    PG.Orbit(one(G), S),
+                    PG.Orbit(PG.Permutation(perm"(2,3,4)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(2,4,3)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2)(3,4)", G), S),
                 ] # the order of cclasses is taken from GAP
             end
 
@@ -167,11 +167,11 @@ end
             G = PermGroup([perm"(1,2)", perm"(1,2,3,4)"])
             ccG = let S = gens(G)
                 ccG = [
-                    Orbit(one(G), S),
-                    Orbit(G(perm"(1,2)(4)"), S),
-                    Orbit(G(perm"(1,2)(3,4)"), S),
-                    Orbit(G(perm"(1,2,3)(4)"), S),
-                    Orbit(G(perm"(1,2,3,4)"), S),
+                    PG.Orbit(one(G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2)(4)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2)(3,4)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2,3)(4)", G), S),
+                    PG.Orbit(PG.Permutation(perm"(1,2,3,4)", G), S),
                 ] # the order of cclasses is taken from GAP
             end
             generictest_dixon_Fp(G)
@@ -194,11 +194,11 @@ end
             S = gens(G)
 
             ccG = [
-                Orbit(one(G), S),
-                Orbit(G(perm"(2,3)(4,5)"), S),
-                Orbit(G(perm"(2,4,3,5)"), S),
-                Orbit(G(perm"(2,5,3,4)"), S),
-                Orbit(G(perm"(1,2,4,5,3)"), S),
+                PG.Orbit(one(G), S),
+                PG.Orbit(PG.Permutation(perm"(2,3)(4,5)", G), S),
+                PG.Orbit(PG.Permutation(perm"(2,4,3,5)", G), S),
+                PG.Orbit(PG.Permutation(perm"(2,5,3,4)", G), S),
+                PG.Orbit(PG.Permutation(perm"(1,2,4,5,3)", G), S),
             ]
             # the order of cclasses is taken from GAP
             generictest_dixon_Fp(G)

@@ -14,7 +14,7 @@ end
         G = PermGroup(perm"(1,2,3,4)", perm"(1,2)")
 
         @test Characters.conjugacy_classes(G) isa
-              AbstractVector{<:AbstractOrbit}
+              AbstractVector{<:PG.AbstractOrbit}
 
         for cc in Characters.conjugacy_classes(G)
             @test all(AP.permtype(g) == AP.permtype(first(cc)) for g in cc)
@@ -55,13 +55,12 @@ end
         a = perm"(1,2,3)(4)"
         b = perm"(1,2,4)"
         G = PermGroup([a, b])
-        (G::PermGroup)(p::Perm) = (@assert p in G; Permutation(p, G))
 
         C = [
-            Orbit(one(G), gens(G)),
-            Orbit(G(perm"(1,2)(3,4)"), gens(G)),
-            Orbit(G(perm"(1,2,3)(4)"), gens(G)),
-            Orbit(G(perm"(1,3,2)(4)"), gens(G)),
+            PG.Orbit(one(G), gens(G)),
+            PG.Orbit(PG.Permutation(perm"(1,2)(3,4)", G), gens(G)),
+            PG.Orbit(PG.Permutation(perm"(1,2,3)(4)", G), gens(G)),
+            PG.Orbit(PG.Permutation(perm"(1,3,2)(4)", G), gens(G)),
         ]
 
         generic_tests_ccmatrix(C)
@@ -96,11 +95,11 @@ end
         S = gens(G)
 
         ccG = [
-            Orbit(one(G), S),
-            Orbit(G(perm"(2,3)(4,5)"), S),
-            Orbit(G(perm"(2,4,3,5)"), S),
-            Orbit(G(perm"(2,5,3,4)"), S),
-            Orbit(G(perm"(1,2,4,5,3)"), S),
+            PG.Orbit(one(G), S),
+            PG.Orbit(PG.Permutation(perm"(2,3)(4,5)", G), S),
+            PG.Orbit(PG.Permutation(perm"(2,4,3,5)", G), S),
+            PG.Orbit(PG.Permutation(perm"(2,5,3,4)", G), S),
+            PG.Orbit(PG.Permutation(perm"(1,2,4,5,3)", G), S),
         ]
         # the order of cclasses is taken from GAP
 
@@ -151,7 +150,7 @@ end
             G = if i == 2
                 PermGroup(perm"(1,2)")
             else
-                PermGroup(perm"(1,2)", Perm([2:i; 1]))
+                PermGroup(perm"(1,2)", PG.Perm([2:i; 1]))
             end
             for _ in 1:5
                 PG = PermGroup(rand(G, 2))
