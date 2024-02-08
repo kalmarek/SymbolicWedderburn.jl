@@ -24,7 +24,7 @@ PrecompileTools.@setup_workload begin
     end
 
     struct OnLetters <: ByPermutations end
-    function action(::OnLetters, p::PermutationGroups.AbstractPermutation, w::Word)
+    function action(::OnLetters, p::AP.AbstractPermutation, w::Word)
         return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
     end
 
@@ -46,7 +46,7 @@ PrecompileTools.@setup_workload begin
     act = OnLetters()
 
     PrecompileTools.@compile_workload begin
-        G = PermGroup(perm"(1,2,3)", perm"(1,2)")
+        G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)")
         wd = WedderburnDecomposition(Rational{Int}, G, act, words, words)
         wdfl = WedderburnDecomposition(Float64, G, act, words, words)
     end

@@ -130,7 +130,7 @@ function complex_character_table(
     )
 end
 
-function _inv_of(cc::AbstractVector{<:AbstractOrbit})
+function _inv_of(cc::AbstractVector{<:PG.AbstractOrbit})
     inv_of = zeros(Int, size(cc))
     for (i, c) in enumerate(cc)
         g = inv(first(c))

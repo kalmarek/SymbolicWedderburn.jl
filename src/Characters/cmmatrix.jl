@@ -45,12 +45,12 @@ function conjugacy_classes_orbit(G::GroupsCore.Group)
     S = gens(G)
     ordG = order(Int, G)
 
-    cclasses = [PermutationGroups.Orbit([id])]
+    cclasses = [PG.Orbit([id])]
     elts_counted = 1
 
     for g in G
         any(ccl -> g ∈ ccl, cclasses) && continue
-        ccl_g = PermutationGroups.Orbit(g, S, conj)
+        ccl_g = PG.Orbit(g, S, conj)
         elts_counted += length(ccl_g)
         push!(cclasses, ccl_g)
         elts_counted == ordG && break

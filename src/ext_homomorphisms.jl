@@ -13,7 +13,7 @@ function Base.getindex(hom::InducedActionHomomorphism{A,T}, f::T) where {A,T}
     return basis(hom)[f]
 end
 
-PermutationGroups.degree(hom::InducedActionHomomorphism) = length(basis(hom))
+AP.degree(hom::InducedActionHomomorphism) = length(basis(hom))
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
 _int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I

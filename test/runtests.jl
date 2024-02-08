@@ -4,7 +4,8 @@ using LinearAlgebra
 using SparseArrays
 
 using GroupsCore
-using PermutationGroups
+import AbstractPermutations as AP
+import PermutationGroups as PG
 using Cyclotomics
 
 using SymbolicWedderburn

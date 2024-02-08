@@ -32,7 +32,7 @@
     @test 2ψ / 2 == χ
     @test 2ψ != χ
 
-    @test PermutationGroups.degree(χ) == 2
+    @test AP.degree(χ) == 2
 
     # @test size(SymbolicWedderburn.image_basis(χ), 1) == 4
 

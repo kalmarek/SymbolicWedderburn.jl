@@ -15,7 +15,7 @@ abstract type ByPermutations <: Action end
 
 function action(
     ::ByPermutations,
-    g::PermutationGroups.AbstractPermutation,
+    g::AP.AbstractPermutation,
     v::AbstractVector,
 )
     return [v[i^g] for i in eachindex(v)]
@@ -40,7 +40,9 @@ coeff_type(::ByPermutations) = Int
 
 function induce(::ByPermutations, hom::ExtensionHomomorphism, g::GroupElement)
     I = _int_type(hom)
-    return Perm{I}(vec(I[hom[action(action(hom), g, f)] for f in basis(hom)]))
+    return PG.Perm{I}(
+        vec(I[hom[action(action(hom), g, f)] for f in basis(hom)]),
+    )
 end
 
 """

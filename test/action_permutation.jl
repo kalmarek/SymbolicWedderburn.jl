@@ -20,7 +20,7 @@ end
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
     ::OnLetters,
-    p::PermutationGroups.AbstractPermutation,
+    p::AP.AbstractPermutation,
     w::Word,
 )
     return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
@@ -29,7 +29,7 @@ end
 struct OnLettersSigned <: SymbolicWedderburn.BySignedPermutations end
 function SymbolicWedderburn.action(
     ::OnLettersSigned,
-    p::PermutationGroups.AbstractPermutation,
+    p::AP.AbstractPermutation,
     w::Word,
 )
     return (Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
@@ -54,13 +54,13 @@ end
         w = Word(A, [1, 2, 3, 2, 1])
 
         # (a·b·c·b·a)^(2,3) == a·c·b·c·a
-        @test SymbolicWedderburn.action(OnLetters(), perm"(2,3)", w) ==
+        @test SymbolicWedderburn.action(OnLetters(), PG.perm"(2,3)", w) ==
               Word(A, [1, 3, 2, 3, 1])
 
         words = allwords(A, radius)
     end
 
-    G = PermGroup(perm"(1,2,3)", perm"(1,2)") # G acts on words permuting letters
+    G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)") # G acts on words permuting letters
 
     @test SymbolicWedderburn.check_group_action(G, OnLetters(), words)
     @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), words)
@@ -75,7 +75,7 @@ end
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
-    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{Int32}
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{Int32}
 
     ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
         G,
@@ -84,7 +84,7 @@ end
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
-    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == Perm{UInt32} # the default
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{UInt32} # the default
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]

@@ -17,7 +17,7 @@ end
               AbstractVector{<:AbstractOrbit}
 
         for cc in Characters.conjugacy_classes(G)
-            @test all(permtype(g) == permtype(first(cc)) for g in cc)
+            @test all(AP.permtype(g) == AP.permtype(first(cc)) for g in cc)
         end
 
         C = Characters.conjugacy_classes(G)
