@@ -141,10 +141,10 @@ Base.:^(χ::Character, n::Integer) = Base.power_by_squaring(χ, n)
 
 ## Group-theoretic functions:
 
-PermutationGroups.degree(χ::Character) = Int(χ(one(parent(χ))))
-function PermutationGroups.degree(
+AP.degree(χ::Character) = Int(χ(one(parent(χ))))
+function AP.degree(
     χ::Character{T,CCl},
-) where {T,CCl<:AbstractOrbit{<:AbstractMatrix}}
+) where {T,CCl<:PG.AbstractOrbit{<:AbstractMatrix}}
     return Int(χ[1])
 end
 

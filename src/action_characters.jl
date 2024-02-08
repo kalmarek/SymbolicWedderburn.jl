@@ -1,11 +1,11 @@
 ## characters defined by actions/homomorphisms
-function nfixedpoints(p::PermutationGroups.AbstractPermutation, deg = degree(p))
+function nfixedpoints(p::AP.AbstractPermutation, deg = degree(p))
     return count(i -> i^p == i, Base.OneTo(deg))
 end
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl<:AbstractOrbit{<:PermutationGroups.AbstractPermutation}}
+) where {CCl<:PG.AbstractOrbit{<:AP.AbstractPermutation}}
     deg = mapreduce(cc -> maximum(degree, cc), max, conjugacy_cls)
     vals = map(conjugacy_cls) do cc
         repr = first(cc)
@@ -18,7 +18,7 @@ end
 
 function _action_class_fun(
     conjugacy_cls::AbstractVector{CCl},
-) where {CCl<:AbstractOrbit{<:AbstractMatrix}}
+) where {CCl<:PG.AbstractOrbit{<:AbstractMatrix}}
     vals = [tr(first(cc)) for cc in conjugacy_cls]
     return Characters.ClassFunction(vals, conjugacy_cls)
 end
@@ -27,7 +27,7 @@ function _action_class_fun(
     hom::InducedActionHomomorphism{<:ByPermutations},
     conjugacy_cls,
 )
-    deg = degree(hom)
+    deg = AP.degree(hom)
     vals = map(conjugacy_cls) do cc
         repr = induce(hom, first(cc))
         return nfixedpoints(repr, deg)

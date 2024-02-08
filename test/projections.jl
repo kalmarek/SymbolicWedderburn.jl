@@ -27,19 +27,19 @@ end
     end
     @test test_orthogonality(chars)
     @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
-          PermutationGroups.degree(G)
+          AP.degree(G)
 
     G = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
     chars = SymbolicWedderburn.irreducible_characters(G)
     @test test_orthogonality(chars)
     @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
-          PermutationGroups.degree(G)
+          AP.degree(G)
 
     G = PermGroup([perm"(1,2,3)", perm"(2,3,4)"])
     chars = SymbolicWedderburn.irreducible_characters(G)
     @test test_orthogonality(chars)
     @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
-          PermutationGroups.degree(G)
+          AP.degree(G)
 
     @time for ord in 2:16
         # @testset "SmallGroup($ord, $n)"
@@ -49,14 +49,14 @@ end
             @test test_orthogonality(chars)
 
             @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, chars) ==
-                  PermutationGroups.degree(G)
+                  AP.degree(G)
 
             mps, _ = SymbolicWedderburn.minimal_projection_system(
                 chars,
                 SymbolicWedderburn._group_algebra(G),
             )
             @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, mps) ≤
-                  PermutationGroups.degree(G)
+                  AP.degree(G)
         end
     end
 end

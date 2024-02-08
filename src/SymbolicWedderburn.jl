@@ -6,7 +6,9 @@ using Primes
 
 using Cyclotomics
 using GroupsCore
-using PermutationGroups
+import AbstractPermutations as AP
+import AbstractPermutations: degree
+import PermutationGroups as PG
 using StarAlgebras
 
 export symmetry_adapted_basis, WedderburnDecomposition

@@ -1,11 +1,11 @@
-struct PowerMap{T<:AbstractOrbit} <: AbstractMatrix{Int}
+struct PowerMap{T<:PG.AbstractOrbit} <: AbstractMatrix{Int}
     cc::Vector{T}
     cache::Matrix{Int}
 
     function PowerMap(
         ccG::AbstractVector{T},
         exp = exponent(ccG),
-    ) where {T<:AbstractOrbit}
+    ) where {T<:PG.AbstractOrbit}
         cache = zeros(Int, length(ccG), exp)
         id = one(first(first(ccG)))
         idx = findfirst(cc -> id ∈ cc, ccG)

@@ -5,8 +5,9 @@ using Primes
 using GroupsCore
 using Cyclotomics
 
-import PermutationGroups: AbstractOrbit, degree
-import PermutationGroups
+import AbstractPermutations as AP
+import AbstractPermutations: degree
+import PermutationGroups as PG
 
 export AbstractClassFunction, Character, CharacterTable
 

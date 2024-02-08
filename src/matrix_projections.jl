@@ -162,9 +162,7 @@ end
 function matrix_projection_irr_acc!(
     result::AbstractMatrix,
     vals,
-    ccls::AbstractVector{
-        <:AbstractOrbit{<:PermutationGroups.AbstractPermutation},
-    },
+    ccls::AbstractVector{<:PG.AbstractOrbit{<:AP.AbstractPermutation}},
     weight,
 )
     iszero(weight) && return result
@@ -189,7 +187,7 @@ end
 function matrix_projection_irr_acc!(
     res::AbstractMatrix,
     vals,
-    ccls::AbstractVector{<:AbstractOrbit{<:AbstractMatrix}},
+    ccls::AbstractVector{<:PG.AbstractOrbit{<:AbstractMatrix}},
     weight,
 )
     # TODO: call to inv(Matrix(g)) is a dirty hack, since if `g`
@@ -234,7 +232,7 @@ function matrix_projection_irr_acc!(
         w = weight * val
         for g in ccl
             h = induce(hom, g)
-            @assert h isa PermutationGroups.Perm
+            @assert h isa PG.Perm
             for i in 1:size(result, 1)
                 push!(I, i)
                 push!(J, i^h)
@@ -294,7 +292,7 @@ end
 function matrix_representation_acc!(
     result::AbstractMatrix,
     α::AlgebraElement{
-        <:StarAlgebra{<:PermutationGroups.AbstractPermutationGroup},
+        <:StarAlgebra{<:PG.AbstractPermutationGroup},
     },
 )
     b = basis(parent(α))
@@ -326,7 +324,7 @@ function matrix_representation_acc!(
     for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
         g = induce(hom, b[idx])
-        @assert g isa PermutationGroups.Perm
+        @assert g isa PG.Perm
         for i in 1:size(result, 1)
             push!(I, i)
             push!(J, i^g)

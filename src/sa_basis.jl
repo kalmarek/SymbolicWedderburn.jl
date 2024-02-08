@@ -27,7 +27,7 @@ function affordable_real(
 end
 
 function symmetry_adapted_basis(
-    G::PermutationGroups.AbstractPermutationGroup,
+    G::PG.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
 )
@@ -79,7 +79,7 @@ overflow occurs during the computation of characters) specifying
 """
 function symmetry_adapted_basis(
     T::Type,
-    G::PermutationGroups.AbstractPermutationGroup,
+    G::PG.AbstractPermutationGroup,
     S::Type = Rational{Int};
     semisimple::Bool = false,
 )

@@ -64,7 +64,7 @@ end
         @test dot(
             multiplicity.(sa_basis_ssimple),
             SymbolicWedderburn.degree.(sa_basis_ssimple),
-        ) == PermutationGroups.degree(G)
+        ) == AP.degree(G)
 
         sa_basis = symmetry_adapted_basis(
             Rational{Int},
@@ -81,25 +81,25 @@ end
     S₄ = PermGroup([perm"(1,2,3,4)", perm"(1,2)"])
 
     sa_basis = symmetry_adapted_basis(C₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(C₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(C₄)
     sa_basis = symmetry_adapted_basis(A₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(A₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(A₄)
     sa_basis = symmetry_adapted_basis(S₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(S₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(S₄)
 
     sa_basis = symmetry_adapted_basis(ComplexF64, C₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(C₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(C₄)
     sa_basis = symmetry_adapted_basis(ComplexF64, A₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(A₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(A₄)
     sa_basis = symmetry_adapted_basis(ComplexF64, S₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(S₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(S₄)
 
     sa_basis = symmetry_adapted_basis(Float64, C₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(C₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(C₄)
     sa_basis = symmetry_adapted_basis(Float64, A₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(A₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(A₄)
     sa_basis = symmetry_adapted_basis(Float64, S₄; semisimple = true)
-    @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(S₄)
+    @test sum(first ∘ size, sa_basis) == AP.degree(S₄)
 end
 
 @testset "Symmetry adapted basis: small groups" begin
@@ -115,10 +115,10 @@ end
                     @test dot(
                         SymbolicWedderburn.degree.(sa_basis),
                         multiplicity.(sa_basis),
-                    ) == PermutationGroups.degree(G)
+                    ) == AP.degree(G)
 
                     @test sum(first ∘ size, sa_basis) ==
-                          PermutationGroups.degree(G)
+                          AP.degree(G)
 
                     S = if (ord, n) in ((26, 1),)
                         Rational{BigInt}
@@ -145,9 +145,9 @@ end
                     @test dot(
                         SymbolicWedderburn.degree.(sa_basisR),
                         multiplicity.(sa_basisR),
-                    ) == PermutationGroups.degree(G)
+                    ) == AP.degree(G)
                     @test sum(first ∘ size, sa_basisR) ==
-                          PermutationGroups.degree(G)
+                          AP.degree(G)
 
                     sa_basisR = symmetry_adapted_basis(
                         Float64,
@@ -183,11 +183,11 @@ end
                     return rank(b) == size(b, 1)
                 end
 
-                @test sum(first ∘ size, sa_basis) == PermutationGroups.degree(G)
+                @test sum(first ∘ size, sa_basis) == AP.degree(G)
 
                 basisC =
                     symmetry_adapted_basis(Complex{T}, G; semisimple = true)
-                @test sum(first ∘ size, basisC) == PermutationGroups.degree(G)
+                @test sum(first ∘ size, basisC) == AP.degree(G)
             end
         end
     end
