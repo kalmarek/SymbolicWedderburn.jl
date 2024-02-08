@@ -23,15 +23,3 @@ function scs_optimizer(;
         "verbose" => verbose,
     )
 end
-
-import CSDP
-function csdp_optimizer(; eps = 1e-8, max_iters = 100, kwargs...)
-    return JuMP.optimizer_with_attributes(
-        CSDP.Optimizer,
-        "axtol" => eps,
-        "atytol" => eps,
-        "objtol" => eps,
-        "maxiter" => max_iters,
-        "usexzgap" => 0,
-    )
-end
