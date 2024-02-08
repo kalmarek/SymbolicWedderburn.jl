@@ -14,6 +14,8 @@ perm_regex = r"((\(\d+(,\d+)*\)?)+)";
 print(Meta.parse(replace(GAPgroups_str, perm_regex=> s"perm\"\1\"")))
 =#
 
+import PermutationGroups: PermGroup, @perm_str
+
 const SmallPermGroups = Dict(
     i + 1 => x for (i, x) in enumerate([
         [PermGroup([perm"(1,2)"])],
