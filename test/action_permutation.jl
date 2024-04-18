@@ -50,7 +50,7 @@ function allwords(A, radius)
 end
 
 @testset "Extending homomorphism" begin
-    words = let A = [:a, :b, :c], radius = 4
+    fb_words = let A = [:a, :b, :c], radius = 4
         w = Word(A, [1, 2, 3, 2, 1])
 
         # (a·b·c·b·a)^(2,3) == a·c·b·c·a
@@ -65,29 +65,45 @@ end
 
     G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)") # G acts on words permuting letters
 
-    @test SymbolicWedderburn.check_group_action(G, OnLetters(), words)
-    @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), words)
+    @test SymbolicWedderburn.check_group_action(G, OnLetters(), fb_words)
+    @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), fb_words)
 
     action = OnLetters()
     tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
     ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
-        Int32,
         G,
         action,
-        words;
+        fb_words;
         precompute = true,
     )
     @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
-    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{Int32}
+    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{UInt32}
 
-    ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
-        G,
-        action,
-        words;
-        precompute = true,
-    )
-    @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
-    @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{UInt32} # the default
+    let T = UInt16
+        l = length(fb_words)
+        fb_words = StarAlgebras.FixedBasis(
+            collect(fb_words),
+            StarAlgebras.DiracMStructure(*),
+            T.((l, l)),
+        )
+        @test SymbolicWedderburn.check_group_action(G, OnLetters(), fb_words)
+        @test SymbolicWedderburn.check_group_action(
+            G,
+            OnLettersSigned(),
+            fb_words,
+        )
+
+        action = OnLetters()
+        tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
+        ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
+            G,
+            action,
+            fb_words;
+            precompute = true,
+        )
+        @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
+        @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{T}
+    end
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]
@@ -124,7 +140,7 @@ end
             @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 80
         end
 
-        @test symmetry_adapted_basis(G, action, words; semisimple = true) isa
+        @test symmetry_adapted_basis(G, action, fb_words; semisimple = true) isa
               Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
@@ -132,18 +148,19 @@ end
             Rational{Int},
             G,
             action,
-            words;
+            fb_words;
             semisimple = true,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
         @test symmetry_adapted_basis(
             Float64,
             G,
             action,
-            words;
+            fb_words;
             semisimple = true,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
-        sa_basis = symmetry_adapted_basis(G, action, words; semisimple = true)
+        sa_basis =
+            symmetry_adapted_basis(G, action, fb_words; semisimple = true)
 
         @test [convert(Matrix{Rational{Int}}, b) for b in sa_basis] isa Vector{Matrix{Rational{Int}}}
         @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
@@ -154,7 +171,7 @@ end
         @test size.(sa_basis, 1) ==
               multips .* SymbolicWedderburn.degree.(irr) ==
               [22, 18, 80]
-        @test sum(first ∘ size, sa_basis) == length(words)
+        @test sum(first ∘ size, sa_basis) == length(fb_words)
     end
 
     @testset "simple decomposition" begin
@@ -209,7 +226,12 @@ end
             @test size(mpr, 1) == m
         end
 
-        @test symmetry_adapted_basis(G, action, words; semisimple = false) isa
+        @test symmetry_adapted_basis(
+            G,
+            action,
+            fb_words;
+            semisimple = false,
+        ) isa
               Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
@@ -217,18 +239,18 @@ end
             Rational{Int},
             G,
             action,
-            words;
+            fb_words;
             semisimple = false,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Rational{Int}}}
         @test symmetry_adapted_basis(
             Float64,
             G,
             action,
-            words;
+            fb_words;
             semisimple = false,
         ) isa Vector{<:SymbolicWedderburn.DirectSummand{Float64}}
 
-        sa_basis = symmetry_adapted_basis(G, action, words)
+        sa_basis = symmetry_adapted_basis(G, action, fb_words)
 
         @test length(sa_basis) == 3
         @test multiplicity.(sa_basis) == [22, 18, 40]
