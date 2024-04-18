@@ -61,11 +61,12 @@ function GroupsCore.gens(G::DihedralGroup)
     return [DihedralElement(G.n, false, 1), DihedralElement(G.n, true, 0)]
 end
 
-# Base.rand not needed for our purposes here
-
 Base.parent(g::DihedralElement) = DihedralGroup(g.n)
 function Base.:(==)(g::DihedralElement, h::DihedralElement)
     return g.n == h.n && g.reflection == h.reflection && g.id == h.id
+end
+function Base.hash(g::DihedralElement, h::UInt)
+    return hash((g.n, g.reflection, g.id, hash(DihedralElement)), h)
 end
 
 function Base.inv(el::DihedralElement)
