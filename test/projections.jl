@@ -41,22 +41,26 @@ end
     @test sum(first ∘ size, SymbolicWedderburn.image_basis.(chars)) ==
           AP.degree(G)
 
-    @time for ord in 2:16
-        # @testset "SmallGroup($ord, $n)"
+    for ord in 2:16
         for (n, G) in enumerate(SmallPermGroups[ord])
-            chars = SymbolicWedderburn.irreducible_characters(Rational{Int}, G)
+            @testset "SmallGroup($ord, $n)" begin
+                chars =
+                    SymbolicWedderburn.irreducible_characters(Rational{Int}, G)
 
-            @test test_orthogonality(chars)
+                @test test_orthogonality(chars)
 
-            @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, chars) ==
-                  AP.degree(G)
+                @test sum(
+                    first ∘ size ∘ SymbolicWedderburn.image_basis,
+                    chars,
+                ) == AP.degree(G)
 
-            mps, _ = SymbolicWedderburn.minimal_projection_system(
-                chars,
-                SymbolicWedderburn._group_algebra(G),
-            )
-            @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, mps) ≤
-                  AP.degree(G)
+                mps, _ = SymbolicWedderburn.minimal_projection_system(
+                    chars,
+                    SymbolicWedderburn._group_algebra(G),
+                )
+                @test sum(first ∘ size ∘ SymbolicWedderburn.image_basis, mps) ≤
+                      AP.degree(G)
+            end
         end
     end
 end

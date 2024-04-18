@@ -17,6 +17,9 @@ function Base.hash(w::Word, h::UInt = UInt(0))
     return hash(w.alphabet, hash(w.letters, hash(Word, h)))
 end
 
+Base.:*(w::Word, v::Word) = Word(w.alphabet, [w.letters; v.letters])
+StarAlgebras.star(w::Word) = Word(w.alphabet, reverse(w.letters))
+
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
     ::OnLetters,
@@ -109,7 +112,7 @@ end
     @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
     multips = SymbolicWedderburn.multiplicities(ψ)
-    @test dot(SymbolicWedderburn.degree.(irr), multips) == length(words)
+    @test dot(SymbolicWedderburn.degree.(irr), multips) == length(basis(ehom))
     simple = isone.(SymbolicWedderburn.degree.(irr))
     @test simple == [true, true, false]
 
