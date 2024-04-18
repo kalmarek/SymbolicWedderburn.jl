@@ -75,7 +75,7 @@ end
     end
 
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
-    @test SymbolicWedderburn.multiplicities(ψ) == [22, 18, 40]
+    @test SymbolicWedderburn.multiplicities(ψ) == [23, 18, 40]
     irr = SymbolicWedderburn.irreducible_characters(tbl)
     multips = SymbolicWedderburn.multiplicities(ψ)
     @test dot(SymbolicWedderburn.degree.(irr), multips) == length(basis(ehom))
@@ -87,14 +87,14 @@ end
         action,
         SymbolicWedderburn.basis(ehom),
     )
-    @test length(inv_vec) == 22
+    @test length(inv_vec) == 23
     @test eltype(eltype(inv_vec)) == Rational{Int}
 
     @testset "semisimple decomposition" begin
         let i = 1
             χ, m, s = irr[i], multips[i], simple[i]
             b = SymbolicWedderburn.image_basis(ehom, χ)
-            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 22
+            @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 23
         end
 
         let i = 2
@@ -135,11 +135,11 @@ end
         @test [convert(Matrix{Float64}, b) for b in sa_basis] isa Vector{Matrix{Float64}}
 
         @test length(sa_basis) == 3
-        @test multiplicity.(sa_basis) == [22, 18, 40]
+        @test multiplicity.(sa_basis) == [23, 18, 40]
         @test SymbolicWedderburn.degree.(sa_basis) == [1, 1, 2]
         @test size.(sa_basis, 1) ==
               multips .* SymbolicWedderburn.degree.(irr) ==
-              [22, 18, 80]
+              [23, 18, 80]
         @test sum(first ∘ size, sa_basis) == length(fb_words)
     end
 
@@ -222,9 +222,9 @@ end
         sa_basis = symmetry_adapted_basis(G, action, fb_words)
 
         @test length(sa_basis) == 3
-        @test multiplicity.(sa_basis) == [22, 18, 40]
+        @test multiplicity.(sa_basis) == [23, 18, 40]
         @test SymbolicWedderburn.degree.(sa_basis) == [1, 1, 2]
         @test all(issimple, sa_basis)
-        @test size.(sa_basis, 1) == multips == [22, 18, 40]
+        @test size.(sa_basis, 1) == multips == [23, 18, 40]
     end
 end
