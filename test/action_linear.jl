@@ -33,7 +33,9 @@ end
 
 @testset "Linear Actions" begin
     G = CyclicGroup(2)
-    monomial_basis = monomials([x, y], 0:4)
+    monomial_basis = let monoms = monomials([x, y], 0:4)
+        StarAlgebras.FixedBasis(monoms, StarAlgebras.DiracMStructure(*))
+    end
     ehom =
         SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), monomial_basis)
 

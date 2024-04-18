@@ -57,7 +57,10 @@ end
         @test SymbolicWedderburn.action(OnLetters(), PG.perm"(2,3)", w) ==
               Word(A, [1, 3, 2, 3, 1])
 
-        words = allwords(A, radius)
+        StarAlgebras.FixedBasis(
+            allwords(A, radius),
+            StarAlgebras.DiracMStructure(*),
+        )
     end
 
     G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)") # G acts on words permuting letters
@@ -156,8 +159,14 @@ end
 
     @testset "simple decomposition" begin
         RG = let G = G
-            b = StarAlgebras.Basis{UInt16}(collect(G))
-            StarAlgebra(G, b, (length(b), length(b)))
+            v = collect(G)
+            l = convert(UInt16, length(v))
+            b = StarAlgebras.FixedBasis(
+                v,
+                StarAlgebras.DiracMStructure(*),
+                (l, l),
+            )
+            StarAlgebra(G, b)
         end
 
         let χ = irr[1], m = multips[1]

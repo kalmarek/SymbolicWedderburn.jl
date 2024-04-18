@@ -38,7 +38,7 @@ function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     )
 end
 
-struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
+struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.ExplicitBasis{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
     basis::B

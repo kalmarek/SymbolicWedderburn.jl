@@ -9,6 +9,10 @@ import SymbolicWedderburn.StarAlgebras
 
 using JuMP
 
+function DynamicPolynomials.coefficients(p, b::StarAlgebras.FixedBasis)
+    return DynamicPolynomials.coefficients(p, b.elts)
+end
+
 function invariant_constraint!(
     M_orb::AbstractMatrix{<:AbstractFloat},
     M::Matrix{<:Integer},
@@ -31,11 +35,12 @@ function sos_problem(poly::AbstractPolynomial)
         0:DynamicPolynomials.maxdegree(poly)÷2,
     )
 
-    basis_constraints = StarAlgebras.Basis{UInt16}(
+    basis_constraints = StarAlgebras.FixedBasis(
         DynamicPolynomials.monomials(
             vars,
             0:DynamicPolynomials.maxdegree(poly),
         ),
+        StarAlgebras.DiracMStructure(*),
     )
 
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
@@ -155,7 +160,10 @@ function sos_problem(
             @timed sos_problem(poly, wedderburn, basis_psd)
     else
         (invariant_vs, basis_cnstr), symmetry_adaptation_time = @timed let G = G
-            basis = StarAlgebras.Basis{UInt32}(basis_constraints)
+            basis = StarAlgebras.FixedBasis(
+                basis_constraints,
+                StarAlgebras.DiracMStructure(*),
+            )
 
             tblG = SymbolicWedderburn.Characters.CharacterTable(
                 Rational{Int},
