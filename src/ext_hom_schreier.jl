@@ -34,4 +34,35 @@ function SchreierExtensionHomomorphism(
 
     return sehom
 end
+
+function memoize!(sehom::SchreierExtensionHomomorphism, val, g, lck = true)
+    if lck
+        lock(sehom.lock) do
+            return sehom.cache[g] = val
+        end
+    else
+        sehom.cache[g] = val
+    end
+    return sehom
+end
+
+function _induce(
+    ac::Action,
+    sehom::SchreierExtensionHomomorphism,
+    g::GroupElement,
+)
+    if g in keys(sehom.cache)
+        return sehom.cache[g]
+    else
+        s = sehom.schreier_tree.representatives[g]
+        sI = induce(ac, sehom, s)
+        hI = induce(ac, sehom, g * inv(s))
+        gI = hI * sI
+
+        if sehom.memoize
+            memoize!(sehom, gI, g)
+        end
+
+        return gI
+    end
 end

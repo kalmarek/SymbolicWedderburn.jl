@@ -24,18 +24,6 @@ _int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 _int_type(::Type{<:Action}) = UInt32
 _int_type(ac::Action) = _int_type(typeof(ac))
 
-function induce(hom::InducedActionHomomorphism, g::GroupElement)
-    return induce(action(hom), hom, g)
-end
-
-function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
-    return throw(
-        """No fallback is provided for $(typeof(ac)).
-        You need to implement
-        `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.""",
-    )
-end
-
 struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.ExplicitBasis{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
