@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "91757b21b288de2de800711fa083ac7a348f0716"
+project_hash = "836a60d0dbebf6da7820e3b791132da2c401bb29"
 
 [[deps.AbstractPermutations]]
 deps = ["GroupsCore"]
@@ -124,9 +124,9 @@ version = "1.6.3"
 
 [[deps.PermutationGroups]]
 deps = ["AbstractPermutations", "GroupsCore", "PrecompileTools", "Random"]
-git-tree-sha1 = "c6e5fdaa1340b59d58d675cd1641c9016809f4a6"
+git-tree-sha1 = "0a06e2ad1dc725df809d6c6dbc6b2453690448d3"
 uuid = "8bc5a954-2dfc-11e9-10e6-cd969bffa420"
-version = "0.6.2"
+version = "0.6.3"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
@@ -179,7 +179,7 @@ version = "1.10.0"
 
 [[deps.StarAlgebras]]
 deps = ["LinearAlgebra", "MutableArithmetics", "SparseArrays"]
-git-tree-sha1 = "01695523364a32851f48becc34c804d8360451f9"
+git-tree-sha1 = "27da61aeb716530a401a05054a3feae454a9b64c"
 repo-rev = "mk/changes_for_SW"
 repo-url = "https://github.com/JuliaAlgebra/StarAlgebras.jl.git"
 uuid = "0c0c59c1-dc5f-42e9-9a8b-b5dc384a6cd1"
