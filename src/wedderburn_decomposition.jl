@@ -62,7 +62,7 @@ function WedderburnDecomposition(
     tbl = CharacterTable(S, G)
     invariants = Threads.@spawn invariant_vectors(tbl, action, basis_full)
 
-    ehom = CachedExtensionHomomorphism(G, action, basis_half; precompute = true)
+    ehom = SchreierExtensionHomomorphism(G, action, basis_half; memoize = true)
     check_group_action(G, ehom; full_check = false)
 
     Uπs = Threads.@spawn symmetry_adapted_basis(

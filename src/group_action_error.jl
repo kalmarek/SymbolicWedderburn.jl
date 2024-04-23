@@ -177,6 +177,6 @@ function check_group_action(
     basis::StarAlgebras.ExplicitBasis;
     full_check = false,
 )
-    ehom = CachedExtensionHomomorphism(G, act, basis; precompute = false)
+    ehom = SchreierExtensionHomomorphism(G, act, basis; memoize = false)
     return check_group_action(G, ehom; full_check = full_check)
 end
