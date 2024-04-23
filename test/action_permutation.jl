@@ -38,17 +38,10 @@ end
     @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), fb_words)
 
     action = OnLetters()
-    tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
-    ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
-        G,
-        action,
-        fb_words;
-        precompute = true,
-    )
-    @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
+    ehom = SymbolicWedderburn.ExtensionHomomorphism(action, fb_words)
     @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{UInt32}
 
-    let T = UInt16
+    let T = UInt16, fb_words = fb_words
         l = length(fb_words)
         fb_words = StarAlgebras.FixedBasis(
             collect(fb_words),
@@ -63,33 +56,27 @@ end
         )
 
         action = OnLetters()
-        tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
-        ehom = SymbolicWedderburn.CachedExtensionHomomorphism(
-            G,
-            action,
-            fb_words;
-            precompute = true,
-        )
-        @test all(g ∈ keys(ehom.cache) for g in G) # we actually cached
+        ehom = SymbolicWedderburn.ExtensionHomomorphism(action, fb_words)
         @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{T}
     end
 
     schrhom = SymbolicWedderburn.SchreierExtensionHomomorphism(
         G,
         action,
-        words;
-        memoize = true,
+        fb_words;
+        memoize = false,
     )
 
     @test all(
         SymbolicWedderburn.induce(ehom, g) ==
         SymbolicWedderburn.induce(schrhom, g) for g in G
     )
+    @test length(schrhom.cache) == ngens(G) + 1
 
     schrhom = SymbolicWedderburn.SchreierExtensionHomomorphism(
         G,
         action,
-        words;
+        fb_words;
         memoize = true,
     )
 
@@ -97,9 +84,14 @@ end
         SymbolicWedderburn.induce(ehom, g) ==
         SymbolicWedderburn.induce(schrhom, g) for g in G
     )
+    @test length(schrhom.cache) == order(Int, G)
 
+    tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
     ψ = SymbolicWedderburn.action_character(ehom, tbl)
     @test SymbolicWedderburn.multiplicities(ψ) == [23, 18, 40]
+    ψ = SymbolicWedderburn.action_character(schrhom, tbl)
+    @test SymbolicWedderburn.multiplicities(ψ) == [23, 18, 40]
+
     irr = SymbolicWedderburn.irreducible_characters(tbl)
     multips = SymbolicWedderburn.multiplicities(ψ)
     @test dot(SymbolicWedderburn.degree.(irr), multips) == length(basis(ehom))
@@ -117,19 +109,19 @@ end
     @testset "semisimple decomposition" begin
         let i = 1
             χ, m, s = irr[i], multips[i], simple[i]
-            b = SymbolicWedderburn.image_basis(ehom, χ)
+            b = SymbolicWedderburn.image_basis(schrhom, χ)
             @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 23
         end
 
         let i = 2
             χ, m, s = irr[i], multips[i], simple[i]
-            b = SymbolicWedderburn.image_basis(ehom, χ)
+            b = SymbolicWedderburn.image_basis(schrhom, χ)
             @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 18
         end
 
         let i = 3
             χ, m, s = irr[i], multips[i], simple[i]
-            b = SymbolicWedderburn.image_basis(ehom, χ)
+            b = SymbolicWedderburn.image_basis(schrhom, χ)
             @test size(b, 1) == SymbolicWedderburn.degree(χ) * m == 80
         end
 
