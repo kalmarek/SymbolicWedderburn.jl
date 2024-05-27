@@ -116,7 +116,7 @@ end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    return sum(α(g) * χ(g) for g in supp(α))
+    return sum(α(g) * χ(g) for g in StarAlgebras.supp(α))
 end
 
 function minimal_rank_projection(
