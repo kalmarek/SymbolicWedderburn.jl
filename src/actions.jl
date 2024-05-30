@@ -124,9 +124,9 @@ end
 
 function induce(
     ::ByPermutations,
-    hom::InducedActionHomomorphism,
+    hom::H,
     g::GroupElement,
-)
+) where {H<:InducedActionHomomorphism}
     I = _int_type(hom)
     v = vec(I[hom[action(action(hom), g, f)] for f in basis(hom)])
     return PG.Perm{I}(v; check = false)
@@ -134,9 +134,9 @@ end
 
 function induce(
     ac::ByLinearTransformation,
-    hom::InducedActionHomomorphism,
+    hom::H,
     g::GroupElement,
-)
+) where {H<:InducedActionHomomorphism}
     I = Int[]
     J = Int[]
     V = coeff_type(ac)[]
@@ -154,9 +154,9 @@ end
 
 function induce(
     ac::BySignedPermutations,
-    hom::InducedActionHomomorphism,
+    hom::H,
     g::GroupElement,
-)
+) where {H<:InducedActionHomomorphism}
     I = Int[]
     J = Int[]
     V = coeff_type(ac)[]
@@ -172,6 +172,14 @@ function induce(
 end
 
 # disabmiguation methods for custom implementations of InducedActionHomomorphism
+function induce(
+    ac::ByPermutations,
+    hom::CachedExtensionHomomorphism,
+    g::GroupElement,
+)
+    return _induce(ac, hom, g)
+end
+
 function induce(
     ac::ByLinearTransformation,
     hom::CachedExtensionHomomorphism,
