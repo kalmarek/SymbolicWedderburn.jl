@@ -10,7 +10,7 @@ function _preallocate(::Type{T}, sizes::Tuple, sizehint) where {T}
 end
 
 __hint(χ::Character) = length(conjugacy_classes(χ))
-__hint(α::AlgebraElement) = count(!iszero, StarAlgebras.coeffs(α))
+__hint(α::AlgebraElement) = count(!iszero, SA.coeffs(α))
 
 _projection_size(m::AbstractMatrix) = size(m)
 _projection_size(::Nothing, χ::Character) = (d = degree(parent(χ)); (d, d))
@@ -299,7 +299,7 @@ function matrix_representation_acc!(
     I = UInt32[]
     J = UInt32[]
     V = eltype(result)[]
-    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
+    for (idx, val) in SA.nonzero_pairs(SA.coeffs(α))
         g = b[idx]
         iszero(val) && continue
         for i in 1:size(result, 1)
@@ -321,7 +321,7 @@ function matrix_representation_acc!(
     I = UInt32[]
     J = UInt32[]
     V = eltype(result)[]
-    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
+    for (idx, val) in SA.nonzero_pairs(SA.coeffs(α))
         iszero(val) && continue
         g = induce(hom, b[idx])
         @assert g isa PG.Perm
@@ -341,7 +341,7 @@ function matrix_representation_acc!(
     α::AlgebraElement,
 )
     b = basis(parent(α))
-    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
+    for (idx, val) in SA.nonzero_pairs(SA.coeffs(α))
         iszero(val) && continue
         result .+= val .* induce(hom, inv(b[idx]))
     end

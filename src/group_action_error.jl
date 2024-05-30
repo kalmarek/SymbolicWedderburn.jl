@@ -174,7 +174,7 @@ end
 function check_group_action(
     G::Group,
     act::Action,
-    basis::StarAlgebras.ExplicitBasis;
+    basis::SA.ExplicitBasis;
     full_check = false,
 )
     ehom = SchreierExtensionHomomorphism(G, act, basis; memoize = false)

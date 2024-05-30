@@ -10,6 +10,7 @@ using Cyclotomics
 
 using SymbolicWedderburn
 using SymbolicWedderburn.FiniteFields
+import SymbolicWedderburn.SA as SA
 using SymbolicWedderburn.StarAlgebras
 
 include("action_permutation.jl")

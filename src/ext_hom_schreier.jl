@@ -12,7 +12,7 @@ struct SchreierExtensionHomomorphism{
     lock::Base.Threads.SpinLock
 end
 
-StarAlgebras.basis(h::SchreierExtensionHomomorphism) = basis(h.ehom)
+SA.basis(h::SchreierExtensionHomomorphism) = basis(h.ehom)
 action(h::SchreierExtensionHomomorphism) = action(h.ehom)
 
 function SchreierExtensionHomomorphism(

@@ -6,18 +6,14 @@ function _group_algebra(G::Group)
         convert(UInt16, min(order(Int, G), typemax(UInt16) >> 2))
     end
 
-    fb = StarAlgebras.FixedBasis(
-        vec(collect(G)),
-        StarAlgebras.DiracMStructure(*),
-        (l, l),
-    )
+    fb = SA.FixedBasis(vec(collect(G)), SA.DiracMStructure(*), (l, l))
     return StarAlgebra(G, fb)
 end
 
 Base.parent(A::StarAlgebra{<:Group}) = A.object
-StarAlgebras.star(g::GroupElement) = inv(g)
+SA.star(g::GroupElement) = inv(g)
 
-function StarAlgebras.AlgebraElement(
+function SA.AlgebraElement(
     χ::AbstractClassFunction,
     RG::StarAlgebra{<:Group},
 )
@@ -116,7 +112,7 @@ end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    return sum(α(g) * χ(g) for g in supp(α))
+    return sum(α(g) * χ(g) for g in SA.supp(α))
 end
 
 function minimal_rank_projection(

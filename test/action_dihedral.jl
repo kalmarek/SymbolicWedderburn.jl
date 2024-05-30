@@ -54,9 +54,7 @@ function SymbolicWedderburn.action(
     return mono([x, y] => [sign_x * var_x, sign_y * var_y])
 end
 
-function StarAlgebras.comparable(::Type{DihedralElement})
-    return StarAlgebras.Comparable((a, b) -> hash(a) < hash(b))
-end
+SA.comparable(::Type{DihedralElement}) = (a, b) -> hash(a) < hash(b)
 
 @testset "Dihedral Action" begin
     G = DihedralGroup(4)

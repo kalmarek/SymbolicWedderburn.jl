@@ -43,8 +43,8 @@ function WedderburnDecomposition(
         T,
         G,
         action,
-        StarAlgebras.FixedBasis(basis_full, StarAlgebras.DiracMStructure(*)),
-        StarAlgebras.FixedBasis(basis_half, StarAlgebras.DiracMStructure(*)),
+        SA.FixedBasis(basis_full, SA.DiracMStructure(*)),
+        SA.FixedBasis(basis_half, SA.DiracMStructure(*)),
         S;
         semisimple = semisimple,
     )
@@ -54,8 +54,8 @@ function WedderburnDecomposition(
     T::Type,
     G::Group,
     action::Action,
-    basis_full::StarAlgebras.ExplicitBasis,
-    basis_half::StarAlgebras.ExplicitBasis,
+    basis_full::SA.ExplicitBasis,
+    basis_half::SA.ExplicitBasis,
     S = Rational{Int};
     semisimple = false,
 )
@@ -93,7 +93,7 @@ function Base.show(io::IO, wbdec::SymbolicWedderburn.WedderburnDecomposition)
 end
 
 invariant_vectors(wbdec::WedderburnDecomposition) = wbdec.invariants
-StarAlgebras.basis(wbdec::WedderburnDecomposition) = wbdec.basis
+SA.basis(wbdec::WedderburnDecomposition) = wbdec.basis
 direct_summands(wbdec::WedderburnDecomposition) = wbdec.Uπs
 function Base.eltype(wbdec::WedderburnDecomposition)
     return eltype(eltype(direct_summands(wbdec)))
@@ -155,7 +155,7 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Action,
-    basis::StarAlgebras.ExplicitBasis,
+    basis::SA.ExplicitBasis,
 )
     triv_χ =
         Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
@@ -173,7 +173,7 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Union{<:ByPermutations,<:BySignedPermutations},
-    basis::StarAlgebras.ExplicitBasis,
+    basis::SA.ExplicitBasis,
 )
     return invariant_vectors(parent(tbl), act, basis)
 end
@@ -181,7 +181,7 @@ end
 function invariant_vectors(
     G::Group,
     act::ByPermutations,
-    basis::StarAlgebras.ExplicitBasis{T,I},
+    basis::SA.ExplicitBasis{T,I},
 ) where {T,I}
     tovisit = trues(length(basis))
     invariant_vs = Vector{SparseVector{Rational{Int},I}}()
@@ -224,7 +224,7 @@ end
 function invariant_vectors(
     G::Group,
     act::BySignedPermutations,
-    basis::StarAlgebras.ExplicitBasis{T,I},
+    basis::SA.ExplicitBasis{T,I},
 ) where {T,I}
     ordG = order(Int, G)
     elts = collect(G)

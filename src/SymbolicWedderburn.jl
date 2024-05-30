@@ -10,6 +10,7 @@ import AbstractPermutations as AP
 import AbstractPermutations: degree
 import PermutationGroups as PG
 using StarAlgebras
+import StarAlgebras as SA
 
 export symmetry_adapted_basis, WedderburnDecomposition
 export basis,
