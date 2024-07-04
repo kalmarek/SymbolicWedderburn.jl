@@ -7,6 +7,7 @@ function _group_algebra(G::Group)
     end
 
     fb = SA.FixedBasis(vec(collect(G)), SA.DiracMStructure(*), (l, l))
+    SA.complete!(fb.table)
     return StarAlgebra(G, fb)
 end
 
