@@ -16,15 +16,13 @@ end
 AP.degree(hom::InducedActionHomomorphism) = length(basis(hom))
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
-_int_type(::Type{<:StarAlgebras.AbstractBasis{T,I}}) where {T,I} = I
-_int_type(basis::StarAlgebras.AbstractBasis) = _int_type(typeof(basis))
+_int_type(basis::StarAlgebras.AbstractBasis) = StarAlgebras.key_type(basis)
 _int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 
 # Exceeding typemax(UInt32) here would mean e.g. that you're trying to block-diagonalize
 # an SDP constraint of size 4_294_967_295 × 4_294_967_295, which is highly unlikely ;)
 _int_type(::Type{<:Action}) = UInt32
 _int_type(ac::Action) = _int_type(typeof(ac))
-
 
 function induce(hom::InducedActionHomomorphism, g::GroupElement)
     return induce(action(hom), hom, g)
@@ -38,26 +36,10 @@ function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
     )
 end
 
-struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.AbstractBasis{T}} <:
+struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.ExplicitBasis{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
     basis::B
-end
-
-function ExtensionHomomorphism(action::Action, basis)
-    return ExtensionHomomorphism(
-        _int_type(action),
-        action,
-        basis,
-    )
-end
-
-function ExtensionHomomorphism(
-    ::Type{I},
-    action::Action,
-    basis,
-) where {I<:Integer}
-    return ExtensionHomomorphism(action, StarAlgebras.Basis{I}(basis))
 end
 
 # interface:
@@ -81,13 +63,12 @@ StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
 
 function CachedExtensionHomomorphism(
-    ::Type{I},
     G::Group,
     action::Action,
     basis;
     precompute = false,
-) where {I}
-    hom = ExtensionHomomorphism(I, action, basis)
+)
+    hom = ExtensionHomomorphism(action, basis)
     S = typeof(induce(hom, one(G)))
     chom = CachedExtensionHomomorphism{eltype(G),S}(hom)
     @sync if precompute
@@ -98,21 +79,6 @@ function CachedExtensionHomomorphism(
         end
     end
     return chom
-end
-
-function CachedExtensionHomomorphism(
-    G::Group,
-    action::Action,
-    basis;
-    precompute = false,
-)
-    return CachedExtensionHomomorphism(
-        _int_type(action),
-        G,
-        action,
-        basis;
-        precompute = precompute,
-    )
 end
 
 function induce(ac::Action, chom::CachedExtensionHomomorphism, g::GroupElement)

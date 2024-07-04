@@ -20,7 +20,7 @@ end
 function SW.action(
     a::VariablePermutation,
     g::AP.AbstractPermutation,
-    m::Monomial,
+    m::AbstractMonomial,
 )
     v = a.variables
     return m(v => SW.action(a, g, v))

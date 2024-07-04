@@ -16,7 +16,7 @@ SymbolicWedderburn.coeff_type(::By90Rotation) = Float64
 function SymbolicWedderburn.action(
     ::By90Rotation,
     g::CyclicGroupElement,
-    m::Monomial,
+    m::AbstractMonomial,
 )
     isone(g) && return m
     x, y = variables(m)
@@ -40,7 +40,10 @@ using Test
 @testset "Decompose in basis" begin
     g = gens(G, 1)
 
-    basis = monomials([x, y], 0:4)
+    basis = StarAlgebras.FixedBasis(
+        monomials([x, y], 0:4),
+        StarAlgebras.DiracMStructure(*),
+    )
     k = SymbolicWedderburn.action(By90Rotation(), g, basis[2])
     ehom = SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), basis)
     idcs, vals = SymbolicWedderburn.decompose(k, ehom)
@@ -57,7 +60,10 @@ end
 
 @testset "induced Matrix Representation" begin
     g = gens(G, 1)
-    monomial_basis = monomials([x, y], 0:4)
+    monomial_basis = StarAlgebras.FixedBasis(
+        monomials([x, y], 0:4),
+        StarAlgebras.DiracMStructure(*),
+    )
     ehom =
         SymbolicWedderburn.ExtensionHomomorphism(By90Rotation(), monomial_basis)
     m = droptol!(SymbolicWedderburn.induce(By90Rotation(), ehom, g), 1e-15)

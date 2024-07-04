@@ -54,14 +54,16 @@ function SymbolicWedderburn.action(
     return mono([x, y] => [sign_x * var_x, sign_y * var_y])
 end
 
+function StarAlgebras.comparable(::Type{DihedralElement})
+    return (a, b) -> hash(a) < hash(b)
+end
+
 @testset "Dihedral Action" begin
     G = DihedralGroup(4)
     @test all(
         SymbolicWedderburn.action(DihedralAction(), g, robinson_form) ==
         robinson_form for g in DihedralGroup(4)
     )
-
-    T = Float64
 
     m, _ = sos_problem(robinson_form, G, DihedralAction())
     JuMP.set_optimizer(
@@ -115,6 +117,11 @@ end
         mono in monomials([x, y], 0:4), g in DihedralGroup(4)
     )
 
+    @test all(
+        SymbolicWedderburn.action(DihedralActionSP(), g, robinson_form) ==
+        robinson_form for g in DihedralGroup(4)
+    )
+
     m, _ = sos_problem(robinson_form, DihedralGroup(4), DihedralActionSP())
 
     JuMP.set_optimizer(
@@ -129,9 +136,4 @@ end
     optimize!(m)
     @test termination_status(m) == MOI.OPTIMAL
     @test isapprox(objective_value(m), -3825 / 4096, atol = 1e-3)
-
-    @test all(
-        SymbolicWedderburn.action(DihedralActionSP(), g, robinson_form) ==
-        robinson_form for g in DihedralGroup(4)
-    )
 end

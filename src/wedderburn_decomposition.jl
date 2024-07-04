@@ -43,8 +43,8 @@ function WedderburnDecomposition(
         T,
         G,
         action,
-        StarAlgebras.Basis{UInt32}(basis_full),
-        StarAlgebras.Basis{UInt32}(basis_half),
+        StarAlgebras.FixedBasis(basis_full, StarAlgebras.DiracMStructure(*)),
+        StarAlgebras.FixedBasis(basis_half, StarAlgebras.DiracMStructure(*)),
         S;
         semisimple = semisimple,
     )
@@ -54,8 +54,8 @@ function WedderburnDecomposition(
     T::Type,
     G::Group,
     action::Action,
-    basis_full::StarAlgebras.Basis,
-    basis_half::StarAlgebras.Basis,
+    basis_full::StarAlgebras.ExplicitBasis,
+    basis_half::StarAlgebras.ExplicitBasis,
     S = Rational{Int};
     semisimple = false,
 )
@@ -155,7 +155,7 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Action,
-    basis::StarAlgebras.Basis,
+    basis::StarAlgebras.ExplicitBasis,
 )
     triv_χ =
         Characters.Character{Rational{Int}}(Characters.trivial_character(tbl))
@@ -173,7 +173,7 @@ end
 function invariant_vectors(
     tbl::Characters.CharacterTable,
     act::Union{<:ByPermutations,<:BySignedPermutations},
-    basis::StarAlgebras.Basis,
+    basis::StarAlgebras.ExplicitBasis,
 )
     return invariant_vectors(parent(tbl), act, basis)
 end
@@ -181,7 +181,7 @@ end
 function invariant_vectors(
     G::Group,
     act::ByPermutations,
-    basis::StarAlgebras.Basis{T,I},
+    basis::StarAlgebras.ExplicitBasis{T,I},
 ) where {T,I}
     tovisit = trues(length(basis))
     invariant_vs = Vector{SparseVector{Rational{Int},I}}()
@@ -224,7 +224,7 @@ end
 function invariant_vectors(
     G::Group,
     act::BySignedPermutations,
-    basis::StarAlgebras.Basis{T,I},
+    basis::StarAlgebras.ExplicitBasis{T,I},
 ) where {T,I}
     ordG = order(Int, G)
     elts = collect(G)

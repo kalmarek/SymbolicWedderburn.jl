@@ -299,7 +299,7 @@ function matrix_representation_acc!(
     I = UInt32[]
     J = UInt32[]
     V = eltype(result)[]
-    for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
         g = b[idx]
         iszero(val) && continue
         for i in 1:size(result, 1)
@@ -321,7 +321,7 @@ function matrix_representation_acc!(
     I = UInt32[]
     J = UInt32[]
     V = eltype(result)[]
-    for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
         g = induce(hom, b[idx])
         @assert g isa PG.Perm
@@ -341,7 +341,7 @@ function matrix_representation_acc!(
     α::AlgebraElement,
 )
     b = basis(parent(α))
-    for (idx, val) in StarAlgebras._nzpairs(StarAlgebras.coeffs(α))
+    for (idx, val) in StarAlgebras.nonzero_pairs(StarAlgebras.coeffs(α))
         iszero(val) && continue
         result .+= val .* induce(hom, inv(b[idx]))
     end

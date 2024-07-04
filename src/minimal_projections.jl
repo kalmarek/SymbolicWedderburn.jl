@@ -1,13 +1,17 @@
 function _group_algebra(G::Group)
     @assert isfinite(G)
-    b = StarAlgebras.Basis{UInt16}(vec(collect(G)))
-    RG = if order(Int, G) <= (typemax(UInt16) >> 2)
-        StarAlgebra(G, b, (length(b), length(b)); precompute = true)
-        # the cache is ~ 0.5 GB
+    l = if isbitstype(eltype(G))
+        UInt16(0)
     else
-        StarAlgebra(G, b)
+        convert(UInt16, min(order(Int, G), typemax(UInt16) >> 2))
     end
-    return RG
+
+    fb = StarAlgebras.FixedBasis(
+        vec(collect(G)),
+        StarAlgebras.DiracMStructure(*),
+        (l, l),
+    )
+    return StarAlgebra(G, fb)
 end
 
 Base.parent(A::StarAlgebra{<:Group}) = A.object
@@ -112,7 +116,7 @@ end
 
 function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
     @assert parent(χ) === parent(parent(α))
-    return sum(α(g) * χ(g) for g in supp(α))
+    return sum(α(g) * χ(g) for g in StarAlgebras.supp(α))
 end
 
 function minimal_rank_projection(

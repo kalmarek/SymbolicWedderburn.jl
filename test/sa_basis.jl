@@ -32,8 +32,13 @@ end
         @test SymbolicWedderburn.degree.(irr) == [1, 1, 2]
 
         RG = let G = G
-            b = StarAlgebras.Basis{UInt16}(collect(G))
-            StarAlgebra(G, b, (length(b), length(b)))
+            l = order(UInt16, G)
+            b = StarAlgebras.FixedBasis(
+                collect(G),
+                StarAlgebras.DiracMStructure(*),
+                (l, l),
+            )
+            StarAlgebra(G, b)
         end
 
         µ, s = SymbolicWedderburn.minimal_rank_projection(irr[1], RG)

@@ -174,7 +174,7 @@ end
 function check_group_action(
     G::Group,
     act::Action,
-    basis::AbstractVector;
+    basis::StarAlgebras.ExplicitBasis;
     full_check = false,
 )
     ehom = CachedExtensionHomomorphism(G, act, basis; precompute = false)
