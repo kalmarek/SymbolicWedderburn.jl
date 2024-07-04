@@ -16,7 +16,7 @@ SymbolicWedderburn.coeff_type(::By90Rotation) = Float64
 function SymbolicWedderburn.action(
     ::By90Rotation,
     g::CyclicGroupElement,
-    m::Monomial,
+    m::AbstractMonomial,
 )
     isone(g) && return m
     x, y = variables(m)
