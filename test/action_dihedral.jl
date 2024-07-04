@@ -55,7 +55,7 @@ function SymbolicWedderburn.action(
 end
 
 function StarAlgebras.comparable(::Type{DihedralElement})
-    return StarAlgebras.Comparable((a, b) -> hash(a) < hash(b))
+    return (a, b) -> hash(a) < hash(b)
 end
 
 @testset "Dihedral Action" begin
