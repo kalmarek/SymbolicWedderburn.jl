@@ -1,12 +1,3 @@
-using LinearAlgebra
-using SparseArrays
-
-using SymbolicWedderburn
-using DynamicPolynomials
-
-include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
-include(joinpath(dirname(@__DIR__), "examples", "dihedral.jl"))
-include(joinpath(dirname(@__DIR__), "examples", "sos_problem.jl"))
 
 using JuMP
 import SCS

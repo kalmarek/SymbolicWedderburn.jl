@@ -1,5 +1,3 @@
-using DynamicPolynomials
-
 using GroupsCore
 include(joinpath(dirname(pathof(GroupsCore)), "..", "test", "cyclic.jl"))
 
@@ -20,13 +18,13 @@ function SymbolicWedderburn.action(
 end
 
 function SymbolicWedderburn.decompose(
-    k::DynamicPolynomials.AbstractPolynomialLike,
+    k::DP.AbstractPolynomialLike,
     hom::SymbolicWedderburn.InducedActionHomomorphism,
 )
     # correct only if basis(hom) == monomials
     I = SymbolicWedderburn._int_type(hom)
-    indcs = I[hom[mono] for mono in DynamicPolynomials.monomials(k)]
-    coeffs = DynamicPolynomials.coefficients(k)
+    indcs = I[hom[mono] for mono in DP.monomials(k)]
+    coeffs = DP.coefficients(k)
 
     return indcs, coeffs
 end

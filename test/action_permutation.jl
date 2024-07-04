@@ -1,5 +1,3 @@
-include("free_words.jl")
-
 struct OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
     ::OnLetters,
