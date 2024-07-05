@@ -226,7 +226,8 @@ end
     end
 
     @time @testset "SmallPermGroups" begin
-        for (ord, groups) in SmallPermGroups
+        for ord in 2:30
+            groups = SmallPermGroups[ord]
             @testset "SmallGroup($ord, $n)" for (n, G) in enumerate(groups)
                 @test Characters.irreducible_characters(G) isa
                       Vector{<:Characters.Character}

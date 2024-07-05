@@ -47,3 +47,30 @@ if VERSION >= v"1.7.0" && !haskey(ENV, "CI")
     end
 end
 
+# Small groups generation:
+#= GAP code:
+H := [];
+for i in [1..63] do
+    Add(H, List(AllSmallGroups(i), G->Image(IsomorphismPermGroup(G))));
+od;
+PrintTo("/tmp/groups.gap", H);
+=#
+
+#=julia code
+GAPgroups_str = join(readlines("/tmp/groups.gap"), "");
+GAPgroups_str = replace(GAPgroups_str, "Group"=>"\nPermGroup");
+GAPgroups_str = replace(GAPgroups_str, r" *"=>"");
+perm_regex = r"((\(\d+(,\d+)*\)?)+)";
+let fn = joinpath(@__DIR__, "smallgroups.jl")
+    open(fn, "w") do file
+
+        print(file, """
+        import PermutationGroups: PermGroup, @perm_str
+
+        const SmallPermGroups = """)
+        println(file, replace(GAPgroups_str, perm_regex=> s"perm\"\1\""))
+    end
+    read(fn, String)
+end
+=#
+
