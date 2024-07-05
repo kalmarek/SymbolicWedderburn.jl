@@ -1,8 +1,5 @@
 using DynamicPolynomials
-const DP = DynamicPolynomials
-using GroupsCore
-
-const SW = SymbolicWedderburn
+import DynamicPolynomials as DP
 
 # Defining action on polynomials by acting on terms and monomials:
 function SW.action(a::SW.Action, el::GroupElement, poly::DP.AbstractPolynomial)

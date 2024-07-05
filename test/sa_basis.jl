@@ -1,5 +1,3 @@
-using SymbolicWedderburn.StarAlgebras
-
 @testset "affordable real degrees/dot" begin
     G = SmallPermGroups[10][2] # C₂⊕C₅
     tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
@@ -33,11 +31,7 @@ end
 
         RG = let G = G
             l = order(UInt16, G)
-            b = StarAlgebras.FixedBasis(
-                collect(G),
-                StarAlgebras.DiracMStructure(*),
-                (l, l),
-            )
+            b = SA.FixedBasis(collect(G), SA.DiracMStructure(*), (l, l))
             StarAlgebra(G, b)
         end
 

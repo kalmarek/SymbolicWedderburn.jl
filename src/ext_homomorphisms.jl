@@ -16,7 +16,7 @@ end
 AP.degree(hom::InducedActionHomomorphism) = length(basis(hom))
 
 coeff_type(hom::InducedActionHomomorphism) = coeff_type(action(hom))
-_int_type(basis::StarAlgebras.AbstractBasis) = StarAlgebras.key_type(basis)
+_int_type(basis::SA.AbstractBasis) = SA.key_type(basis)
 _int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 
 # Exceeding typemax(UInt32) here would mean e.g. that you're trying to block-diagonalize
@@ -24,26 +24,14 @@ _int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 _int_type(::Type{<:Action}) = UInt32
 _int_type(ac::Action) = _int_type(typeof(ac))
 
-function induce(hom::InducedActionHomomorphism, g::GroupElement)
-    return induce(action(hom), hom, g)
-end
-
-function induce(ac::Action, hom::InducedActionHomomorphism, g::GroupElement)
-    return throw(
-        """No fallback is provided for $(typeof(ac)).
-        You need to implement
-        `induce(::$(typeof(ac)), ::$(typeof(hom)), ::$(typeof(g)))`.""",
-    )
-end
-
-struct ExtensionHomomorphism{A<:Action,T,B<:StarAlgebras.ExplicitBasis{T}} <:
+struct ExtensionHomomorphism{A<:Action,T,B<:SA.ExplicitBasis{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
     basis::B
 end
 
 # interface:
-StarAlgebras.basis(hom::ExtensionHomomorphism) = hom.basis
+SA.basis(hom::ExtensionHomomorphism) = hom.basis
 action(hom::ExtensionHomomorphism) = hom.action
 
 struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
@@ -59,7 +47,7 @@ function CachedExtensionHomomorphism{G,H}(
     return CachedExtensionHomomorphism(hom, Dict{G,H}(), Threads.SpinLock())
 end
 
-StarAlgebras.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
+SA.basis(h::CachedExtensionHomomorphism) = basis(h.ehom)
 action(h::CachedExtensionHomomorphism) = action(h.ehom)
 
 function CachedExtensionHomomorphism(

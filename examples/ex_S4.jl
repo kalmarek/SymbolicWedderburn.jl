@@ -1,12 +1,3 @@
-using SymbolicWedderburn
-using PermutationGroups
-
-using DynamicPolynomials
-
-include(joinpath(@__DIR__, "action_polynomials.jl"))
-include(joinpath(@__DIR__, "sos_problem.jl"))
-include(joinpath(@__DIR__, "solver.jl"))
-
 const N = 4
 @polyvar x[1:N]
 

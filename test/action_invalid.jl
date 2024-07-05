@@ -1,8 +1,3 @@
-using SymbolicWedderburn
-using DynamicPolynomials
-
-include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
-
 @testset "Catching invalid actions" begin
     include(joinpath(dirname(pathof(GroupsCore)), "..", "test", "cyclic.jl"))
     struct CyclicAction <: OnMonomials end
@@ -22,10 +17,7 @@ include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
     G = CyclicGroup(4)
     act = CyclicAction()
     @polyvar a[1:2]
-    basis = StarAlgebras.FixedBasis(
-        monomials(a, 0:2),
-        StarAlgebras.DiracMStructure(*),
-    )
+    basis = SA.FixedBasis(monomials(a, 0:2), SA.DiracMStructure(*))
 
     @test_throws SymbolicWedderburn.GroupActionError SymbolicWedderburn.check_group_action(
         G,

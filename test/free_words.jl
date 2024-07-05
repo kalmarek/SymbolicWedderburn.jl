@@ -30,7 +30,7 @@ function Base.:*(w::Word, z::Word)
     return Word(w.alphabet, [w.letters; z.letters])
 end
 
-function StarAlgebras.star(w::Word)
+function SA.star(w::Word)
     # star(:a) = :b
     # star(:b) = :a
     # star(:c) = :c

@@ -137,11 +137,11 @@ function symmetry_adapted_basis(
     semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(
+    ehom = SchreierExtensionHomomorphism(
         parent(tbl),
         action,
         basis;
-        precompute = true,
+        memoize = true,
     )
     check_group_action(G, ehom; full_check = false)
     return symmetry_adapted_basis(
@@ -161,11 +161,11 @@ function symmetry_adapted_basis(
     semisimple = false,
 )
     tbl = CharacterTable(S, G)
-    ehom = CachedExtensionHomomorphism(
+    ehom = SchreierExtensionHomomorphism(
         parent(tbl),
         action,
         basis;
-        precompute = true,
+        memoize = true,
     )
     check_group_action(G, ehom; full_check = false)
     return symmetry_adapted_basis(T, tbl, ehom; semisimple = semisimple)

@@ -1,16 +1,7 @@
-using LinearAlgebra
-using SparseArrays
-
-using GroupsCore
-
-using DynamicPolynomials
-using SymbolicWedderburn
-import SymbolicWedderburn.StarAlgebras
-
 using JuMP
 
-function DynamicPolynomials.coefficients(p, b::StarAlgebras.FixedBasis)
-    return DynamicPolynomials.coefficients(p, b.elts)
+function DP.coefficients(p, b::SA.FixedBasis)
+    return DP.coefficients(p, b.elts)
 end
 
 function invariant_constraint!(
@@ -28,19 +19,13 @@ function invariant_constraint!(
 end
 
 function sos_problem(poly::AbstractPolynomial)
-    vars = DynamicPolynomials.variables(poly)
+    vars = DP.variables(poly)
 
-    basis_psd = DynamicPolynomials.monomials(
-        vars,
-        0:DynamicPolynomials.maxdegree(poly)÷2,
-    )
+    basis_psd = DP.monomials(vars, 0:DP.maxdegree(poly)÷2)
 
-    basis_constraints = StarAlgebras.FixedBasis(
-        DynamicPolynomials.monomials(
-            vars,
-            0:DynamicPolynomials.maxdegree(poly),
-        ),
-        StarAlgebras.DiracMStructure(*),
+    basis_constraints = SA.FixedBasis(
+        DP.monomials(vars, 0:DP.maxdegree(poly)),
+        SA.DiracMStructure(*),
     )
 
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
@@ -54,7 +39,7 @@ function sos_problem(poly::AbstractPolynomial)
 
     objective = poly - t
     for (idx, b) in enumerate(basis_constraints)
-        c = DynamicPolynomials.coefficient(objective, b)
+        c = DP.coefficient(objective, b)
         JuMP.@constraint sos_model LinearAlgebra.dot(P, M .== idx) == c
     end
 
@@ -64,7 +49,7 @@ end
 function sos_problem(
     poly::AbstractPolynomial,
     invariant_vs::AbstractVector,
-    basis_constraints::StarAlgebras.AbstractBasis,
+    basis_constraints::SA.AbstractBasis,
     basis_psd,
     T=Float64,
 )
@@ -80,7 +65,7 @@ function sos_problem(
     # preallocating
     M_orb = similar(M, T)
 
-    C = DynamicPolynomials.coefficients(poly - t, basis_constraints)
+    C = DP.coefficients(poly - t, basis_constraints)
 
     for iv in invariant_vs
         c = dot(C, iv)
@@ -94,18 +79,18 @@ end
 
 function sos_problem(
     poly::AbstractPolynomial,
-    wedderburn::SymbolicWedderburn.WedderburnDecomposition,
+    wedderburn::SW.WedderburnDecomposition,
     basis_psd;
 )
     m = JuMP.Model()
 
-    M = let basis_constraints = SymbolicWedderburn.basis(wedderburn)
+    M = let basis_constraints = SA.basis(wedderburn)
         [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
     end
 
     JuMP.@variable m t
     JuMP.@objective m Max t
-    psds = map(SymbolicWedderburn.direct_summands(wedderburn)) do ds
+    psds = map(SW.direct_summands(wedderburn)) do ds
         dim = size(ds, 1)
         P = JuMP.@variable m [1:dim, 1:dim] Symmetric
         JuMP.@constraint m P in PSDCone()
@@ -116,15 +101,13 @@ function sos_problem(
     # Mπs = zeros.(eltype(wedderburn), size.(psds))
     M_orb = similar(M, eltype(wedderburn))
 
-    C = DynamicPolynomials.coefficients(
-        poly - t,
-        SymbolicWedderburn.basis(wedderburn),
-    )
+    C = DP.coefficients(poly - t, SW.basis(wedderburn))
+
     for iv in invariant_vectors(wedderburn)
         c = dot(C, iv)
         M_orb = invariant_constraint!(M_orb, M, iv)
-        # Mπs = SymbolicWedderburn.diagonalize!(Mπs, M_orb, wedderburn)
-        Mπs = SymbolicWedderburn.diagonalize(M_orb, wedderburn)
+        # Mπs = SW.diagonalize!(Mπs, M_orb, wedderburn)
+        Mπs = SW.diagonalize(M_orb, wedderburn)
 
         JuMP.@constraint m sum(
             dot(Mπ, Pπ) for (Mπ, Pπ) in zip(Mπs, psds) if !iszero(Mπ)
@@ -136,18 +119,19 @@ end
 function sos_problem(
     poly::AbstractPolynomial,
     G::Group,
-    action::SymbolicWedderburn.Action,
+    action::SW.Action,
     T=Float64;
     decompose_psd=true,
     semisimple=false
 )
-    max_deg = DynamicPolynomials.maxdegree(poly)
-    vars = DynamicPolynomials.variables(poly)
-    basis_psd = DynamicPolynomials.monomials(vars, 0:max_deg÷2)
-    basis_constraints = DynamicPolynomials.monomials(vars, 0:max_deg)
+    max_deg = DP.maxdegree(poly)
+    vars = DP.variables(poly)
+    basis_psd = DP.monomials(vars, 0:max_deg÷2)
+    basis_constraints = DP.monomials(vars, 0:max_deg)
 
     if decompose_psd == true
-        wedderburn, symmetry_adaptation_time = @timed WedderburnDecomposition(
+        wedderburn, symmetry_adaptation_time =
+            @timed SW.WedderburnDecomposition(
             T,
             G,
             action,
@@ -160,15 +144,9 @@ function sos_problem(
             @timed sos_problem(poly, wedderburn, basis_psd)
     else
         (invariant_vs, basis_cnstr), symmetry_adaptation_time = @timed let G = G
-            basis = StarAlgebras.FixedBasis(
-                basis_constraints,
-                StarAlgebras.DiracMStructure(*),
-            )
+            basis = SA.FixedBasis(basis_constraints, SA.DiracMStructure(*))
 
-            tblG = SymbolicWedderburn.Characters.CharacterTable(
-                Rational{Int},
-                G,
-            )
+            tblG = SW.Characters.CharacterTable(Rational{Int}, G)
             iv = invariant_vectors(tblG, action, basis)
             iv, basis
         end

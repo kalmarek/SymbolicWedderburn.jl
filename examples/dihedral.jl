@@ -88,3 +88,6 @@ function GroupsCore.order(T::Type, el::DihedralElement)
     iszero(el.id) && return T(1)
     return T(div(el.n, gcd(el.n, el.id)))
 end
+
+# this is needed for using them in StarAlgebra:
+SA.comparable(::Type{DihedralElement}) = (a, b) -> hash(a) < hash(b)
