@@ -7,18 +7,6 @@
 # *Symmetry groups, semidefinite programs, and sums of squares*.
 # Journal of Pure and Applied Algebra 192.1-3 (2004): 95-128.
 
-using LinearAlgebra
-using SparseArrays
-
-using SymbolicWedderburn
-import SymbolicWedderburn.SA as SA
-using DynamicPolynomials
-
-# definitions of general actions on polynomials:
-include(joinpath(@__DIR__, "action_polynomials.jl"))
-include(joinpath(@__DIR__, "sos_problem.jl"))
-include(joinpath(@__DIR__, "solver.jl"))
-
 @polyvar x y
 const robinson_form =
     x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1

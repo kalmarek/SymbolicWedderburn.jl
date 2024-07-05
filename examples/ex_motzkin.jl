@@ -1,12 +1,3 @@
-using SymbolicWedderburn
-using PermutationGroups
-
-using DynamicPolynomials
-
-include(joinpath(@__DIR__, "action_polynomials.jl"))
-include(joinpath(@__DIR__, "sos_problem.jl"))
-include(joinpath(@__DIR__, "solver.jl"))
-
 @polyvar x y
 
 motzkin = x^4 * y^2 + y^4 * x^2 - 3 * x^2 * y^2 + 1
