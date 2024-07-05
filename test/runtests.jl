@@ -22,6 +22,7 @@ include("action_permutation.jl")
 include(joinpath(dirname(@__DIR__), "examples", "action_polynomials.jl"))
 include(joinpath(dirname(@__DIR__), "examples", "dihedral.jl"))
 include(joinpath(dirname(@__DIR__), "examples", "sos_problem.jl"))
+include(joinpath(dirname(@__DIR__), "examples", "solver.jl"))
 
 include("action_linear.jl")
 include("action_dihedral.jl")

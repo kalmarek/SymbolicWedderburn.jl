@@ -1,28 +1,3 @@
-
-using JuMP
-import SCS
-
-function scs_optimizer(;
-    accel = 0,
-    alpha = 1.5,
-    eps = 1e-6,
-    max_iters = 10_000,
-    verbose = true,
-)
-    return JuMP.optimizer_with_attributes(
-        SCS.Optimizer,
-        "acceleration_lookback" => accel,
-        "acceleration_interval" => 10,
-        "alpha" => alpha,
-        "eps_abs" => eps,
-        "eps_rel" => eps,
-        "linear_solver" => SCS.DirectSolver,
-        "max_iters" => max_iters,
-        "warm_start" => true,
-        "verbose" => verbose,
-    )
-end
-
 @polyvar x y
 const robinson_form =
     x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
@@ -44,8 +19,6 @@ function SymbolicWedderburn.action(
     sign_y = 2 <= el.id ? -1 : 1
     return mono([x, y] => [sign_x * var_x, sign_y * var_y])
 end
-
-SA.comparable(::Type{DihedralElement}) = (a, b) -> hash(a) < hash(b)
 
 @testset "Dihedral Action" begin
     G = DihedralGroup(4)

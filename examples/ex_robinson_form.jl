@@ -11,7 +11,7 @@ using LinearAlgebra
 using SparseArrays
 
 using SymbolicWedderburn
-using SymbolicWedderburn.StarAlgebras
+import SymbolicWedderburn.SA as SA
 using DynamicPolynomials
 
 # definitions of general actions on polynomials:

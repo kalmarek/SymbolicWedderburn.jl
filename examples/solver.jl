@@ -1,4 +1,3 @@
-using JuMP
 import SCS
 
 function scs_optimizer(;
