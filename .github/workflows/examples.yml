@@ -1,4 +1,4 @@
-name: CI
+name: Examples
 on:
   - push
   - pull_request
@@ -9,13 +9,9 @@ jobs:
     strategy:
       matrix:
         version:
-          - '1.6'
           - '1'
-          - 'nightly'
         os:
           - ubuntu-latest
-          - macOS-latest
-          - windows-latest
         arch:
           - x64
         allow_failures:
@@ -37,19 +33,32 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      - name: Setup branches
-        shell: julia --project=@. {0}
+      - name: Examples project instantiation
+        shell: julia --project=examples {0}
         run: |
           using Pkg
           Pkg.add([
               PackageSpec(name="StarAlgebras", rev="main"),
           ])
-      - uses: julia-actions/julia-buildpkg@latest
-      - uses: julia-actions/julia-runtest@latest
-      - uses: julia-actions/julia-processcoverage@v1
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./lcov.info
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
+          Pkg.instantiate()
+      - name: Example C₂ linear action
+        shell: julia --project=examples {0}
+        run: |
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_C2_linear.jl"))
+      - name: Example a polynomial with Sym(4)-symmetry
+        shell: julia --project=examples {0}
+        run: |
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_S4.jl"))
+      - name: Example Motzkin polynomial
+        shell: julia --project=examples {0}
+        run: |
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_motzkin.jl"))
+      - name: Example Robinson Form
+        shell: julia --project=examples {0}
+        run: |
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_robinson_form.jl"))
+
