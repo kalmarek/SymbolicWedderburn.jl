@@ -9,9 +9,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - '1.6'
           - '1'
-          - 'nightly'
         os:
           - ubuntu-latest
         arch:
@@ -35,7 +33,7 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      - name: Example project instantiation
+      - name: Examples project instantiation
         shell: julia --project=examples {0}
         run: |
           using Pkg
