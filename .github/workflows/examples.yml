@@ -44,21 +44,21 @@ jobs:
       - name: Example C₂ linear action
         shell: julia --project=examples {0}
         run: |
-          include("examples/preamble.jl");
-          include("examples/ex_C2.linear.jl")
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_C2_linear.jl"))
       - name: Example a polynomial with Sym(4)-symmetry
         shell: julia --project=examples {0}
         run: |
-          include("examples/preamble.jl");
-          include("examples/ex_S4.jl")
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_S4.jl"))
       - name: Example Motzkin polynomial
         shell: julia --project=examples {0}
         run: |
-          include("examples/preamble.jl");
-          include("examples/ex_motzkin.jl")
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_motzkin.jl"))
       - name: Example Robinson Form
         shell: julia --project=examples {0}
         run: |
-          include("examples/preamble.jl");
-          include("examples/ex_robinson_form.jl")
+          include(joinpath(pwd(), "examples/preamble.jl"))
+          include(joinpath(pwd(), "examples/ex_robinson_form.jl"))
 

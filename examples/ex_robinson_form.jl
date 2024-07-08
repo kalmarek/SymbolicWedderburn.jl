@@ -26,8 +26,8 @@ include(joinpath(@__DIR__, "dihedral.jl"))
 
 struct DihedralAction <: OnMonomials end
 
-SymbolicWedderburn.coeff_type(::DihedralAction) = Int
-function SymbolicWedderburn.action(
+SW.coeff_type(::DihedralAction) = Int
+function SW.action(
     ::DihedralAction,
     el::DihedralElement,
     mono::AbstractMonomial,
@@ -45,7 +45,7 @@ end
 
 G = DihedralGroup(4)
 for g in G
-    @assert SymbolicWedderburn.action(DihedralAction(), g, robinson_form) ==
+    @assert SW.action(DihedralAction(), g, robinson_form) ==
             robinson_form
 end
 

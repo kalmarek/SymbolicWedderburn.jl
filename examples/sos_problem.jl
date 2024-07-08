@@ -103,7 +103,7 @@ function sos_problem(
 
     C = DP.coefficients(poly - t, SW.basis(wedderburn))
 
-    for iv in invariant_vectors(wedderburn)
+    for iv in SW.invariant_vectors(wedderburn)
         c = dot(C, iv)
         M_orb = invariant_constraint!(M_orb, M, iv)
         # Mπs = SW.diagonalize!(Mπs, M_orb, wedderburn)
@@ -147,7 +147,7 @@ function sos_problem(
             basis = SA.FixedBasis(basis_constraints, SA.DiracMStructure(*))
 
             tblG = SW.Characters.CharacterTable(Rational{Int}, G)
-            iv = invariant_vectors(tblG, action, basis)
+            iv = SW.invariant_vectors(tblG, action, basis)
             iv, basis
         end
 

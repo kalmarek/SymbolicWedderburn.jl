@@ -60,7 +60,7 @@ end
     ssimple_basis =
         SW.symmetry_adapted_basis(Float64, G, By90Rotation(), monomial_basis)
     degs = SW.degree.(ssimple_basis)
-    mlts = multiplicity.(ssimple_basis)
+    mlts = SW.multiplicity.(ssimple_basis)
     @test sum(d * m for (d, m) in zip(degs, mlts)) == length(monomial_basis)
     @test sum(first ∘ size, ssimple_basis) == length(monomial_basis)
 end
