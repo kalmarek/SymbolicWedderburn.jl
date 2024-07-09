@@ -13,7 +13,7 @@ MyGroup = PermGroup([gen1, gen2, gen3]) # SL(2,3)
 tbl = SW.CharacterTable(Rational{Int}, MyGroup)
 
 # Get irreducible characters
-irreducible_chars = irreducible_characters(tbl)
+irreducible_chars = SW.irreducible_characters(tbl)
 
 # Define multiplicities (for simplicity, use ones)
 multiplicities = fill(1, length(irreducible_chars))
