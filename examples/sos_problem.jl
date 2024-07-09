@@ -116,6 +116,45 @@ function sos_problem(
     return m
 end
 
+function other_way(
+    poly::AbstractPolynomial,
+    wedderburn::SymbolicWedderburn.WedderburnDecomposition,
+    basis_psd;
+)
+    m = JuMP.Model()
+
+    JuMP.@variable m t
+    JuMP.@objective m Max t
+    psds = map(SymbolicWedderburn.direct_summands(wedderburn)) do ds
+        dim = size(ds, 1)
+        P = JuMP.@variable m [1:dim, 1:dim] Symmetric
+        JuMP.@constraint m P in PSDCone()
+        return P
+    end
+
+    C = DynamicPolynomials.coefficients(
+        poly - t,
+        SymbolicWedderburn.basis(wedderburn),
+    )
+    equations = [-dot(C, iv) for iv in invariant_vectors(wedderburn)]
+    for ds in SymbolicWedderburn.direct_summands(wedderburn)
+        dim = size(ds, 1)
+        P = JuMP.@variable(m, [1:dim, 1:dim] in PSDCone())
+        U = image_basis(ds)
+        q = U * basis_psd
+        for j in 1:dim
+            for i in 1:dim
+                qq = SA.star(q[i]) * q[j]
+                for (k, iv) in enumerate(invariant_vectors(wedderburn))
+                    MA.operate!(MA.add_mul, equations[k], dot(qq, iv), P[i, j])
+                end
+            end
+        end
+    end
+    @constraint(m, equations in Zeros())
+    return m
+end
+
 function sos_problem(
     poly::AbstractPolynomial,
     G::Group,
