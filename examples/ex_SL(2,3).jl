@@ -15,8 +15,8 @@ tbl = SW.CharacterTable(Rational{Int}, MyGroup)
 # Get irreducible characters
 irreducible_chars = irreducible_characters(tbl)
 
-# Define multiplicities (for simplicity, use ones)
-multiplicities = fill(1, length(irreducible_chars))
+# Define multiplicities (for simplicity, use twos, it should be even for the quaternion case) 
+multiplicities = fill(2, length(irreducible_chars))
 
 # Get real irreducible characters and their multiplicities
 real_irreps, real_mults = SW.affordable_real(irreducible_chars, multiplicities)
