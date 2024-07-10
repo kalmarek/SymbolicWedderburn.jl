@@ -6,10 +6,14 @@ function affordable_real(
     mls_real = similar(multiplicities, 0)
     for (i, χ) in pairs(irreducible_characters)
         ι = Characters.frobenius_schur(χ)
-        if abs(ι) == 1 # real or quaternionic
-            @debug "real/quaternionic:" χ
+        if ι == 1 # real
+            @debug "real" χ
             push!(irr_real, χ)
             push!(mls_real, multiplicities[i])
+        elseif ι == -1 # quaternion
+            @debug "quaterionic" χ
+            push!(irr_real, 2*χ)
+            push!(mls_real, multiplicities[i]/2)
         else # complex one...
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
