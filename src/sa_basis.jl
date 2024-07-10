@@ -13,7 +13,7 @@ function affordable_real(
         elseif ι == -1 # quaternion
             @debug "quaterionic" χ
             push!(irr_real, 2*χ)
-            push!(mls_real, multiplicities[i])
+            push!(mls_real, multiplicities[i]/2)
         else # complex one...
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
