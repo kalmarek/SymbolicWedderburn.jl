@@ -1,22 +1,27 @@
 function affordable_real(
     irreducible_characters,
-    multiplicities = fill(1, length(irreducible_characters)),
+    multiplicities,
 )
     irr_real = similar(irreducible_characters, 0)
     mls_real = similar(multiplicities, 0)
     for (i, χ) in pairs(irreducible_characters)
         ι = Characters.frobenius_schur(χ)
-        if abs(ι) == 1 # real or quaternionic
-            @debug "real/quaternionic:" χ
+        if ι == 1 # real
+            @debug "real" χ
             push!(irr_real, χ)
             push!(mls_real, multiplicities[i])
-        else # complex one...
+        elseif ι == -1 # quaternionic
+            @debug "quaternionic" χ
+            @assert iseven(multiplicities[i]) "Multiplicities of quaternionic character must be even."
+            push!(irr_real, 2 * χ)
+            push!(mls_real, div(multiplicities[i], 2))
+        else # complex
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
-            @assert k !== nothing
-            @debug "complex" χ conj(χ) = irreducible_characters[k]
-            if k > i # ... we haven't already observed a conjugate of
-                @assert multiplicities[i] == multiplicities[k]
+            @assert k !== nothing "Conjugate character not found."
+            @debug "complex" χ "conj(χ) =" irreducible_characters[k]
+            if k > i # we haven't already observed a conjugate
+                @assert multiplicities[i] == multiplicities[k] "Multiplicities of complex conjugates must be equal."
                 push!(irr_real, χ + cχ)
                 push!(mls_real, multiplicities[i])
             end
