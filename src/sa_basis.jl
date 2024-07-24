@@ -19,7 +19,7 @@ function affordable_real(
             cχ = conj(χ)
             k = findfirst(==(cχ), irreducible_characters)
             @assert k !== nothing "Conjugate character not found."
-            @debug "complex" χ "conj(χ) =" irreducible_characters[k]
+            @debug "complex" χ conj(χ) = irreducible_characters[k]
             if k > i # we haven't already observed a conjugate
                 @assert multiplicities[i] == multiplicities[k] "Multiplicities of complex conjugates must be equal."
                 push!(irr_real, χ + cχ)
