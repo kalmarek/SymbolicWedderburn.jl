@@ -21,7 +21,7 @@ end
     G = PermGroup([perm"(1,2,3,4)"])
     chars = let irr = SymbolicWedderburn.irreducible_characters(G)
         if !all(isreal, irr)
-            irr, _ = SymbolicWedderburn.affordable_real(irr)
+            irr, _ = SymbolicWedderburn.affordable_real(irr,fill(1, length(irr)))
         end
         SymbolicWedderburn.Character{Float64}.(irr)
     end
