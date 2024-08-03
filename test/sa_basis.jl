@@ -9,7 +9,7 @@
     @test all(isone ∘ SymbolicWedderburn.degree, chars_fl)
     @test all(χ -> isapprox(dot(χ, χ), 1), chars_fl)
 
-    charsR, _ = SymbolicWedderburn.affordable_real(chars)
+    charsR, _ = SymbolicWedderburn.affordable_real(chars,fill(1, length(chars)))
     @test SymbolicWedderburn.degree.(charsR) ==
           [dot(χ, χ) for χ in charsR] ==
           [1, 1, 2, 2, 2, 2]
