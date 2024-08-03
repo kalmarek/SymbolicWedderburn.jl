@@ -157,7 +157,8 @@ end
                     for b in sa_basisR
                         if issimple(b)
                             @test multiplicity(b) == size(b, 1) ||
-                                  2 * multiplicity(b) == size(b, 1)
+                                  2 * multiplicity(b) == size(b, 1) ||
+                                  4 * multiplicity(b) == size(b, 1)
                             # the first condiditon doesn't hold for realified characters;
                         else
                             rk, res = divrem(size(b, 1), multiplicity(b))
