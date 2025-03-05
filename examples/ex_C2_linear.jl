@@ -1,5 +1,6 @@
 using SymbolicWedderburn
 using DynamicPolynomials
+import DynamicPolynomials as DP
 using SparseArrays
 
 using GroupsCore
@@ -16,7 +17,7 @@ SymbolicWedderburn.coeff_type(::By90Rotation) = Float64
 function SymbolicWedderburn.action(
     ::By90Rotation,
     g::CyclicGroupElement,
-    m::Monomial,
+    m::DP.Monomial,
 )
     isone(g) && return m
     x, y = variables(m)
