@@ -23,6 +23,32 @@ using SymbolicWedderburn.StarAlgebras
     )
 end
 
+@testset "row_echelon_form #89" begin
+    struct OnInts <: SW.ByPermutations
+        translate::Dict{PG.Perm{UInt16},PG.Perm{UInt16}}
+    end
+
+    function SW.action(
+        action::OnInts,
+        p::AP.AbstractPermutation,
+        fs::Vector{Int},
+    )
+        return [c^action.translate[p] for c in fs]
+    end
+
+    rotate = OnInts(
+        Dict(
+            PG.perm"(1,2,3)" => PG.perm"(1,2,3)(4,5,6)",
+            PG.perm"" => PG.perm"",
+            PG.perm"(1,3,2)" => PG.perm"(1,3,2)(4,6,5)",
+        ),
+    )
+
+    G = PG.PermGroup(PG.perm"(1,2,3)")
+    res = SW.symmetry_adapted_basis(G, rotate, [[i] for i in 1:6])
+    @test rank.(complex.(res)) == [2, 2, 2]
+end
+
 @testset "Symmetry adapted basis" begin
     @testset "step by step" begin
         G = PermGroup(perm"(1,2)", perm"(1,2,3)")

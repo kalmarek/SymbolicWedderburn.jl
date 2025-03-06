@@ -1,5 +1,5 @@
 using DynamicPolynomials
-const DP = DynamicPolynomials
+import DynamicPolynomials as DP
 using GroupsCore
 
 const SW = SymbolicWedderburn
@@ -20,7 +20,7 @@ end
 function SW.action(
     a::VariablePermutation,
     g::AP.AbstractPermutation,
-    m::Monomial,
+    m::DP.Monomial,
 )
     v = a.variables
     return m(v => SW.action(a, g, v))
