@@ -11,6 +11,14 @@ import AbstractPermutations: degree
 import PermutationGroups as PG
 using StarAlgebras
 
+### This is technically pirating from StarAlgebras;
+# a stopgap solution until StarAlgebras is updated to v0.3 (?)
+function Base.getindex(
+    b::StarAlgebras.Basis{P},
+    p::P) where P <: AP.AbstractPermutation
+    return b.rbasis[p]
+end
+
 export symmetry_adapted_basis, WedderburnDecomposition
 export basis,
     # degree, # too common name to export
