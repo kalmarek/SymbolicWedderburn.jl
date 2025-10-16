@@ -43,6 +43,4 @@ include("direct_summands.jl")
 include("sa_basis.jl")
 include("wedderburn_decomposition.jl")
 
-include("precompile.jl")
-
 end # module
