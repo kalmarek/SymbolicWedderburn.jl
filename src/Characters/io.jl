@@ -20,9 +20,9 @@ __coefs_desc(::Type{<:Rational{T}}) where {T} = "rationals ($T)"
 __coefs_desc(::Type{<:Cyclotomics.Cyclotomic{T}}) where {T} = "cyclotomics ($T)"
 
 function Base.show(io::IO, ::MIME"text/plain", chtbl::CharacterTable)
-    hl_odd = PrettyTables.Highlighter(;
-        f = (rule, i, j) -> i % 2 == 0,
-        crayon = PrettyTables.Crayon(;
+    hl_odd = PrettyTables.TextHighlighter(
+        (rule, i, j) -> i % 2 == 0,
+        PrettyTables.Crayon(;
             foreground = :dark_gray,
             negative = true,
         ),
@@ -34,24 +34,24 @@ function Base.show(io::IO, ::MIME"text/plain", chtbl::CharacterTable)
         io,
         chtbl;
         title = "Character table of $(parent(chtbl)) over $(__coefs_desc(eltype(chtbl)))",
-        header = ["$(first(cc))^G" for cc in conjugacy_classes(chtbl)],
+        column_labels = ["$(first(cc))^G" for cc in conjugacy_classes(chtbl)],
         row_labels = [
             Symbol('χ', FiniteFields.subscriptify(i)) for i in axes(chtbl, 1)
         ],
-        row_label_column_title = "",
+        stubhead_label = "",
         # hlines = [:header, :end],
         # vlines = [1],
-        formatters = fmt,
-        autowrap = true,
-        linebreaks = true,
-        columns_width = displaysize(io)[2] ÷ size(chtbl, 2) - 8,
+        formatters = [fmt],
+        auto_wrap = true,
+        line_breaks = true,
+        fixed_data_column_widths = displaysize(io)[2] ÷ size(chtbl, 2) - 8,
         reserved_display_lines = 3[],
         # vcrop_mode = :middle,
         # equal_columns_width = true,
         # crop = :vertical,
-        ellipsis_line_skip = 1,
+        #ellipsis_line_skip = 1,
         # alignment = [:r, :l],
-        highlighters = hl_odd,
+        highlighters = [hl_odd],
     )
 end
 
