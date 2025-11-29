@@ -43,8 +43,8 @@ function WedderburnDecomposition(
         T,
         G,
         action,
-        SA.FixedBasis(basis_full, SA.DiracMStructure(*)),
-        SA.FixedBasis(basis_half, SA.DiracMStructure(*)),
+        SA.FixedBasis(basis_full),
+        SA.FixedBasis(basis_half),
         S;
         semisimple = semisimple,
     )
