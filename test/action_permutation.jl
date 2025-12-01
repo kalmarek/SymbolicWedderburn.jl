@@ -24,7 +24,7 @@ end
         @test SymbolicWedderburn.action(OnLetters(), PG.perm"(2,3)", w) ==
               Word(A, [1, 3, 2, 3, 1])
 
-        SA.FixedBasis(allwords(FreeWords(A), radius), SA.DiracMStructure(*))
+        SA.FixedBasis(allwords(FreeWords(A), radius))
     end
 
     G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)") # G acts on words permuting letters
@@ -39,7 +39,7 @@ end
     let T = UInt16, fb_words = fb_words
         l = length(fb_words)
         fb_words =
-            SA.FixedBasis(collect(fb_words), SA.DiracMStructure(*), T.((l, l)))
+            SA.FixedBasis(collect(fb_words), T.((l, l)))
         @test SymbolicWedderburn.check_group_action(G, OnLetters(), fb_words)
         @test SymbolicWedderburn.check_group_action(
             G,
@@ -155,7 +155,7 @@ end
         RG = let G = G
             v = collect(G)
             l = convert(UInt16, length(v))
-            b = SA.FixedBasis(v, SA.DiracMStructure(*), (l, l))
+            b = SA.FixedBasis(v, (l, l))
             StarAlgebra(G, b)
         end
 
