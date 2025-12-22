@@ -31,7 +31,7 @@ using Test
 @testset "Decompose in basis" begin
     g = gens(G, 1)
 
-    basis = SA.FixedBasis(monomials([x, y], 0:4), SA.DiracMStructure(*))
+    basis = SA.FixedBasis(monomials([x, y], 0:4))
     k = SW.action(By90Rotation(), g, basis[2])
     ehom = SW.ExtensionHomomorphism(By90Rotation(), basis)
     idcs, vals = SW.decompose(k, ehom)
@@ -48,8 +48,7 @@ end
 
 @testset "induced Matrix Representation" begin
     g = gens(G, 1)
-    monomial_basis =
-        SA.FixedBasis(monomials([x, y], 0:4), SA.DiracMStructure(*))
+    monomial_basis = SA.FixedBasis(monomials([x, y], 0:4))
     ehom = SW.ExtensionHomomorphism(By90Rotation(), monomial_basis)
     m = droptol!(SW.induce(By90Rotation(), ehom, g), 1e-15)
     @test eltype(m) == Float64

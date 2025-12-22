@@ -6,8 +6,8 @@ function _group_algebra(G::Group)
         convert(UInt16, min(order(Int, G), typemax(UInt16) >> 2))
     end
 
-    fb = SA.FixedBasis(vec(collect(G)), SA.DiracMStructure(*), (l, l))
-    SA.complete!(fb.table)
+    fb = SA.MTable(SA.FixedBasis{eltype(G),typeof(l)}(vec(collect(G))), (l, l))
+    SA.complete!(fb)
     return StarAlgebra(G, fb)
 end
 

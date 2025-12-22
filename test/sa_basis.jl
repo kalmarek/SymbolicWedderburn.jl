@@ -31,7 +31,7 @@ end
 
         RG = let G = G
             l = order(UInt16, G)
-            b = SA.FixedBasis(collect(G), SA.DiracMStructure(*), (l, l))
+            b = SA.MTable(SA.FixedBasis{eltype(G),typeof(l)}(collect(G)), (l, l))
             StarAlgebra(G, b)
         end
 
