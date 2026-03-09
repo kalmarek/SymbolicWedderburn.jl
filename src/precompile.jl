@@ -3,7 +3,7 @@ import PrecompileTools
 include(joinpath(@__DIR__, "..", "test", "free_words.jl"))
 
 PrecompileTools.@setup_workload begin
-    M = __FreeWords([:a, :b, :c])
+    M = _FreeWords([:a, :b, :c])
     words = collect(Iterators.take(M, nwords(M, 4)))
     act = _OnLetters()
 
