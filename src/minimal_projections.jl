@@ -111,7 +111,7 @@ function Base.iterate(citr::CyclicSubgroups, state)
     return iterate(citr, state)
 end
 
-function (χ::AbstractClassFunction)(α::AlgebraElement{<:StarAlgebra{<:Group}})
+function (χ::AbstractClassFunction)(α::AlgebraElement{T,<:StarAlgebra{<:Group}}) where {T}
     @assert parent(χ) === parent(parent(α))
     return sum(α(g) * χ(g) for g in SA.supp(α))
 end
