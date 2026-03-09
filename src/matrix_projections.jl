@@ -292,9 +292,10 @@ end
 function matrix_representation_acc!(
     result::AbstractMatrix,
     α::AlgebraElement{
+        T,
         <:StarAlgebra{<:PG.AbstractPermutationGroup},
     },
-)
+) where {T}
     b = basis(parent(α))
     I = UInt32[]
     J = UInt32[]
