@@ -1,53 +1,54 @@
-struct OnLetters <: SymbolicWedderburn.ByPermutations end
+struct _OnLetters <: SymbolicWedderburn.ByPermutations end
 function SymbolicWedderburn.action(
-    ::OnLetters,
+    ::_OnLetters,
     p::AP.AbstractPermutation,
-    w::Word,
+    w::_Word,
 )
-    return Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
+    return _Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
 end
 
-struct OnLettersSigned <: SymbolicWedderburn.BySignedPermutations end
+struct _OnLettersSigned <: SymbolicWedderburn.BySignedPermutations end
 function SymbolicWedderburn.action(
-    ::OnLettersSigned,
+    ::_OnLettersSigned,
     p::AP.AbstractPermutation,
-    w::Word,
+    w::_Word,
 )
-    return (Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
+    return (_Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
 end
 
 @testset "Extending homomorphism" begin
     fb_words = let A = [:a, :b, :c], radius = 4
-        w = Word(A, [1, 2, 3, 2, 1])
+        w = _Word(A, [1, 2, 3, 2, 1])
 
         # (a·b·c·b·a)^(2,3) == a·c·b·c·a
-        @test SymbolicWedderburn.action(OnLetters(), PG.perm"(2,3)", w) ==
-              Word(A, [1, 3, 2, 3, 1])
+        @test SymbolicWedderburn.action(_OnLetters(), PG.perm"(2,3)", w) ==
+              _Word(A, [1, 3, 2, 3, 1])
 
-        SA.FixedBasis(allwords(FreeWords(A), radius), SA.DiracMStructure(*))
+        all_basis = allwords(_FreeWords(A), radius)
+        SA.FixedBasis{eltype(all_basis),UInt32}(all_basis)
     end
 
     G = PG.PermGroup(PG.perm"(1,2,3)", PG.perm"(1,2)") # G acts on words permuting letters
 
-    @test SymbolicWedderburn.check_group_action(G, OnLetters(), fb_words)
-    @test SymbolicWedderburn.check_group_action(G, OnLettersSigned(), fb_words)
+    @test SymbolicWedderburn.check_group_action(G, _OnLetters(), fb_words)
+    @test SymbolicWedderburn.check_group_action(G, _OnLettersSigned(), fb_words)
 
-    action = OnLetters()
+    action = _OnLetters()
     ehom = SymbolicWedderburn.ExtensionHomomorphism(action, fb_words)
     @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{UInt32}
 
     let T = UInt16, fb_words = fb_words
         l = length(fb_words)
-        fb_words =
-            SA.FixedBasis(collect(fb_words), SA.DiracMStructure(*), T.((l, l)))
-        @test SymbolicWedderburn.check_group_action(G, OnLetters(), fb_words)
+        fixed_basis = SA.FixedBasis{eltype(fb_words),T}(collect(fb_words))
+        fb_words = SA.MTable(fixed_basis, T.((l, l)))
+        @test SymbolicWedderburn.check_group_action(G, _OnLetters(), fb_words)
         @test SymbolicWedderburn.check_group_action(
             G,
-            OnLettersSigned(),
+            _OnLettersSigned(),
             fb_words,
         )
 
-        action = OnLetters()
+        action = _OnLetters()
         ehom = SymbolicWedderburn.ExtensionHomomorphism(action, fb_words)
         @test typeof(SymbolicWedderburn.induce(ehom, one(G))) == PG.Perm{T}
     end
@@ -155,7 +156,7 @@ end
         RG = let G = G
             v = collect(G)
             l = convert(UInt16, length(v))
-            b = SA.FixedBasis(v, SA.DiracMStructure(*), (l, l))
+            b = SA.MTable(SA.FixedBasis{eltype(v),typeof(l)}(v), (l, l))
             StarAlgebra(G, b)
         end
 

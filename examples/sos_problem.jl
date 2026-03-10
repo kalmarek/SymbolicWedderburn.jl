@@ -25,7 +25,6 @@ function sos_problem(poly::AbstractPolynomial)
 
     basis_constraints = SA.FixedBasis(
         DP.monomials(vars, 0:DP.maxdegree(poly)),
-        SA.DiracMStructure(*),
     )
 
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
@@ -144,7 +143,7 @@ function sos_problem(
             @timed sos_problem(poly, wedderburn, basis_psd)
     else
         (invariant_vs, basis_cnstr), symmetry_adaptation_time = @timed let G = G
-            basis = SA.FixedBasis(basis_constraints, SA.DiracMStructure(*))
+            basis = SA.FixedBasis(basis_constraints)
 
             tblG = SW.Characters.CharacterTable(Rational{Int}, G)
             iv = SW.invariant_vectors(tblG, action, basis)

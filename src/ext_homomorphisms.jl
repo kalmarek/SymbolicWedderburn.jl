@@ -24,14 +24,19 @@ _int_type(hom::InducedActionHomomorphism) = _int_type(basis(hom))
 _int_type(::Type{<:Action}) = UInt32
 _int_type(ac::Action) = _int_type(typeof(ac))
 
-struct ExtensionHomomorphism{A<:Action,T,B<:SA.ExplicitBasis{T}} <:
+struct ExtensionHomomorphism{A<:Action,T,B<:SA.MultiplicativeStructure{T}} <:
        InducedActionHomomorphism{A,T}
     action::A
-    basis::B
+    mstructure::B
+end
+
+function ExtensionHomomorphism(action::Action, basis::SA.ExplicitBasis)
+    return ExtensionHomomorphism(action, SA.DiracMStructure(basis, *))
 end
 
 # interface:
-SA.basis(hom::ExtensionHomomorphism) = hom.basis
+SA.mstructure(hom::ExtensionHomomorphism) = hom.mstructure
+SA.basis(hom::ExtensionHomomorphism) = SA.basis(SA.mstructure(hom))
 action(hom::ExtensionHomomorphism) = hom.action
 
 struct CachedExtensionHomomorphism{A,T,G,H,E<:InducedActionHomomorphism{A,T}} <:
