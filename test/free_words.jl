@@ -78,7 +78,7 @@ end
 
 allwords(M::_FreeWords, radius) = collect(Iterators.take(M, nwords(M, radius)))
 
-struct _OnLetters <: SA.ByPermutations end
+struct _OnLetters <: SymbolicWedderburn.ByPermutations end
 function action(::_OnLetters, p::AP.AbstractPermutation, w::_Word)
     return _Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
 end
