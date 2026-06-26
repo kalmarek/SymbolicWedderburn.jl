@@ -241,15 +241,27 @@ function _symmetry_adapted_basis(
 )
     mps, ranks = minimal_projection_system(irr, RG)
     @debug "ranks of projections obtained by mps:" degrees
+    G = parent(RG)
     res = map(zip(mps, irr, multips, ranks)) do (µ, χ, m, r)
         Threads.@spawn begin
-            µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
-            # here we use algebra to compute the dimension of image;
-            # direct summand is simple only if rk == m, i.e. r == 1
-            rk = m * r
-            image =
-                isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            return DirectSummand(image, m, χ)
+            d = degree(χ)
+            if r == 1 || d == 1 || !(T <: LinearAlgebra.BlasFloat) || isnothing(hom)
+                # Symbolic minimal projection either succeeded (rk == m, simple)
+                # or we can't run the numerical fallback. Original behavior:
+                µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
+                rk = m * r
+                image = isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
+                return DirectSummand(image, m, χ)
+            else
+                # Symbolic failed (r > 1, d > 1). Project onto the full m*d
+                # isotypical subspace using χ itself, then numerically
+                # block-diagonalize into m simple m×N blocks and keep one.
+                χT = eltype(χ) == T ? χ : Character{T}(χ)
+                rk = m * d
+                image = image_basis(hom, χT, rk)
+                ds = DirectSummand(image, m, χ)
+                return numerical_simplify(ds, hom, G)
+            end
         end
     end
     direct_summands = fetch.(res)
