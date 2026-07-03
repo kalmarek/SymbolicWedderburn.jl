@@ -405,6 +405,7 @@ function numerical_simplify(
     # responsible for re-projecting onto rank m*d before calling this.
     @assert size(R, 1) == m * d "`numerical_simplify` expects R with m*d rows; got $(size(R, 1)) for m=$m d=$d"
 
+    F = convert(Matrix{T}, R)
     Ss = _isotypical_matrix_reps(Matrix{T}(R), hom, G)
     if !all(is_orthogonal, Ss)
         error("The matrix representation induced from the action on the polynomial basis is not orthogonal.")
@@ -416,7 +417,6 @@ function numerical_simplify(
     # Pick one of the d simple sub-blocks. For SDP applications, all d blocks
     # are equivalent (give the same Gram matrix `C`); see `diagonalize!` which
     # accounts for the d-fold replication via `trace_preserving`.
-    F = convert(Matrix{T}, R)
     cols = 1:d:(1 + d*(m-1))
     simple = transpose(U[:, cols]) * F
     return DirectSummand(simple, m, character(ds))
