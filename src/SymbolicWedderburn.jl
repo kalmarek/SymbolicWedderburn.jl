@@ -34,6 +34,7 @@ include("matrix_projections.jl")
 include("image_basis.jl")
 include("minimal_projections.jl")
 include("direct_summands.jl")
+include("numerical_simple.jl")
 include("sa_basis.jl")
 include("wedderburn_decomposition.jl")
 
