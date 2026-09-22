@@ -12,11 +12,7 @@ import PermutationGroups as PG
 export AbstractClassFunction, Character, CharacterTable
 
 export conjugacy_classes,
-    multiplicities,
-    degree,
-    irreducible_characters,
-    isirreducible,
-    table
+    multiplicities, degree, irreducible_characters, isirreducible, table
 
 include("gf.jl")
 

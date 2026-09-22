@@ -14,10 +14,7 @@ end
 Base.parent(A::StarAlgebra{<:Group}) = A.object
 SA.star(g::GroupElement) = inv(g)
 
-function SA.AlgebraElement(
-    χ::AbstractClassFunction,
-    RG::StarAlgebra{<:Group},
-)
+function SA.AlgebraElement(χ::AbstractClassFunction, RG::StarAlgebra{<:Group})
     G = parent(RG)
     @assert G === parent(χ)
     b = basis(RG)
@@ -100,7 +97,7 @@ function Base.iterate(citr::CyclicSubgroups, state)
             citr.seen[ord] = Set([g])
             return Set(g^i for i in 1:ord), state
         else
-            if any(g^i in citr.seen[ord] for i in 1:ord-1)
+            if any(g^i in citr.seen[ord] for i in 1:(ord-1))
                 return iterate(citr, state)
             else
                 push!(citr.seen[ord], g)
@@ -111,7 +108,9 @@ function Base.iterate(citr::CyclicSubgroups, state)
     return iterate(citr, state)
 end
 
-function (χ::AbstractClassFunction)(α::AlgebraElement{T,<:StarAlgebra{<:Group}}) where {T}
+function (χ::AbstractClassFunction)(
+    α::AlgebraElement{T,<:StarAlgebra{<:Group}},
+) where {T}
     @assert parent(χ) === parent(parent(α))
     return sum(α(g) * χ(g) for g in SA.supp(α))
 end

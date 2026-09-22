@@ -45,8 +45,7 @@ end
 
 G = DihedralGroup(4)
 for g in G
-    @assert SW.action(DihedralAction(), g, robinson_form) ==
-            robinson_form
+    @assert SW.action(DihedralAction(), g, robinson_form) == robinson_form
 end
 
 OPTIMIZER =
@@ -146,4 +145,3 @@ end
 @assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL
 @assert isapprox(wedderburn_dec.objective, no_symmetry.objective, atol = 1e-3)
 @assert no_symmetry.solve_t / wedderburn_dec.solve_t > 1
-

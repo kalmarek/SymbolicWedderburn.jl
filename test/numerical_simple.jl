@@ -225,7 +225,12 @@ end
     G = PG.PermGroup([PG.perm"(1,2,3)(4,5,6)", PG.perm"(1,2)(4,5)"])
     basis = SA.FixedBasis(collect(1:6))
     tbl = SW.Characters.CharacterTable(Rational{Int}, G)
-    ehom = SW.SchreierExtensionHomomorphism(parent(tbl), _NatPermAct(), basis; memoize = true)
+    ehom = SW.SchreierExtensionHomomorphism(
+        parent(tbl),
+        _NatPermAct(),
+        basis;
+        memoize = true,
+    )
 
     ss = symmetry_adapted_basis(Float64, tbl, ehom; semisimple = true)
     non_simple = filter(!SW.issimple, ss)
@@ -278,7 +283,12 @@ end
     G = PG.PermGroup([PG.perm"(1,2,3)(4,5,6)", PG.perm"(1,2)(4,5)"])
     basis = SA.FixedBasis(collect(1:6))
     tbl = SW.Characters.CharacterTable(Rational{Int}, G)
-    ehom = SW.SchreierExtensionHomomorphism(parent(tbl), _NatPermAct(), basis; memoize = true)
+    ehom = SW.SchreierExtensionHomomorphism(
+        parent(tbl),
+        _NatPermAct(),
+        basis;
+        memoize = true,
+    )
 
     ss = symmetry_adapted_basis(Float64, tbl, ehom; semisimple = false)
     for ds in ss

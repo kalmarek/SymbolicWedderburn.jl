@@ -17,7 +17,7 @@ struct PowerMap{T<:PG.AbstractOrbit} <: AbstractMatrix{Int}
     end
 end
 
-Base.axes(pm::PowerMap) = (Base.OneTo(length(pm.cc)), 0:size(pm.cache, 2)-1)
+Base.axes(pm::PowerMap) = (Base.OneTo(length(pm.cc)), 0:(size(pm.cache, 2)-1))
 Base.size(pm::PowerMap) = size(pm.cache)
 
 function Base.getindex(p::PowerMap, i::Integer, j::Integer)

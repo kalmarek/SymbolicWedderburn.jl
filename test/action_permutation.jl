@@ -13,7 +13,10 @@ function SymbolicWedderburn.action(
     p::AP.AbstractPermutation,
     w::_Word,
 )
-    return (_Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
+    return (
+        _Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]),
+        1,
+    )
 end
 
 @testset "Extending homomorphism" begin
@@ -205,8 +208,7 @@ end
             action,
             fb_words;
             semisimple = false,
-        ) isa
-              Vector{
+        ) isa Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
         @test symmetry_adapted_basis(

@@ -38,7 +38,7 @@ function _find_l(M::AbstractMatrix)
     # this function should be redundant when defining a better structure for echelonized subspaces
     l = Int[]
     for i in 1:size(M, 2)
-        j = findfirst(isone, @view M[length(l)+1:end, i])
+        j = findfirst(isone, @view M[(length(l)+1):end, i])
         if j !== nothing
             push!(l, i)
         end
@@ -57,7 +57,7 @@ function eigen_decomposition!(M::Matrix{T}) where {T<:FiniteFields.GF}
         basis = eigen[val]
         dim = size(basis, 1)
         cd = eigspace_ptrs[end]
-        ran = cd:cd+dim-1
+        ran = cd:(cd+dim-1)
         M[ran, :] = basis
         push!(eigspace_ptrs, cd + dim)
     end
@@ -100,19 +100,19 @@ Base.length(esd::EigenSpaceDecomposition) = length(esd.eigspace_ptrs) - 1
 
 function Base.getindex(esd::EigenSpaceDecomposition, i::Int)
     @boundscheck 1 <= i <= length(esd)
-    return esd.basis[esd.eigspace_ptrs[i]:esd.eigspace_ptrs[i+1]-1, :]
+    return esd.basis[esd.eigspace_ptrs[i]:(esd.eigspace_ptrs[i+1]-1), :]
 end
 
 function Base.iterate(esd::EigenSpaceDecomposition, s = 1)
     s > length(esd) && return nothing
-    first_last = esd.eigspace_ptrs[s]:esd.eigspace_ptrs[s+1]-1
+    first_last = esd.eigspace_ptrs[s]:(esd.eigspace_ptrs[s+1]-1)
     return (esd.basis[first_last, :], s + 1)
 end
 
 Base.eltype(::EigenSpaceDecomposition{T}) where {T} = Matrix{T}
 
 function LinearAlgebra.isdiag(esd::EigenSpaceDecomposition)
-    return esd.eigspace_ptrs == 1:length(esd)+1
+    return esd.eigspace_ptrs == 1:(length(esd)+1)
 end
 
 function refine(esd::EigenSpaceDecomposition{T}, M::Matrix{T}) where {T}

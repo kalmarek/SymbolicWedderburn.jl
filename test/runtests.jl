@@ -77,4 +77,3 @@ let fn = joinpath(@__DIR__, "smallgroups.jl")
     read(fn, String)
 end
 =#
-

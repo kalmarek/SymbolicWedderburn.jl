@@ -245,7 +245,7 @@ function _is_ordered_blockdim(A, d, tol = 1e-8)
     B = A[1:d, 1:d]
     return _isblockdim(A, d, tol) && all(d:d:(size(A, 1)-d)) do offset
         I = offset .+ (1:d)
-        return isapprox(B, A[I, I], rtol = tol)
+        return isapprox(B, A[I, I]; rtol = tol)
     end
 end
 
@@ -396,9 +396,11 @@ function numerical_simplify(
     issimple(ds) && return ds
     R = image_basis(ds)
     T = eltype(R)
-    T <: LinearAlgebra.BlasFloat || throw(ArgumentError(
-        "numerical_simplify requires `eltype(image_basis(ds)) <: BlasFloat`, got $T",
-    ))
+    T <: LinearAlgebra.BlasFloat || throw(
+        ArgumentError(
+            "numerical_simplify requires `eltype(image_basis(ds)) <: BlasFloat`, got $T",
+        ),
+    )
     m = multiplicity(ds)
     d = AP.degree(character(ds))
     # `R` should span the full m*d-dim isotypical subspace. The caller is
@@ -408,16 +410,20 @@ function numerical_simplify(
     F = convert(Matrix{T}, R)
     Ss = _isotypical_matrix_reps(Matrix{T}(R), hom, G)
     if !all(is_orthogonal, Ss)
-        error("The matrix representation induced from the action on the polynomial basis is not orthogonal.")
+        error(
+            "The matrix representation induced from the action on the polynomial basis is not orthogonal.",
+        )
     end
     U = ordered_block_diagonalize(Ss, d)
     if isnothing(U)
-        error("Could not simultaneously block-diagonalize into $m identical $(d)x$(d) blocks")
+        error(
+            "Could not simultaneously block-diagonalize into $m identical $(d)x$(d) blocks",
+        )
     end
     # Pick one of the d simple sub-blocks. For SDP applications, all d blocks
     # are equivalent (give the same Gram matrix `C`); see `diagonalize!` which
     # accounts for the d-fold replication via `trace_preserving`.
-    cols = 1:d:(1 + d*(m-1))
+    cols = 1:d:(1+d*(m-1))
     simple = transpose(U[:, cols]) * F
     return DirectSummand(simple, m, character(ds))
 end

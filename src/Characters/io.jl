@@ -22,10 +22,7 @@ __coefs_desc(::Type{<:Cyclotomics.Cyclotomic{T}}) where {T} = "cyclotomics ($T)"
 function Base.show(io::IO, ::MIME"text/plain", chtbl::CharacterTable)
     hl_odd = PrettyTables.TextHighlighter(
         (rule, i, j) -> i % 2 == 0,
-        PrettyTables.Crayon(;
-            foreground = :dark_gray,
-            negative = true,
-        ),
+        PrettyTables.Crayon(; foreground = :dark_gray, negative = true),
     )
 
     fmt = (v, args...) -> sprint(show, MIME"text/plain"(), v)
