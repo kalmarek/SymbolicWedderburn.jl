@@ -41,6 +41,10 @@ end
 include("projections.jl")
 include("sa_basis.jl")
 
+@testset "numerical_simple" begin
+    include("numerical_simple.jl")
+end
+
 if VERSION >= v"1.7.0" && !haskey(ENV, "CI")
     @testset "Examples" begin
         include("../examples/run_examples.jl")

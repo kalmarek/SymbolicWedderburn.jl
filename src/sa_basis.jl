@@ -241,15 +241,44 @@ function _symmetry_adapted_basis(
 )
     mps, ranks = minimal_projection_system(irr, RG)
     @debug "ranks of projections obtained by mps:" degrees
+    G = parent(RG)
     res = map(zip(mps, irr, multips, ranks)) do (µ, χ, m, r)
         Threads.@spawn begin
-            µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
-            # here we use algebra to compute the dimension of image;
-            # direct summand is simple only if rk == m, i.e. r == 1
-            rk = m * r
-            image =
-                isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
-            return DirectSummand(image, m, χ)
+            d = degree(χ)
+            # A character combined from a complex-conjugate pair by
+            # `affordable_real` has more than one nonzero entry in
+            # `multiplicities(χ)`. The post-loop dimension check below expects
+            # simple summands of size `m * sum(multiplicities(χ) .> 0)` (i.e.
+            # `2m` for combined pairs), so we must NOT reduce those further
+            # via numerical block-diagonalization.
+            is_combined = sum(multiplicities(χ) .> 0) > 1
+            if r == 1 || d == 1 || isone(m) || is_combined ||
+               !(T <: LinearAlgebra.BlasFloat) || isnothing(hom)
+                # Symbolic minimal projection either succeeded (rk == m, simple)
+                # or we can't run the numerical fallback:
+                #   * `m == 1`: only one isotypical copy, so
+                #     `ordered_block_diagonalize` has nothing to merge across
+                #     copies. The rep is already as-simple-as-it-gets;
+                #     downstream consumers expect `m*r × N` here.
+                #   * `is_combined`: complex-conjugate pair — the "simple"
+                #     convention keeps the size `2m` (both real components),
+                #     so we don't try to numerically split it.
+                #   * non-BlasFloat T or missing `hom`: no Schur decomposition
+                #     available.
+                µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
+                rk = m * r
+                image = isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
+                return DirectSummand(image, m, χ)
+            else
+                # Symbolic failed (r > 1, d > 1, m > 1). Project onto the full
+                # m*d isotypical subspace using χ itself, then numerically
+                # block-diagonalize into m simple m×N blocks and keep one.
+                χT = eltype(χ) == T ? χ : Character{T}(χ)
+                rk = m * d
+                image = image_basis(hom, χT, rk)
+                ds = DirectSummand(image, m, χ)
+                return numerical_simplify(ds, hom, G)
+            end
         end
     end
     direct_summands = fetch.(res)
