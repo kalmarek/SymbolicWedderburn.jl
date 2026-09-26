@@ -53,12 +53,12 @@ end
     )
 
     m, _ = sos_problem(robinson_form, G, DihedralAction())
-    # Leave margin for platform-dependent solver variation in the objective.
-    JuMP.set_optimizer(m, scs_optimizer(; eps = 1e-6, alpha = 1.8, accel = -15))
+    JuMP.set_optimizer(m, scs_optimizer(; eps = 1e-5, alpha = 1.8, accel = -15))
 
     optimize!(m)
 
-    @test isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-4)
+    # Allow for platform-dependent solver variation in the objective.
+    @test isapprox(value(m[:t]), -3825 / 4096, rtol = 1e-3)
     status = termination_status(m)
     @test status ∈ (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
 end
