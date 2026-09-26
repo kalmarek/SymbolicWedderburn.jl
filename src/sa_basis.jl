@@ -252,8 +252,12 @@ function _symmetry_adapted_basis(
             # `2m` for combined pairs), so we must NOT reduce those further
             # via numerical block-diagonalization.
             is_combined = sum(multiplicities(χ) .> 0) > 1
-            if r == 1 || d == 1 || isone(m) || is_combined ||
-               !(T <: LinearAlgebra.BlasFloat) || isnothing(hom)
+            if r == 1 ||
+               d == 1 ||
+               isone(m) ||
+               is_combined ||
+               !(T <: LinearAlgebra.BlasFloat) ||
+               isnothing(hom)
                 # Symbolic minimal projection either succeeded (rk == m, simple)
                 # or we can't run the numerical fallback:
                 #   * `m == 1`: only one isotypical copy, so
@@ -267,7 +271,9 @@ function _symmetry_adapted_basis(
                 #     available.
                 µT = eltype(µ) == T ? µ : AlgebraElement{T}(µ)
                 rk = m * r
-                image = isnothing(hom) ? image_basis(µT, rk) : image_basis(hom, µT, rk)
+                image =
+                    isnothing(hom) ? image_basis(µT, rk) :
+                    image_basis(hom, µT, rk)
                 return DirectSummand(image, m, χ)
             else
                 # Symbolic failed (r > 1, d > 1, m > 1). Project onto the full

@@ -51,7 +51,7 @@ Base.isone(n::GF) = isone(Int(n))
 
 Base.promote_rule(::Type{GF{q}}, ::Type{I}) where {q,I<:Integer} = GF{q}
 function Base.promote_rule(::Type{GF{p}}, ::Type{GF{q}}) where {p,q}
-    throw(
+    return throw(
         DomainError(
             (GF{p}, GF{q}),
             "Cannot perform arithmetic on elements from different fields",
@@ -87,10 +87,10 @@ function rootofunity(::Type{GF{q}}, ord::Integer) where {q}
     d, r = divrem(q - 1, ord)
     !iszero(r) &&
         throw(DomainError(GF{q}, "No root of unity of order $ord in $(GF{q})."))
-    for i in 2:q-1
+    for i in 2:(q-1)
         g = GF{q}(i, false)
         acc = g
-        for j in 2:ord-1
+        for j in 2:(ord-1)
             acc *= g
             isone(acc) && @goto next_elt
         end

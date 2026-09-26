@@ -45,3 +45,17 @@ function SparseArrays.droptol!(
     droptol!(image_basis(ds), tol)
     return ds
 end
+
+function Base.summary(io::IO, ds::DirectSummand)
+    println(
+        io,
+        "direct summand of rank $(projection_rank(ds)) with multiplicity $(multiplicity(ds))",
+    )
+    return Base.summary(io, image_basis(ds))
+end
+
+function Base.show(io::IO, m::MIME"text/plain", ds::DirectSummand)
+    Base.summary(io, ds)
+    Base.println(io)
+    return Base.print_array(io, ds.basis)
+end

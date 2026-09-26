@@ -47,8 +47,10 @@ b, c = decompose(v, hom)
 See also [`ByLinearTransformation`](@ref).
 """
 function decompose(x, hom::InducedActionHomomorphism)
-    throw("""No fallback is provided for $(typeof(x)). You need to implement
-          `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""")
+    return throw(
+        """No fallback is provided for $(typeof(x)). You need to implement
+        `decompose(::$(typeof(x)), ::$(typeof(hom)))`.""",
+    )
 end
 
 """
@@ -73,8 +75,10 @@ abstract type BySignedPermutations <: ByLinearTransformation end
 ## coeff_types
 coeff_type(::ByPermutations) = Int
 function coeff_type(ac::ByLinearTransformation)
-    throw("No fallback is provided for $(typeof(ac)). You need to implement
-          `coeff_type(::$(typeof(ac)))`.")
+    return throw(
+        "No fallback is provided for $(typeof(ac)). You need to implement
+          `coeff_type(::$(typeof(ac)))`.",
+    )
 end
 coeff_type(::BySignedPermutations) = Int # lets not worry about roots of unity
 

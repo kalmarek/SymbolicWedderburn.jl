@@ -27,7 +27,9 @@ function (χ::AbstractClassFunction)(g::GroupElement)
     for (i, cc) in enumerate(conjugacy_classes(χ))
         g ∈ cc && return χ[i]
     end
-    throw(DomainError(g, "element does not belong to conjugacy classes of $χ"))
+    return throw(
+        DomainError(g, "element does not belong to conjugacy classes of $χ"),
+    )
 end
 
 _div(val, orderG) = div(val, orderG)
@@ -53,4 +55,3 @@ Base.@propagate_inbounds function Base.getindex(χ::ClassFunction, i::Integer)
     @boundscheck 1 ≤ i ≤ length(conjugacy_classes(χ))
     return values(χ)[i]
 end
-
