@@ -53,7 +53,10 @@ end
     )
 
     m, _ = sos_problem(robinson_form, G, DihedralAction())
-    JuMP.set_optimizer(m, scs_optimizer(; eps = 1e-5, alpha = 1.8, accel = -15))
+    JuMP.set_optimizer(
+        m,
+        scs_optimizer(; eps = 1e-5, alpha = 1.95, accel = -15),
+    )
 
     optimize!(m)
 
