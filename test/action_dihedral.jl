@@ -1,3 +1,28 @@
+using Test
+using LinearAlgebra
+using SparseArrays
+using GroupsCore
+using SymbolicWedderburn
+import SymbolicWedderburn as SW
+import SymbolicWedderburn.SA as SA
+import AbstractPermutations as AP
+using DynamicPolynomials
+import DynamicPolynomials as DP
+using JuMP
+
+if !isdefined(@__MODULE__, :OnMonomials)
+    include("../examples/action_polynomials.jl")
+end
+if !isdefined(@__MODULE__, :DihedralGroup)
+    include("../examples/dihedral.jl")
+end
+if !isdefined(@__MODULE__, :sos_problem)
+    include("../examples/sos_problem.jl")
+end
+if !isdefined(@__MODULE__, :scs_optimizer)
+    include("../examples/solver.jl")
+end
+
 @polyvar x y
 const robinson_form =
     x^6 + y^6 - x^4 * y^2 - y^4 * x^2 - x^4 - y^4 - x^2 - y^2 + 3x^2 * y^2 + 1
@@ -28,10 +53,8 @@ end
     )
 
     m, _ = sos_problem(robinson_form, G, DihedralAction())
-    JuMP.set_optimizer(
-        m,
-        scs_optimizer(; eps = 1e-5, alpha = 1.95, accel = -15),
-    )
+    # Leave margin for platform-dependent solver variation in the objective.
+    JuMP.set_optimizer(m, scs_optimizer(; eps = 1e-6, alpha = 1.8, accel = -15))
 
     optimize!(m)
 
