@@ -47,9 +47,9 @@ function _multiplicities(
 
     ω⁻¹ = inv(FiniteFields.rootofunity(F, e))
     ωs = Matrix{typeof(ω⁻¹)}(undef, e, e)
-    Threads.@threads for k in 0:e-1
+    Threads.@threads for k in 0:(e-1)
         ω⁻ᵏ = ω⁻¹^k
-        for l in 0:e-1
+        for l in 0:(e-1)
             ωs[l+1, k+1] = ω⁻ᵏ^l
         end
     end
@@ -62,8 +62,9 @@ function _multiplicities(
 
     for (i, χ) in enumerate(chars)
         Threads.@threads for j in 1:length(cclasses)
-            for k in 0:e-1
-                val = Int(ie * sum(χ[pmap[j, l]] * ωs[l+1, k+1] for l in 0:e-1))
+            for k in 0:(e-1)
+                val =
+                    Int(ie * sum(χ[pmap[j, l]] * ωs[l+1, k+1] for l in 0:(e-1)))
                 multiplicities[i, j, k+1] = val
             end
         end

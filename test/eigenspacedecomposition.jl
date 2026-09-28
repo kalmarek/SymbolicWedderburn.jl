@@ -2,7 +2,7 @@ function _row_echelon(A; L = [])
     A, l = Characters.row_echelon_form(A)
     @test all([x ∈ l for x in L]) && length(L) <= length(l)
     for (i, j) in enumerate(l)
-        @test all([iszero(A[k, j]) for k = 1:size(A, 1) if k != i])
+        @test all([iszero(A[k, j]) for k in 1:size(A, 1) if k != i])
     end
     @test all([isone(A[i, j]) for (i, j) in enumerate(l)])
 end

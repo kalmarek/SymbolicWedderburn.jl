@@ -84,7 +84,6 @@ wedderburn_dec = let f = f, vars = DynamicPolynomials.variables(f)
     )
 end
 
-
 @info "Summary of Example: S4" no_symmetry orbit_dec semisimple_dec wedderburn_dec
 
 @assert wedderburn_dec.status == no_symmetry.status == MOI.OPTIMAL

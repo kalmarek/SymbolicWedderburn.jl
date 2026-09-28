@@ -56,7 +56,8 @@ Base.@propagate_inbounds function _reduce_column_by_pivot!(
     return A
 end
 
-_finalize_pivot_reduce!(A::AbstractMatrix, pivot) = A
+_finalize_row_echelon!(A::AbstractMatrix) = A
+_finalize_row_echelon!(A::AbstractSparseMatrix) = dropzeros!(A)
 
 # version over AbstractFloat
 
@@ -81,11 +82,10 @@ Base.@propagate_inbounds function _find_pivot(
     return true, oftype(starting_at, starting_at + midx - 1)
 end
 
-function _finalize_pivot_reduce!(
+function _finalize_row_echelon!(
     A::AbstractSparseMatrix{T},
-    pivot,
 ) where {T<:FloatOrComplex}
-    m = T <: Complex ? 2abs(eps(T)) : eps(T)
+    m = T <: Complex ? 2abs(eps(real(T))) : eps(T)
     droptol!(A, max(size(A)...) * m)
     return A
 end
@@ -136,8 +136,8 @@ Base.@propagate_inbounds function row_echelon_form!(A::AbstractMatrix)
         # zero the whole col_idx-th column above and below pivot:
         # to the left of col_idx everything is zero
         A = _reduce_column_by_pivot!(A, row_idx, col_idx; starting_at = col_idx)
-        A = _finalize_pivot_reduce!(A, col_idx)
     end
+    A = _finalize_row_echelon!(A)
     return A, pivots
 end
 

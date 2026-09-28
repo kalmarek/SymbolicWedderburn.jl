@@ -21,11 +21,9 @@ end
 function sos_problem(poly::AbstractPolynomial)
     vars = DP.variables(poly)
 
-    basis_psd = DP.monomials(vars, 0:DP.maxdegree(poly)÷2)
+    basis_psd = DP.monomials(vars, 0:(DP.maxdegree(poly)÷2))
 
-    basis_constraints = SA.FixedBasis(
-        DP.monomials(vars, 0:DP.maxdegree(poly)),
-    )
+    basis_constraints = SA.FixedBasis(DP.monomials(vars, 0:DP.maxdegree(poly)))
 
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
 
@@ -50,7 +48,7 @@ function sos_problem(
     invariant_vs::AbstractVector,
     basis_constraints::SA.AbstractBasis,
     basis_psd,
-    T=Float64,
+    T = Float64,
 )
     M = [basis_constraints[x*y] for x in basis_psd, y in basis_psd]
 
@@ -119,25 +117,25 @@ function sos_problem(
     poly::AbstractPolynomial,
     G::Group,
     action::SW.Action,
-    T=Float64;
-    decompose_psd=true,
-    semisimple=false
+    T = Float64;
+    decompose_psd = true,
+    semisimple = false,
 )
     max_deg = DP.maxdegree(poly)
     vars = DP.variables(poly)
-    basis_psd = DP.monomials(vars, 0:max_deg÷2)
+    basis_psd = DP.monomials(vars, 0:(max_deg÷2))
     basis_constraints = DP.monomials(vars, 0:max_deg)
 
     if decompose_psd == true
         wedderburn, symmetry_adaptation_time =
             @timed SW.WedderburnDecomposition(
-            T,
-            G,
-            action,
-            basis_constraints,
-            basis_psd,
-            semisimple=semisimple,
-        )
+                T,
+                G,
+                action,
+                basis_constraints,
+                basis_psd,
+                semisimple = semisimple,
+            )
 
         model, model_creation_time =
             @timed sos_problem(poly, wedderburn, basis_psd)

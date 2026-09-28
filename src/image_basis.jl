@@ -76,7 +76,7 @@ function image_basis!(A::AbstractMatrix, rank = nothing)
         end
     end
     # TODO: orthogonalize the result
-    return img[pivots, :]
+    return img[1:length(pivots), :]
 end
 
 function image_basis!(

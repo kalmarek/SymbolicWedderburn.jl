@@ -1,3 +1,19 @@
+using Test
+using LinearAlgebra
+using SparseArrays
+using GroupsCore
+using Cyclotomics
+using SymbolicWedderburn
+using SymbolicWedderburn.StarAlgebras
+import AbstractPermutations as AP
+import PermutationGroups as PG
+import SymbolicWedderburn as SW
+import SymbolicWedderburn.SA as SA
+
+if !isdefined(@__MODULE__, :SmallPermGroups)
+    include("smallgroups.jl")
+end
+
 @testset "affordable real degrees/dot" begin
     G = SmallPermGroups[10][2] # C₂⊕C₅
     tbl = SymbolicWedderburn.CharacterTable(Rational{Int}, G)
@@ -21,6 +37,37 @@
     )
 end
 
+@testset "row_echelon_form #89" begin
+    struct OnInts <: SW.ByPermutations
+        translate::Dict{PG.Perm{UInt16},PG.Perm{UInt16}}
+    end
+
+    function SW.action(
+        action::OnInts,
+        p::AP.AbstractPermutation,
+        fs::Matrix{Int},
+    )
+        return map(c -> c^action.translate[p], fs)
+    end
+
+    rotate = OnInts(
+        Dict(
+            PG.perm"(1,2,3)" => PG.perm"(1,2,3)(4,5,6)",
+            PG.perm"" => PG.perm"",
+            PG.perm"(1,3,2)" => PG.perm"(1,3,2)(4,6,5)",
+        ),
+    )
+
+    G = PG.PermGroup(PG.perm"(1,2,3)")
+    # Scalar matrices keep this basis closed under the star operation.
+    res = SW.symmetry_adapted_basis(
+        G,
+        rotate,
+        SA.FixedBasis{Matrix{Int},UInt32}([fill(i, 1, 1) for i in 1:6]),
+    )
+    @test rank.(complex.(res)) == [2, 2, 2]
+end
+
 @testset "Symmetry adapted basis" begin
     @testset "step by step" begin
         G = PermGroup(perm"(1,2)", perm"(1,2,3)")
@@ -31,7 +78,10 @@ end
 
         RG = let G = G
             l = order(UInt16, G)
-            b = SA.MTable(SA.FixedBasis{eltype(G),typeof(l)}(collect(G)), (l, l))
+            b = SA.MTable(
+                SA.FixedBasis{eltype(G),typeof(l)}(collect(G)),
+                (l, l),
+            )
             StarAlgebra(G, b)
         end
 
@@ -116,8 +166,7 @@ end
                         multiplicity.(sa_basis),
                     ) == AP.degree(G)
 
-                    @test sum(first ∘ size, sa_basis) ==
-                          AP.degree(G)
+                    @test sum(first ∘ size, sa_basis) == AP.degree(G)
 
                     S = if (ord, n) in ((26, 1),)
                         Rational{BigInt}
@@ -145,8 +194,7 @@ end
                         SymbolicWedderburn.degree.(sa_basisR),
                         multiplicity.(sa_basisR),
                     ) == AP.degree(G)
-                    @test sum(first ∘ size, sa_basisR) ==
-                          AP.degree(G)
+                    @test sum(first ∘ size, sa_basisR) == AP.degree(G)
 
                     sa_basisR = symmetry_adapted_basis(
                         Float64,

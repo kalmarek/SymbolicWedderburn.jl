@@ -1,10 +1,14 @@
-struct _OnLetters <: SymbolicWedderburn.ByPermutations end
-function SymbolicWedderburn.action(
-    ::_OnLetters,
-    p::AP.AbstractPermutation,
-    w::_Word,
-)
-    return _Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)])
+using Test
+using LinearAlgebra
+using GroupsCore
+using SymbolicWedderburn
+using SymbolicWedderburn.StarAlgebras
+import AbstractPermutations as AP
+import PermutationGroups as PG
+import SymbolicWedderburn.SA as SA
+
+if !isdefined(@__MODULE__, :_Word)
+    include("free_words.jl")
 end
 
 struct _OnLettersSigned <: SymbolicWedderburn.BySignedPermutations end
@@ -13,7 +17,10 @@ function SymbolicWedderburn.action(
     p::AP.AbstractPermutation,
     w::_Word,
 )
-    return (_Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]), 1)
+    return (
+        _Word(w.alphabet, [w.letters[i]^p for i in eachindex(w.letters)]),
+        1,
+    )
 end
 
 @testset "Extending homomorphism" begin
@@ -205,8 +212,7 @@ end
             action,
             fb_words;
             semisimple = false,
-        ) isa
-              Vector{
+        ) isa Vector{
             <:SymbolicWedderburn.DirectSummand{<:SymbolicWedderburn.Cyclotomic},
         }
         @test symmetry_adapted_basis(
