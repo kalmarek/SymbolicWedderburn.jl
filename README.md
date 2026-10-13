@@ -55,7 +55,7 @@ For more examples you may have a look at [dihedral action example](https://githu
 # Related software
 
 ## Sum of Squares optimization
-This package is used by [SumOfSquares](https://github.com/jump-dev/SumOfSquares.jl) to perform exactly this reduction, for an example use see its [documentation](https://jump.dev/SumOfSquares.jl/latest/generated/Symmetry/dihedral_symmetry_of_the_robinson_form/).
+This package is used by [SumOfSquares](https://github.com/jump-dev/SumOfSquares.jl) to perform exactly this reduction, for an example use see its [documentation](https://jump.dev/SumOfSquares.jl/dev/generated/Symmetry/dihedral/).
 
 The software for sum of (hermitian) squares computations in a non-commutative setting (group algebra of a infinite group) using `SymbolicWedderburn` is my project [`PropertyT.jl`](https://github.com/kalmarek/PropertyT.jl/) (unregistered). There we used the sum of squares optimization to prove Property (T) for special automorphisms group of the free group. It's a cool result, [check it out!](https://annals.math.princeton.edu/2021/193-2/p03).
 
